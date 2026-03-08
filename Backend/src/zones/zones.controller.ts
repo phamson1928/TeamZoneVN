@@ -70,6 +70,15 @@ export class ZonesController {
     return this.zonesService.findAllByOwner(ownerId);
   }
 
+  @Get('suggested')
+  @ApiOperation({ summary: 'Gợi ý zones phù hợp với user (theo game profile, rank)' })
+  findSuggested(
+    @CurrentUser('sub') userId: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.zonesService.getSuggestedZones(userId, limit ? Number(limit) : 10);
+  }
+
   @Get('admin')
   @UseGuards(RolesGuard)
   @Roles('ADMIN')

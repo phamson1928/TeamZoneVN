@@ -264,11 +264,11 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 
 ## Phase 8: Report & Moderation (Week 11-12)
 
-### 8.1 Report System
+### 8.1 Report System ✅ COMPLETED
 
-- [ ] `POST /reports` - Tạo report
-- [ ] `GET /reports` - Danh sách reports (Admin)
-- [ ] `PATCH /reports/:id` - Resolve report (Admin)
+- [x] `POST /reports` - Tạo report
+- [x] `GET /reports` - Danh sách reports (Admin)
+- [x] `PATCH /reports/:id` - Resolve report (Admin)
 
 ### 8.2 Moderation Actions
 
@@ -277,15 +277,14 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 - [x] Ban user — `PATCH /users/:id/ban` (Phase 2.4)
 - [x] Close zone — `PATCH /zones/admin/:id/close` (Phase 4.5)
 - [x] Delete group — `DELETE /groups/admin/:id` (Phase 5.4)
-- [ ] View report history — `GET /reports` (Admin list)
-- [ ] Report stats gộp trong `GET /dashboard/stats`
+- [x] View report history — `GET /reports` (Admin list)
 
-### 8.3 Dashboard Module (Admin Statistics)
+### 8.3 Dashboard Module (Admin Statistics) ✅ COMPLETED
 
 > **Note:** Module `dashboard` riêng cho thống kê trang Admin. Route prefix: `/dashboard`. Query `?period=7d|30d` cho charts.
 
 **Stats (Phase 8):**
-- [ ] `GET /dashboard/stats` - Tổng quan dashboard (Admin)
+- [x] `GET /dashboard/stats` - Tổng quan dashboard (Admin)
   - Total users (active/banned)
   - Total zones (open/closed)
   - Total groups (active/dissolved)
@@ -294,16 +293,9 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
   - Active users today/this week
 
 **Charts MVP (Phase 8):**
-- [ ] `GET /dashboard/charts/users` - Tăng trưởng users theo ngày
-- [ ] `GET /dashboard/charts/zones` - Zones theo game (phân bố)
-- [ ] `GET /dashboard/charts/activity` - Hoạt động theo giờ
-
-**Charts Production (Phase 10):**
-- [ ] `GET /dashboard/charts/reports` - Xu hướng reports (open vs resolved)
-- [ ] `GET /dashboard/charts/engagement` - Zones/Groups tạo mới theo ngày
-- [ ] `GET /dashboard/charts/top-games` - Top games (zones, groups count)
-- [ ] `GET /dashboard/charts/peak-hours` - Giờ cao điểm (zones, join requests)
-- [ ] `GET /dashboard/charts/moderation` - Moderation workload (cần Report.resolvedAt)
+- [x] `GET /dashboard/charts/users` - Tăng trưởng users theo ngày
+- [x] `GET /dashboard/charts/zones` - Zones theo game (phân bố)
+- [x] `GET /dashboard/charts/activity` - Hoạt động theo giờ
 
 ---
 
@@ -311,47 +303,63 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 
 > **Mục đích:** Mở rộng trải nghiệm multi-user — Friend List, Zone Invite, Quick Match, Suggested Zones, Top User theo Like.
 
-### 9.1 Friend List
+### 9.1 Friend List ✅ COMPLETED
 
-- [ ] Schema: `Friendship` (userId, friendId, status: PENDING | ACCEPTED)
-- [ ] `POST /friends/request/:userId` - Gửi lời mời kết bạn
-- [ ] `PATCH /friends/request/:id` - Chấp nhận / Từ chối (Accept/Decline)
-- [ ] `GET /friends` - Danh sách bạn bè (pagination)
-- [ ] `GET /friends/requests` - Lời mời đang chờ (incoming)
-- [ ] `DELETE /friends/:userId` - Hủy kết bạn / Hủy lời mời
+- [x] Schema: `Friendship` (senderId, receiverId, status: PENDING | ACCEPTED)
+- [x] `POST /friends/request` - Gửi lời mời kết bạn (Body: `receiverId`)
+- [x] `PATCH /friends/request/:senderId` - Chấp nhận / Từ chối (Body: `status`)
+- [x] `GET /friends` - Danh sách bạn bè (pagination: page, limit)
+- [x] `GET /friends/requests/incoming` - Danh sách lời mời đang chờ (incoming)
+- [x] `GET /friends/requests/sent` - Danh sách lời mời đã gửi (outgoing)
+- [x] `DELETE /friends/:friendId` - Hủy kết bạn / Hủy lời mời
+- [x] Notification types: `FRIEND_REQUEST`, `FRIEND_ACCEPTED`
 
-### 9.2 Zone Invite (Mời bạn vào Zone)
+### 9.2 Zone Invite (Mời bạn vào Zone) ✅ COMPLETED
 
-- [ ] Schema: `ZoneInvite` (zoneId, inviterId, inviteeId, status: PENDING | ACCEPTED | DECLINED)
-- [ ] `POST /zones/:id/invite` - Mời bạn bè vào zone (chọn từ friend list, owner only)
-- [ ] `PATCH /zones/:id/invites/:inviteId` - Chấp nhận / Từ chối lời mời (invitee)
-- [ ] `GET /users/me/zone-invites` - Danh sách lời mời zone đang chờ
-- [ ] Notification type: `ZONE_INVITE` — gửi khi owner mời bạn vào zone
-- [ ] Logic: Invitee chấp nhận → auto-approve join request (hoặc add trực tiếp nếu zone còn slot)
+- [x] Schema: `ZoneInvite` (zoneId, inviterId, inviteeId, status: PENDING | ACCEPTED | DECLINED)
+- [x] `POST /zones/:zoneId/invite` - Mời bạn bè vào zone (owner only, chỉ được mời friends)
+- [x] `PATCH /zones/:zoneId/invites/:inviteId` - Chấp nhận / Từ chối lời mời (invitee)
+- [x] `DELETE /zones/:zoneId/invites/:inviteId` - Hủy lời mời (owner)
+- [x] `GET /users/me/zone-invites` - Danh sách lời mời zone đang chờ
+- [x] Notification type: `ZONE_INVITE` — gửi khi owner mời bạn vào zone
+- [x] Logic: Invitee chấp nhận → auto-create ZoneJoinRequest với status APPROVED
 
-### 9.3 Quick Match (Ghép nhanh)
+### 9.3 Quick Match (Ghép nhanh) ✅ COMPLETED
 
-- [ ] Schema: `QuickMatchQueue` (userId, gameId, rankLevel, requiredPlayers, createdAt) — hoặc dùng Redis
-- [ ] `POST /quick-match` - Vào hàng đợi (gameId, rankLevel, requiredPlayers)
-- [ ] `DELETE /quick-match` - Rời hàng đợi
-- [ ] Logic match: Ghép users cùng game, rank tương thích (Silver–Gold–Plat), đủ requiredPlayers
-- [ ] Khi match: Tự động tạo Zone + Group, gửi notification cho tất cả
-- [ ] Timeout: Sau X phút (config) chưa match → thông báo, cho phép retry
+> **Note:** Dùng PostgreSQL (`QuickMatchQueue` table) thay vì Redis để phù hợp với stack hiện tại.
 
-### 9.4 Suggested Zones (Gợi ý Zone)
+- [x] Schema: `QuickMatchQueue` (userId, gameId, rankLevel, requiredPlayers, createdAt)
+- [x] `POST /quick-match` - Vào hàng đợi (gameId, rankLevel, requiredPlayers)
+- [x] `DELETE /quick-match` - Rời hàng đợi
+- [x] `GET /quick-match/status` - Xem trạng thái hàng đợi của mình
+- [x] Logic match: Ghép users cùng game, rank tương thích (±1 bậc), đủ requiredPlayers (FIFO)
+- [x] Khi match: Tự động tạo Zone + Group, gửi notification `QUICK_MATCH_FOUND` cho tất cả
 
-- [ ] `GET /zones/suggested` - Danh sách zone gợi ý cho user hiện tại
-- [ ] Logic gợi ý: Theo game (UserGameProfile), rank tương thích, zone mới, tags phổ biến
-- [ ] Loại trừ: Zone user đã join/reject, zone FULL/CLOSED
-- [ ] Có thể merge vào `GET /zones` với query `?suggested=true` hoặc endpoint riêng
+### 9.4 Suggested Zones (Gợi ý Zone) ✅ COMPLETED
 
-### 9.5 Top User (User Like / Leaderboard)
+- [x] `GET /zones/suggested` - Danh sách zone gợi ý cho user hiện tại
+- [x] Logic gợi ý: Dựa trên UserGameProfile (game + rank ±1 bậc), zone mới nhất
+- [x] Loại trừ: Zone user đã join/có request, zone FULL/CLOSED, zone của chính mình
+- [x] Fallback: Nếu chưa có game profile → trả về zones OPEN mới nhất
 
-- [ ] Schema: `UserLike` (userId, likerId) — userId = người được like, likerId = người like (unique)
-- [ ] `POST /users/:id/like` - Like user (1 user chỉ like 1 user 1 lần)
-- [ ] `DELETE /users/:id/like` - Bỏ like
-- [ ] `GET /leaderboard/users` - Top user theo số like (query: ?period=week|month|all, ?gameId=)
-- [ ] `GET /users/:id` - Bổ sung field `likeCount`, `isLikedByMe` (nếu có auth)
+### 9.5 Top User (User Like / Leaderboard) ✅ COMPLETED
+
+- [x] Schema: `UserLike` (userId, likerId) — userId = người được like, likerId = người like (unique)
+- [x] `POST /users/:id/like` - Like user (1 user chỉ like 1 user 1 lần)
+- [x] `DELETE /users/:id/like` - Bỏ like
+- [x] `GET /users/:id/likes` - Xem số like + trạng thái `isLikedByMe`
+- [x] `GET /leaderboard/users` - Top user theo số like (query: ?period=week|month|all, ?gameId=)
+- [x] `GET /users/:id` - Bổ sung field `likeCount`, `isLikedByMe` vào public profile
+
+### 9.6 Dashboard Additions (Phase 9 — Admin) ✅ COMPLETED
+
+- [x] Stats (bổ sung vào `GET /dashboard/stats`):
+  - Total Friendships (ACCEPTED count)
+  - Total UserLikes
+  - Quick Match current queue size
+- [x] `GET /dashboard/charts/social-engagement` - Xu hướng tương tác (Likes & Friendships theo ngày)
+- [x] `GET /dashboard/charts/quick-match` - Thống kê Quick Match (ghép thành công theo game)
+- [x] `GET /dashboard/charts/leaderboard-top` - Top 10 users widget (theo likes)
 
 ---
 
@@ -359,11 +367,11 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 
 ### 10.0 Dashboard Charts Production (bổ sung Phase 8)
 
-- [ ] `GET /dashboard/charts/reports` - Xu hướng reports
-- [ ] `GET /dashboard/charts/engagement` - Engagement (zones, groups theo ngày)
-- [ ] `GET /dashboard/charts/top-games` - Top games
-- [ ] `GET /dashboard/charts/peak-hours` - Peak hours
-- [ ] `GET /dashboard/charts/moderation` - Moderation workload
+- [x] `GET /dashboard/charts/reports` - Xu hướng reports
+- [x] `GET /dashboard/charts/engagement` - Engagement (zones, groups theo ngày)
+- [x] `GET /dashboard/charts/top-games` - Top games
+- [x] `GET /dashboard/charts/peak-hours` - Peak hours (Đã có: getActivityByHourChart)
+- [x] `GET /dashboard/charts/moderation` - Moderation workload
 
 ### 10.1 Testing
 
@@ -454,13 +462,13 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 | **Admin - Messages**   | **3**             |
 | Notifications          | 4                 |
 | Reports                | 3                 |
-| **Dashboard**          | **9** (1 stats + 8 charts, Admin) |
+| Dashboard                | **12** (1 stats + 11 charts, Admin) |
 | **Friends (Phase 9)**  | **6**             |
 | **Zone Invites (Phase 9)** | **4**         |
 | **Quick Match (Phase 9)** | **3**          |
 | **Suggested Zones (Phase 9)** | **1**      |
 | **Leaderboard (Phase 9)** | **4**          |
-| **Total**              | **~95 endpoints** |
+| **Total**              | **~98 endpoints** |
 
 ---
 
@@ -543,6 +551,7 @@ src/
 - `GET /dashboard/stats` — Tổng quan (users, zones, groups, reports)
 - **Charts MVP:** users, zones, activity
 - **Charts Production:** reports, engagement, top-games, peak-hours, moderation
+- **Charts Social (Phase 9):** quick-match, social-engagement, leaderboard-top
 
 ---
 

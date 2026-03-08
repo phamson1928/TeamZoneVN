@@ -379,7 +379,14 @@ export const ZoneDetailsScreen = () => {
 
         {/* Participants Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Thành viên</Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Thành viên</Text>
+            {isOwner && (
+              <TouchableOpacity onPress={() => (navigation as any).navigate('InviteFriends', { zoneId })}>
+                <Text style={styles.inviteFriendsText}>Mời bạn bè +</Text>
+              </TouchableOpacity>
+            )}
+          </View>
           <View style={styles.participantsContainer}>
             <View style={styles.avatarStack}>
               {/* Owner Avatar */}
@@ -836,6 +843,17 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
     textTransform: 'uppercase',
     letterSpacing: 1.5,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  inviteFriendsText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: theme.colors.primary,
   },
   participantsContainer: {
     flexDirection: 'row',

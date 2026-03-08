@@ -9,6 +9,7 @@ import { UpdateZoneDto } from './dto/update-zone.dto.js';
 import { SearchZonesDto, ZoneSortBy } from './dto/search-zones.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma, ContactMethodType } from '@prisma/client';
+import type { RankLevel } from '@prisma/client';
 
 @Injectable()
 export class ZonesService {
@@ -491,5 +492,67 @@ export class ZonesService {
       message: 'Zone đã được đóng bởi admin',
       data: updatedZone,
     };
+  }
+
+  async getSuggestedZones(userId: string, limit = 10) {
+    const RANK_ORDER = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'PRO'];
+
+    // Lấy danh sách game profile của user để biết game và rank
+    const userGameProfiles = await this.prisma.userGameProfile.findMany({
+      where: { userId },
+      select: { gameId: true, rankLevel: true },
+    });
+
+    if (userGameProfiles.length === 0) {
+      // Fallback: trả về zones mới nhất đang OPEN
+      return this.prisma.zone.findMany({
+        where: { status: 'OPEN' },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        include: {
+          tags: { include: { tag: true } },
+          owner: { select: { id: true, username: true, avatarUrl: true } },
+          game: { select: { id: true, name: true, iconUrl: true } },
+          _count: { select: { joinRequests: { where: { status: 'APPROVED' } } } },
+        },
+      });
+    }
+
+    // Loại trừ zone user đã join hoặc đã rejected
+    const userRequests = await this.prisma.zoneJoinRequest.findMany({
+      where: { userId },
+      select: { zoneId: true },
+    });
+    const excludeZoneIds = userRequests.map((r) => r.zoneId);
+
+    // Build OR conditions: mỗi game profile → các zone cùng game + rank tương thích
+    const orConditions = userGameProfiles.map((profile) => {
+      const rankIdx = RANK_ORDER.indexOf(profile.rankLevel);
+      const compatibleRanks = RANK_ORDER.filter((_, i) => Math.abs(i - rankIdx) <= 1) as RankLevel[];
+      return {
+        gameId: profile.gameId,
+        minRankLevel: { in: compatibleRanks },
+        maxRankLevel: { in: compatibleRanks },
+      };
+    });
+
+    const zones = await this.prisma.zone.findMany({
+      where: {
+        status: 'OPEN',
+        id: { notIn: excludeZoneIds },
+        ownerId: { not: userId },
+        OR: orConditions,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      include: {
+        tags: { include: { tag: true } },
+        owner: { select: { id: true, username: true, avatarUrl: true } },
+        game: { select: { id: true, name: true, iconUrl: true } },
+        _count: { select: { joinRequests: { where: { status: 'APPROVED' } } } },
+      },
+    });
+
+    return zones;
   }
 }

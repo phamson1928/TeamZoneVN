@@ -75,6 +75,13 @@ enum ReportStatus {
   RESOLVED
 }
 
+enum ReportSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
 enum Platform {
   PC
   CONSOLE
@@ -93,6 +100,22 @@ enum NotificationType {
   GROUP_FORMED
   NEW_MESSAGE
   MEMBER_LEFT
+  FRIEND_REQUEST
+  FRIEND_ACCEPTED
+  ZONE_INVITE
+  QUICK_MATCH_FOUND
+}
+
+enum ZoneInviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum FriendStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
 
 ////////////////////
@@ -114,17 +137,26 @@ model User {
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
 
-  gameProfiles  UserGameProfile[]
-  zones         Zone[]            @relation("ZoneOwner")
-  joinRequests  ZoneJoinRequest[]
-  groupsLed     Group[]           @relation("GroupLeader")
-  groupMembers  GroupMember[]
-  messages      Message[]
-  notifications Notification[]
-  reports       Report[]          @relation("ReportReporter")
+  gameProfiles    UserGameProfile[]
+  zones           Zone[]            @relation("ZoneOwner")
+  joinRequests    ZoneJoinRequest[]
+  groupsLed       Group[]           @relation("GroupLeader")
+  groupMembers    GroupMember[]
+  messages        Message[]
+  notifications   Notification[]
+  reports         Report[]          @relation("ReportReporter")
+  resolvedReports Report[]          @relation("ReportResolver")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  listSendFriendship    Friendship[]     @relation("FriendUser")
+  listReceiveFriendship Friendship[]     @relation("FriendFriend")
+  sentZoneInvites       ZoneInvite[]     @relation("ZoneInviter")
+  receivedZoneInvites   ZoneInvite[]     @relation("ZoneInvitee")
+  quickMatchQueue       QuickMatchQueue?
+  likesReceived         UserLike[]       @relation("LikedUser")
+  likesGiven            UserLike[]       @relation("LikerUser")
 }
 
 model UserProfile {
@@ -176,7 +208,8 @@ model Game {
   groups       Group[]
   userProfiles UserGameProfile[]
 
-  createdAt DateTime @default(now())
+  createdAt        DateTime          @default(now())
+  quickMatchQueues QuickMatchQueue[]
 }
 
 model UserGameProfile {
@@ -215,7 +248,8 @@ model Zone {
   joinRequests ZoneJoinRequest[]
   group        Group?
 
-  createdAt DateTime @default(now())
+  createdAt   DateTime     @default(now())
+  zoneInvites ZoneInvite[]
 
   @@index([title])
   @@index([ownerId])
@@ -340,14 +374,101 @@ model Notification {
 ////////////////////
 
 model Report {
-  id         String           @id @default(uuid())
-  reporterId String
-  targetType ReportTargetType
-  targetId   String
-  reason     String
-  status     ReportStatus     @default(OPEN)
+  id             String           @id @default(uuid())
+  reporterId     String
+  targetType     ReportTargetType
+  targetId       String
+  reason         String
+  severity       ReportSeverity   @default(MEDIUM)
+  status         ReportStatus     @default(OPEN)
+  resolutionNote String?
+  resolvedAt     DateTime?
+  resolvedById   String?
 
-  reporter User @relation("ReportReporter", fields: [reporterId], references: [id])
+  reporter   User  @relation("ReportReporter", fields: [reporterId], references: [id])
+  resolvedBy User? @relation("ReportResolver", fields: [resolvedById], references: [id])
 
   createdAt DateTime @default(now())
+
+  @@index([status])
+  @@index([targetType, targetId])
+  @@index([reporterId])
+  @@index([createdAt])
+}
+
+////////////////////
+/// FRIENDS
+////////////////////
+
+model Friendship {
+  id         String       @id @default(uuid())
+  senderId   String
+  receiverId String
+  status     FriendStatus @default(PENDING)
+
+  sender   User @relation("FriendUser", fields: [senderId], references: [id])
+  receiver User @relation("FriendFriend", fields: [receiverId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([senderId, receiverId])
+}
+
+////////////////////
+/// ZONE INVITES
+////////////////////
+
+model ZoneInvite {
+  id        String           @id @default(uuid())
+  zoneId    String
+  inviterId String
+  inviteeId String
+  status    ZoneInviteStatus @default(PENDING)
+
+  zone    Zone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  inviter User @relation("ZoneInviter", fields: [inviterId], references: [id])
+  invitee User @relation("ZoneInvitee", fields: [inviteeId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([zoneId, inviteeId])
+  @@index([inviteeId, status])
+}
+
+////////////////////
+/// QUICK MATCH
+////////////////////
+
+model QuickMatchQueue {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  gameId          String
+  rankLevel       RankLevel
+  requiredPlayers Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game Game @relation(fields: [gameId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([gameId, rankLevel])
+}
+
+////////////////////
+/// USER LIKES
+////////////////////
+
+model UserLike {
+  id      String @id @default(uuid())
+  userId  String // người được like
+  likerId String // người like
+
+  user  User @relation("LikedUser", fields: [userId], references: [id], onDelete: Cascade)
+  liker User @relation("LikerUser", fields: [likerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, likerId])
+  @@index([userId])
+  @@index([createdAt])
 }

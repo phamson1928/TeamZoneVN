@@ -15,7 +15,7 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async getMe(userId: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
@@ -58,11 +58,12 @@ export class UsersService {
     return this.getMe(userId);
   }
 
-  async getPublicProfile(userId: string): Promise<PublicUserResponseDto> {
+  async getPublicProfile(userId: string, requesterId?: string): Promise<PublicUserResponseDto & { likeCount: number; isLikedByMe: boolean }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
         profile: true,
+        _count: { select: { likesReceived: true } },
       },
     });
 
@@ -74,17 +75,25 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
+    const isLikedByMe = requesterId
+      ? !!(await this.prisma.userLike.findUnique({
+        where: { userId_likerId: { userId, likerId: requesterId } },
+      }))
+      : false;
+
     return {
       id: user.id,
       username: user.username,
       avatarUrl: user.avatarUrl,
+      likeCount: user._count.likesReceived,
+      isLikedByMe,
       profile: user.profile
         ? {
-            bio: user.profile.bio,
-            playStyle: user.profile.playStyle,
-            timezone: user.profile.timezone,
-            lastActiveAt: user.profile.lastActiveAt,
-          }
+          bio: user.profile.bio,
+          playStyle: user.profile.playStyle,
+          timezone: user.profile.timezone,
+          lastActiveAt: user.profile.lastActiveAt,
+        }
         : null,
     };
   }
@@ -374,11 +383,11 @@ export class UsersService {
       createdAt: user.createdAt,
       profile: user.profile
         ? {
-            bio: user.profile.bio,
-            playStyle: user.profile.playStyle,
-            timezone: user.profile.timezone,
-            lastActiveAt: user.profile.lastActiveAt,
-          }
+          bio: user.profile.bio,
+          playStyle: user.profile.playStyle,
+          timezone: user.profile.timezone,
+          lastActiveAt: user.profile.lastActiveAt,
+        }
         : null,
     };
   }
@@ -400,11 +409,11 @@ export class UsersService {
       avatarUrl: user.avatarUrl,
       profile: user.profile
         ? {
-            bio: user.profile.bio,
-            playStyle: user.profile.playStyle,
-            timezone: user.profile.timezone,
-            lastActiveAt: user.profile.lastActiveAt,
-          }
+          bio: user.profile.bio,
+          playStyle: user.profile.playStyle,
+          timezone: user.profile.timezone,
+          lastActiveAt: user.profile.lastActiveAt,
+        }
         : null,
     };
   }

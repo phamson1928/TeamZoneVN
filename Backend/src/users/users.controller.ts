@@ -135,8 +135,9 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'Người dùng không tồn tại' })
   async getPublicProfile(
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<PublicUserResponseDto> {
-    return this.usersService.getPublicProfile(id);
+    @CurrentUser('sub') requesterId: string,
+  ) {
+    return this.usersService.getPublicProfile(id, requesterId);
   }
 
   @Get()

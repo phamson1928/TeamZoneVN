@@ -19,6 +19,11 @@ import { TagsModule } from './tags/tags.module';
 import { FilesModule } from './files/files.module';
 import { ChatModule } from './chat/chat.module';
 import { MessagesModule } from './messages/messages.module';
+import { DashboardModule } from './dashboard/dashboard.module.js';
+import { FriendsModule } from './friends/friends.module';
+import { ZoneInvitesModule } from './zone-invites/zone-invites.module';
+import { QuickMatchModule } from './quick-match/quick-match.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
 
 @Module({
   imports: [
@@ -54,6 +59,11 @@ import { MessagesModule } from './messages/messages.module';
     FilesModule,
     ChatModule,
     MessagesModule,
+    DashboardModule,
+    FriendsModule,
+    ZoneInvitesModule,
+    QuickMatchModule,
+    LeaderboardModule,
   ],
   controllers: [AppController],
   providers: [

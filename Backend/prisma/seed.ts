@@ -1,4 +1,4 @@
-import { PrismaClient, Platform, RankLevel, GroupMemberRole, ZoneStatus } from '@prisma/client';
+import { PrismaClient, Platform, RankLevel, GroupMemberRole, ZoneStatus, ReportSeverity } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -17,7 +17,9 @@ async function main() {
   await prisma.zoneJoinRequest.deleteMany({ where: myUserExists ? { userId: { not: MY_USER_ID } } : {} });
   await prisma.zoneContactMethod.deleteMany();
   await prisma.zoneTagRelation.deleteMany();
+  await prisma.zoneInvite.deleteMany();
   await prisma.zone.deleteMany({ where: myUserExists ? { ownerId: { not: MY_USER_ID } } : {} });
+  await prisma.quickMatchQueue.deleteMany();
   await prisma.userGameProfile.deleteMany({ where: myUserExists ? { userId: { not: MY_USER_ID } } : {} });
   await prisma.game.deleteMany();
   await prisma.userProfile.deleteMany({ where: myUserExists ? { userId: { not: MY_USER_ID } } : {} });
@@ -25,6 +27,8 @@ async function main() {
   await prisma.passwordResetToken.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.report.deleteMany();
+  await prisma.friendship.deleteMany();
+  await prisma.userLike.deleteMany();
 
   console.log('✅ Cleaned up existing data');
 
@@ -272,6 +276,81 @@ async function main() {
   });
 
   console.log('✅ Created groups and sample messages');
+
+  // 6. Create Friendships
+  console.log('🤝 Creating friendships...');
+  await prisma.friendship.createMany({
+    data: [
+      { senderId: users['SonGoku_VN'].id, receiverId: users['Tuan_Fps_God'].id, status: 'ACCEPTED' },
+      { senderId: users['SonGoku_VN'].id, receiverId: users['Linh_Xinh_Genshin'].id, status: 'ACCEPTED' },
+      { senderId: users['Huong_Support'].id, receiverId: users['Linh_Xinh_Genshin'].id, status: 'ACCEPTED' },
+      { senderId: users['Duy_Solo_Top'].id, receiverId: users['Tuan_Fps_God'].id, status: 'PENDING' },
+      { senderId: users['TestUser_Seed'].id, receiverId: users['SonGoku_VN'].id, status: 'ACCEPTED' },
+    ]
+  });
+
+  // 7. Create User Likes
+  console.log('👍 Creating user likes...');
+  await prisma.userLike.createMany({
+    data: [
+      { userId: users['SonGoku_VN'].id, likerId: users['Tuan_Fps_God'].id },
+      { userId: users['SonGoku_VN'].id, likerId: users['Linh_Xinh_Genshin'].id },
+      { userId: users['SonGoku_VN'].id, likerId: users['Huong_Support'].id },
+      { userId: users['Tuan_Fps_God'].id, likerId: users['SonGoku_VN'].id },
+      { userId: users['Linh_Xinh_Genshin'].id, likerId: users['Huong_Support'].id },
+      { userId: users['TestUser_Seed'].id, likerId: users['SonGoku_VN'].id },
+    ]
+  });
+
+  // 8. Create Zone Invites
+  console.log('📩 Creating zone invites...');
+  await prisma.zoneInvite.create({
+    data: {
+      zoneId: createdZones[0].id, // Valorant hard rank
+      inviterId: users['SonGoku_VN'].id,
+      inviteeId: users['Huong_Support'].id,
+      status: 'PENDING'
+    }
+  });
+
+  // 9. Create Quick Match Queue
+  console.log('⏱️ Creating quick match queue entries...');
+  await prisma.quickMatchQueue.create({
+    data: {
+      userId: users['Duy_Solo_Top'].id,
+      gameId: games['League of Legends'].id,
+      rankLevel: RankLevel.ADVANCED,
+      requiredPlayers: 5
+    }
+  });
+
+  // 10. Create Sample Reports
+  console.log('🚩 Creating sample reports...');
+  await prisma.report.createMany({
+    data: [
+      {
+        reporterId: users['SonGoku_VN'].id,
+        targetType: 'USER',
+        targetId: users['Tuan_Fps_God'].id,
+        reason: 'Sử dụng ngôn từ không chuẩn mực trong chat.',
+        severity: ReportSeverity.LOW,
+      },
+      {
+        reporterId: users['Linh_Xinh_Genshin'].id,
+        targetType: 'ZONE',
+        targetId: createdZones[2].id, // CS2
+        reason: 'Tiêu đề zone chứa nội dung nhạy cảm.',
+        severity: ReportSeverity.MEDIUM,
+      },
+      {
+        reporterId: users['Huong_Support'].id,
+        targetType: 'GROUP',
+        targetId: group2.id,
+        reason: 'Có hành vi phá hoại trải nghiệm người chơi khác.',
+        severity: ReportSeverity.HIGH,
+      }
+    ]
+  });
 
   console.log('\n🚀 SEEDING COMPLETED SUCCESSFULLY!');
   console.log('-----------------------------------');
