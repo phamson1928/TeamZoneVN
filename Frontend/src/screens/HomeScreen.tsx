@@ -284,6 +284,10 @@ export const HomeScreen = () => {
   } = useQuery({
     queryKey: ['zones', 'search', submittedSearch, sortBy],
     queryFn: async () => {
+      if (!submittedSearch.trim() && sortBy === 'newest') {
+        const response = await apiClient.get('/zones/suggested');
+        return response.data.data as Zone[];
+      }
       let url = `/zones/search?page=1&limit=20&sortBy=${sortBy}`;
       if (submittedSearch.trim()) {
         url += `&q=${encodeURIComponent(submittedSearch.trim())}`;
@@ -501,8 +505,17 @@ export const HomeScreen = () => {
         {/* Zones Section Title */}
         <View style={styles.zonesSectionHeader}>
           <View style={styles.sectionTitleRow}>
-            <Text style={styles.sectionTitle}>KHU VỰC GỢI Ý</Text>
+            <Text style={styles.sectionTitle}>{submittedSearch.trim() ? 'KẾT QUẢ TÌM KIẾM' : 'KHU VỰC GỢI Ý'}</Text>
           </View>
+          <TouchableOpacity
+            style={styles.quickMatchBtn}
+            onPress={() => navigation.navigate('QuickMatch' as never)}
+          >
+            <LinearGradient colors={['#2563FF', '#7C3AED']} style={styles.quickMatchGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+              <Zap color="#fff" size={12} fill="#fff" />
+              <Text style={styles.quickMatchText}>Ghép Nhanh</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
       </View>
     ),
@@ -968,9 +981,29 @@ const styles = StyleSheet.create({
   zonesSectionHeader: {
     paddingHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   listContent: {
     paddingBottom: 100,
+  },
+  quickMatchBtn: {
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  quickMatchGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  quickMatchText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
 
   // Zone Card - New Gaming Dashboard Style

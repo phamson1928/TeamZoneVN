@@ -6,11 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  ActivityIndicator} from 'react-native';
+  ActivityIndicator
+} from 'react-native';
 import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Edit2, Trash2, Gamepad2, Users, Star, Trophy, MapPin, Settings, LogOut, Zap } from 'lucide-react-native';
+import { Edit2, Trash2, Gamepad2, Users, Star, Trophy, MapPin, Settings, LogOut, Zap, UserPlus } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Container } from '../components/Container';
@@ -82,7 +83,7 @@ export const ProfileScreen = () => {
           <View style={styles.avatarSection}>
             <View style={styles.avatarWrapper}>
               {user?.avatarUrl ? (
-                <Image source={{ uri: user.avatarUrl }} style={styles.avatar}  contentFit="cover" transition={500} cachePolicy="disk"/>
+                <Image source={{ uri: user.avatarUrl }} style={styles.avatar} contentFit="cover" transition={500} cachePolicy="disk" />
               ) : (
                 <LinearGradient colors={['#2563FF', '#7C3AED']} style={styles.avatarPlaceholder}>
                   <Text style={styles.avatarInitial}>
@@ -159,7 +160,7 @@ export const ProfileScreen = () => {
                 <Image
                   source={{ uri: profile.game.iconUrl }}
                   style={styles.gameProfileIcon}
-                 contentFit="cover" transition={500} cachePolicy="disk"/>
+                  contentFit="cover" transition={500} cachePolicy="disk" />
                 <View style={styles.gameProfileInfo}>
                   <Text style={styles.gameProfileName}>{profile.game.name}</Text>
                   <View style={[styles.rankPill, { backgroundColor: (RANK_COLORS[profile.rankLevel] || borderColor) + '20' }]}>
@@ -190,15 +191,37 @@ export const ProfileScreen = () => {
           </View>
         )}
 
-        {/* Footer Actions */}
+        {/* Navigation Actions */}
         <View style={styles.footerActions}>
+          <TouchableOpacity
+            style={styles.actionBlock}
+            onPress={() => navigation.navigate('Friends' as never)}
+          >
+            <View style={styles.actionIconBg}><Users size={20} color={theme.colors.primary} /></View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Bạn Bè</Text>
+              <Text style={styles.actionSubtitle}>Quản lý bạn bè và lời mời</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionBlock}
+            onPress={() => navigation.navigate('Leaderboard' as never)}
+          >
+            <View style={styles.actionIconBg}><Trophy size={20} color="#F59E0B" /></View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Bảng Xếp Hạng</Text>
+              <Text style={styles.actionSubtitle}>Top người dùng yêu thích</Text>
+            </View>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.myZonesButton}
             onPress={() => navigation.navigate('MyZones' as never)}
           >
             <LinearGradient colors={['#2563FF', '#7C3AED']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.myZonesGradient}>
               <MapPin size={16} color="#FFF" />
-              <Text style={styles.myZonesText}>My Zones</Text>
+              <Text style={styles.myZonesText}>My Zones (Khu vực của tôi)</Text>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -561,5 +584,36 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  actionBlock: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1E293B',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  actionIconBg: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(37,99,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  actionContent: {
+    flex: 1,
+  },
+  actionTitle: {
+    color: theme.colors.text,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  actionSubtitle: {
+    color: theme.colors.textSecondary,
+    fontSize: 12,
+    marginTop: 2,
   },
 });

@@ -164,7 +164,7 @@ export interface Message {
   };
 }
 
-export type NotificationType = 'JOIN_REQUEST' | 'REQUEST_APPROVED' | 'REQUEST_REJECTED' | 'GROUP_FORMED' | 'MEMBER_LEFT';
+export type NotificationType = 'JOIN_REQUEST' | 'REQUEST_APPROVED' | 'REQUEST_REJECTED' | 'GROUP_FORMED' | 'MEMBER_LEFT' | 'FRIEND_REQUEST' | 'FRIEND_ACCEPTED' | 'ZONE_INVITE' | 'QUICK_MATCH_FOUND';
 
 export interface NotificationItem {
   id: string;
@@ -174,4 +174,53 @@ export interface NotificationItem {
   data?: any;
   isRead: boolean;
   createdAt: string;
+}
+
+export type FriendshipStatus = 'PENDING' | 'ACCEPTED';
+
+export interface Friendship {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  status: FriendshipStatus;
+  createdAt: string;
+  updatedAt: string;
+  sender?: User;
+  receiver?: User;
+}
+
+export type ZoneInviteStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
+
+export interface ZoneInvite {
+  id: string;
+  zoneId: string;
+  inviterId: string;
+  inviteeId: string;
+  status: ZoneInviteStatus;
+  createdAt: string;
+  updatedAt: string;
+  inviter?: User;
+  invitee?: User;
+  zone?: Zone;
+}
+
+export interface QuickMatchStatus {
+  inQueue: boolean;
+  gameId?: string;
+  gameName?: string;
+  queuedSince?: string;
+}
+
+export interface UserPublicProfile extends User {
+  likeCount: number;
+  isLikedByMe: boolean;
+}
+
+export interface LeaderboardUser {
+  rank: number;
+  userId: string;
+  username: string;
+  avatarUrl?: string | null;
+  likeCount: number;
+  gameProfile?: UserGameProfile;
 }

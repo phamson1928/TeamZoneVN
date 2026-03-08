@@ -8,7 +8,7 @@ import {
   FlatList,
   Dimensions
 } from 'react-native';
-import { Users, Settings, Info, X, BellOff, CheckCircle2, XCircle, LogOut, UserPlus } from 'lucide-react-native';
+import { Users, Settings, Info, X, BellOff, CheckCircle2, XCircle, LogOut, UserPlus, Send, Zap } from 'lucide-react-native';
 import { COLORS } from '../theme/colors';
 import { NotificationItem } from '../types';
 
@@ -69,6 +69,22 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
         break;
       case 'MEMBER_LEFT':
         IconComponent = LogOut;
+        iconColor = '#F59E0B';
+        bgColor = 'rgba(245,158,11,0.15)';
+        break;
+      case 'ZONE_INVITE':
+        IconComponent = Send;
+        break;
+      case 'FRIEND_REQUEST':
+        IconComponent = UserPlus;
+        break;
+      case 'FRIEND_ACCEPTED':
+        IconComponent = CheckCircle2;
+        iconColor = '#22C55E';
+        bgColor = 'rgba(34,197,94,0.15)';
+        break;
+      case 'QUICK_MATCH_FOUND':
+        IconComponent = Zap;
         iconColor = '#F59E0B';
         bgColor = 'rgba(245,158,11,0.15)';
         break;

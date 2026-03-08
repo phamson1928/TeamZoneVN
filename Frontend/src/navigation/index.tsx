@@ -30,6 +30,11 @@ import { AddGameProfileScreen } from '../screens/AddGameProfileScreen';
 import { TeamZoneVNsScreen } from '../screens/TeamZoneVNsScreen';
 import { MyZonesScreen } from '../screens/MyZonesScreen';
 import { ChatRoomScreen } from '../screens/ChatRoomScreen';
+import { LeaderboardScreen } from '../screens/LeaderboardScreen';
+import { FriendsScreen } from '../screens/FriendsScreen';
+import { PublicProfileScreen } from '../screens/PublicProfileScreen';
+import { QuickMatchScreen } from '../screens/QuickMatchScreen';
+import { InviteFriendsScreen } from '../screens/InviteFriendsScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -45,6 +50,11 @@ export type RootStackParamList = {
   MyZones: undefined;
   Notifications: undefined;
   ChatRoom: { groupId: string; groupName: string };
+  Leaderboard: undefined;
+  Friends: undefined;
+  PublicProfile: { userId: string };
+  QuickMatch: undefined;
+  InviteFriends: { zoneId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -212,6 +222,11 @@ const MainNavigator = () => (
     <Stack.Screen name="MyZones" component={MyZonesScreen} />
     <Stack.Screen name="Notifications" component={NotificationsScreen} />
     <Stack.Screen name="ChatRoom" component={ChatRoomScreen} />
+    <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
+    <Stack.Screen name="Friends" component={FriendsScreen} />
+    <Stack.Screen name="PublicProfile" component={PublicProfileScreen} />
+    <Stack.Screen name="QuickMatch" component={QuickMatchScreen} />
+    <Stack.Screen name="InviteFriends" component={InviteFriendsScreen} />
   </Stack.Navigator>
 );
 
