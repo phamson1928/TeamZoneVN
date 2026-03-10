@@ -1,12 +1,39 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { AppModule } from './app.module.js';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter.js';
 import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor.js';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+
+  // ── Security: HTTP headers (XSS, clickjacking, MIME sniffing, etc.) ──
+  app.use(
+    helmet({
+      // Allow Swagger UI to load inline scripts/styles in development
+      contentSecurityPolicy: process.env.NODE_ENV === 'production',
+      crossOriginEmbedderPolicy: process.env.NODE_ENV === 'production',
+    }),
+  );
+
+  // ── CORS ──────────────────────────────────────────────────────────────
+  const rawOrigins = process.env.CORS_ORIGIN || '';
+  // Support comma-separated list of origins, e.g. "https://app.com,https://admin.app.com"
+  // Falls back to allow all ('*') when CORS_ORIGIN is not set or is '*'
+  const allowedOrigins: string | string[] | boolean =
+    rawOrigins === '' || rawOrigins === '*'
+      ? '*'
+      : rawOrigins.split(',').map((o) => o.trim());
+
+  app.enableCors({
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: allowedOrigins !== '*', // credentials require explicit origins
+    maxAge: 86400, // preflight cache: 24 hours
+  });
 
   // Global Validation Pipe
   app.useGlobalPipes(
@@ -25,12 +52,6 @@ async function bootstrap(): Promise<void> {
 
   // Global Response Interceptor
   app.useGlobalInterceptors(new TransformResponseInterceptor());
-
-  // Enable CORS
-  app.enableCors({
-    origin: process.env.CORS_ORIGIN || '*',
-    credentials: true,
-  });
 
   // Swagger Documentation
   const config = new DocumentBuilder()

@@ -395,8 +395,8 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 
 - [x] Input validation (class-validator)
 - [x] SQL injection prevention (Prisma handles)
-- [ ] XSS prevention
-- [ ] CORS configuration
+- [x] XSS prevention
+- [x] CORS configuration
 
 ---
 
