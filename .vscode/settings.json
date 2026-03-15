@@ -4,5 +4,6 @@
   "java.import.exclusions": [
     "**/node_modules/**",
     "**/.git/**"
-  ]
+  ],
+  "typescript.autoClosingTags": false
 }
