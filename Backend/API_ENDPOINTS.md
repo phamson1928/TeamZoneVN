@@ -690,29 +690,33 @@ curl -s "http://localhost:3000/users?page=1&limit=20" \
 
 ```json
 {
-  "data": [
-    {
-      "id": "9e0a44d5-65a0-4ee4-810f-ed6a77db6e53",
-      "email": "test@example.com",
-      "username": "testuser",
-      "avatarUrl": null,
-      "role": "USER",
-      "status": "ACTIVE",
-      "createdAt": "2026-01-31T17:13:34.708Z",
-      "profile": {
-        "bio": "Pro gamer since 2020",
-        "playStyle": "Aggressive",
-        "timezone": "Asia/Ho_Chi_Minh",
-        "lastActiveAt": "2026-02-03T08:30:00.000Z"
+  "success": true,
+  "data": {
+    "data": [
+      {
+        "id": "9e0a44d5-65a0-4ee4-810f-ed6a77db6e53",
+        "email": "test@example.com",
+        "username": "testuser",
+        "avatarUrl": null,
+        "role": "USER",
+        "status": "ACTIVE",
+        "createdAt": "2026-01-31T17:13:34.708Z",
+        "profile": {
+          "bio": "Pro gamer since 2020",
+          "playStyle": "Aggressive",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "lastActiveAt": "2026-02-03T08:30:00.000Z"
+        }
       }
+    ],
+    "meta": {
+      "page": 1,
+      "limit": 20,
+      "total": 150,
+      "totalPages": 8
     }
-  ],
-  "meta": {
-    "page": 1,
-    "limit": 20,
-    "total": 150,
-    "totalPages": 8
-  }
+  },
+  "timestamp": "2026-01-31T17:13:41.921Z"
 }
 ```
 
@@ -742,29 +746,33 @@ curl -s "http://localhost:3000/users/search?query=john&role=USER&status=ACTIVE&p
 
 ```json
 {
-  "data": [
-    {
-      "id": "user-uuid",
-      "email": "john@example.com",
-      "username": "john_doe",
-      "avatarUrl": "https://example.com/avatar.jpg",
-      "role": "USER",
-      "status": "ACTIVE",
-      "createdAt": "2026-01-15T10:00:00.000Z",
-      "profile": {
-        "bio": "Casual gamer",
-        "playStyle": "Defensive",
-        "timezone": "America/New_York",
-        "lastActiveAt": "2026-02-03T07:00:00.000Z"
+  "success": true,
+  "data": {
+    "data": [
+      {
+        "id": "user-uuid",
+        "email": "john@example.com",
+        "username": "john_doe",
+        "avatarUrl": "https://example.com/avatar.jpg",
+        "role": "USER",
+        "status": "ACTIVE",
+        "createdAt": "2026-01-15T10:00:00.000Z",
+        "profile": {
+          "bio": "Casual gamer",
+          "playStyle": "Defensive",
+          "timezone": "America/New_York",
+          "lastActiveAt": "2026-02-03T07:00:00.000Z"
+        }
       }
+    ],
+    "meta": {
+      "page": 1,
+      "limit": 20,
+      "total": 5,
+      "totalPages": 1
     }
-  ],
-  "meta": {
-    "page": 1,
-    "limit": 20,
-    "total": 5,
-    "totalPages": 1
-  }
+  },
+  "timestamp": "2026-01-31T17:13:41.921Z"
 }
 ```
 
