@@ -2,20 +2,20 @@ import { Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
     Users,
-    MapPin, // Zones
-    UsersRound, // Groups
-    ShieldAlert, // Moderation
+    MapPin,
+    UsersRound,
+    ShieldAlert,
     LogOut,
-    ShieldCheck
+    ShieldCheck,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 const navigationMenuItems = [
     { name: 'Tổng quan', to: '/', icon: LayoutDashboard },
-    { name: 'Quản lý người dùng', to: '/users', icon: Users },
-    { name: 'Quản lý Zone', to: '/zones', icon: MapPin },
-    { name: 'Quản lý nhóm', to: '/groups', icon: UsersRound },
-    { name: 'Kiểm duyệt & Báo cáo', to: '/moderation', icon: ShieldAlert },
+    { name: 'Người dùng', to: '/users', icon: Users },
+    { name: 'Zone', to: '/zones', icon: MapPin },
+    { name: 'Nhóm', to: '/groups', icon: UsersRound },
+    { name: 'Kiểm duyệt', to: '/moderation', icon: ShieldAlert },
 ];
 
 export const Sidebar = () => {
@@ -29,62 +29,71 @@ export const Sidebar = () => {
     };
 
     return (
-        <div className="hidden lg:flex flex-col w-[260px] fixed inset-y-0 border-r border-gray-100 bg-white">
-            {/* Brand logo */}
-            <div className="h-16 flex items-center px-6 border-b border-gray-100/50">
-                <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center mr-3">
-                    <ShieldCheck className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-xl font-bold tracking-tight text-gray-900">GameZone</span>
-            </div>
+        <div className="hidden lg:flex flex-col w-[240px] fixed inset-y-0 z-30">
+            {/* Apple-style frosted-glass sidebar */}
+            <div className="flex flex-col h-full mx-3 my-3 rounded-[28px] overflow-hidden
+                            bg-white/75 backdrop-blur-2xl border border-white/60
+                            shadow-[0_8px_32px_rgba(0,0,0,0.08)]">
 
-            {/* Navigation Links */}
-            <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto font-medium">
-                <div className="text-xs font-semibold text-gray-400 mb-3 px-3 uppercase tracking-wider">
-                    Chức năng
-                </div>
-                {navigationMenuItems.map((item) => {
-                    const isActive = location.pathname === item.to || (location.pathname.startsWith(item.to) && item.to !== '/');
-                    const Icon = item.icon;
-                    return (
-                        <Link
-                            key={item.name}
-                            to={item.to}
-                            className={cn(
-                                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all",
-                                isActive
-                                    ? "bg-indigo-50 text-indigo-600 font-semibold"
-                                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
-                            )}
-                        >
-                            <Icon className={cn("h-5 w-5", isActive ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-500")} strokeWidth={isActive ? 2.5 : 2} />
-                            {item.name}
-                        </Link>
-                    );
-                })}
-            </nav>
-
-            {/* Footer / Promo Card */}
-            <div className="p-4 border-t border-gray-100">
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 shadow-sm relative overflow-hidden mb-4">
-                    <div className="absolute top-0 right-0 p-3 opacity-10">
-                        <ShieldCheck className="h-16 w-16 text-indigo-600 -rotate-12 transform scale-150" />
+                {/* Brand */}
+                <div className="flex items-center gap-3.5 px-6 pt-7 pb-6">
+                    <div className="h-10 w-10 rounded-2xl bg-gray-900 flex items-center justify-center shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                        <ShieldCheck className="h-6 w-6 text-white" strokeWidth={1.5} />
                     </div>
-                    <span className="inline-block px-2 py-0.5 rounded-full bg-white text-indigo-600 text-xs font-bold border border-indigo-100 mb-2">Admin Pro</span>
-                    <p className="text-sm font-semibold text-gray-900 mb-1">Cần hỗ trợ?</p>
-                    <p className="text-xs text-gray-500 mb-3">Đọc docs hoặc gửi ticket.</p>
-                    <button className="w-full bg-gray-900 hover:bg-black text-white py-2 rounded-lg text-xs font-semibold shadow-md transition-all">
-                        Xem Docs
+                    <div>
+                        <span className="text-[16px] font-extrabold tracking-tight text-gray-900 block leading-tight">GameZone</span>
+                        <span className="text-[11px] font-bold text-gray-400 block mt-0.5 tracking-wide uppercase">Control Center</span>
+                    </div>
+                </div>
+
+                {/* Nav */}
+                <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
+                    <p className="text-[10px] font-bold text-gray-400 mb-2 px-2 uppercase tracking-[0.12em]">Quản lý</p>
+                    {navigationMenuItems.map((item) => {
+                        const isActive = location.pathname === item.to || (location.pathname.startsWith(item.to) && item.to !== '/');
+                        const Icon = item.icon;
+                        return (
+                            <Link
+                                key={item.name}
+                                to={item.to}
+                                className={cn(
+                                    "flex items-center gap-3 px-3 py-2.5 rounded-[14px] transition-all duration-200 text-[13.5px] font-semibold",
+                                    isActive
+                                        ? "bg-gray-900 text-white shadow-sm"
+                                        : "text-gray-500 hover:text-gray-900 hover:bg-black/5"
+                                )}
+                            >
+                                <Icon className={cn("h-[18px] w-[18px] flex-shrink-0", isActive ? "text-white" : "text-gray-400")} strokeWidth={isActive ? 2.2 : 1.8} />
+                                {item.name}
+                            </Link>
+                        );
+                    })}
+                </nav>
+
+                {/* Footer */}
+                <div className="px-3 pb-4 pt-3 border-t border-gray-100/80">
+                    {/* Promo card */}
+                    <div className="mb-2 p-4 rounded-[18px] bg-gradient-to-br from-gray-50 to-gray-100/60 border border-gray-200/60 relative overflow-hidden">
+                        <div className="absolute -right-3 -top-3 opacity-[0.07]">
+                            <ShieldCheck className="h-20 w-20 text-gray-900" />
+                        </div>
+                        <span className="inline-block px-2 py-0.5 rounded-full bg-gray-900 text-white text-[10px] font-bold mb-2">Pro</span>
+                        <p className="text-[13px] font-bold text-gray-900 leading-snug">Cần hỗ trợ?</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5 mb-3">Đọc tài liệu hoặc gửi ticket.</p>
+                        <button className="w-full bg-gray-900 hover:bg-black text-white py-2 rounded-[10px] text-[12px] font-semibold transition-all active:scale-95">
+                            Xem Docs
+                        </button>
+                    </div>
+
+                    {/* Logout */}
+                    <button
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-3 px-3 py-2.5 rounded-[14px] text-gray-400 hover:text-red-500 hover:bg-red-50/80 transition-all font-semibold text-[13.5px]"
+                    >
+                        <LogOut className="h-[18px] w-[18px]" strokeWidth={1.8} />
+                        Đăng xuất
                     </button>
                 </div>
-
-                <button
-                    onClick={handleLogout}
-                    className="flex w-full items-center justify-start gap-3 px-3 py-2.5 rounded-xl text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all font-medium"
-                >
-                    <LogOut className="h-5 w-5 text-gray-400" />
-                    Đăng xuất
-                </button>
             </div>
         </div>
     );

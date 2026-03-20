@@ -5,13 +5,12 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Login } from './pages/Login';
 import { Overview } from './pages/Overview';
 import UserManagement from './pages/UserManagement';
+import ZoneManagement from './pages/ZoneManagement';
 
 const queryClient = new QueryClient();
 
-// Placeholder components for the other sections
-const ZoneManagement = () => <div className="p-8 rounded-[32px] bg-white border border-gray-100 min-h-[600px] shadow-sm"><h2 className="text-2xl font-bold text-gray-900">Quản lý Zone</h2></div>;
-const GroupManagement = () => <div className="p-8 rounded-[32px] bg-white border border-gray-100 min-h-[600px] shadow-sm"><h2 className="text-2xl font-bold text-gray-900">Quản lý nhóm</h2></div>;
-const Moderation = () => <div className="p-8 rounded-[32px] bg-white border border-gray-100 min-h-[600px] shadow-sm"><h2 className="text-2xl font-bold text-gray-900">Kiểm duyệt & Báo cáo</h2></div>;
+import GroupManagement from './pages/GroupManagement';
+import Moderation from './pages/Moderation';
 
 function App() {
   return (
