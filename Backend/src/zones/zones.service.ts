@@ -129,10 +129,21 @@ export class ZonesService {
     };
   }
 
-  async findAllByAdmin(page: number, limit: number) {
+  async findAllByAdmin(page: number, limit: number, query?: string) {
     const skip = (page - 1) * limit;
+
+    const where: Prisma.ZoneWhereInput = {};
+    if (query && query.trim()) {
+      const q = query.trim();
+      where.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
+        { owner: { username: { contains: q, mode: 'insensitive' } } },
+      ];
+    }
+
     const [data, total] = await Promise.all([
       this.prisma.zone.findMany({
+        where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -142,6 +153,14 @@ export class ZonesService {
               id: true,
               username: true,
               email: true,
+              avatarUrl: true,
+            },
+          },
+          game: {
+            select: {
+              id: true,
+              name: true,
+              iconUrl: true,
             },
           },
           _count: {
@@ -151,7 +170,7 @@ export class ZonesService {
           },
         },
       }),
-      this.prisma.zone.count(),
+      this.prisma.zone.count({ where }),
     ]);
     return {
       data,

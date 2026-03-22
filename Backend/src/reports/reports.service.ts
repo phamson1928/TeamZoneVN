@@ -7,11 +7,15 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateReportDto } from './dto/create-report.dto.js';
 import { UpdateReportDto } from './dto/update-report.dto.js';
 import { ReportQueryDto } from './dto/report-query.dto.js';
-import { ReportStatus, ReportTargetType } from '@prisma/client';
+import { ReportStatus, ReportTargetType, NotificationType } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 @Injectable()
 export class ReportsService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly notificationsService: NotificationsService,
+    ) { }
 
     /**
      * Tạo report mới (User)
@@ -123,6 +127,7 @@ export class ReportsService {
      * Resolve report (Admin)
      * - Chỉ OPEN → RESOLVED
      * - Ghi resolvedAt, resolvedById, resolutionNote
+     * - Gửi thông báo real-time đến người tố cáo (reporter)
      */
     async resolve(adminId: string, id: string, dto: UpdateReportDto) {
         const report = await this.prisma.report.findUnique({ where: { id } });
@@ -135,7 +140,7 @@ export class ReportsService {
             throw new BadRequestException('Report đã được xử lý');
         }
 
-        return this.prisma.report.update({
+        const resolved = await this.prisma.report.update({
             where: { id },
             data: {
                 status: ReportStatus.RESOLVED,
@@ -152,6 +157,19 @@ export class ReportsService {
                 },
             },
         });
+
+        // 🔔 Gửi thông báo real-time đến người tố cáo
+        await this.notificationsService.create(report.reporterId, {
+            type: NotificationType.REPORT_RESOLVED,
+            title: `Báo cáo của bạn đã được xử lý`,
+            data: {
+                reportId: id,
+                reason: report.reason,
+                resolutionNote: dto.resolutionNote,
+            },
+        });
+
+        return resolved;
     }
 
     // ─── Private Helpers ──────────────────────────────────────────────────────

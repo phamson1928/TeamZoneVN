@@ -269,6 +269,7 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 - [x] `POST /reports` - Tạo report
 - [x] `GET /reports` - Danh sách reports (Admin)
 - [x] `PATCH /reports/:id` - Resolve report (Admin)
+- [x] Gửi thông báo real-time (`REPORT_RESOLVED`) cho người báo cáo khi report được resolve.
 
 ### 8.2 Moderation Actions
 

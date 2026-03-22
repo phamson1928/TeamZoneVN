@@ -9,7 +9,6 @@ import {
   UserResponseDto,
   PublicUserResponseDto,
   SearchUsersDto,
-  UserActivityDto,
 } from './dto';
 import { Prisma } from '@prisma/client';
 
@@ -203,72 +202,6 @@ export class UsersService {
         totalPages: Math.ceil(total / maxLimit),
       },
     };
-  }
-
-  async getUserActivities(userId: string): Promise<UserActivityDto[]> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    const activities: UserActivityDto[] = [];
-
-    const zones = await this.prisma.zone.findMany({
-      where: { ownerId: userId },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-    });
-
-    zones.forEach((zone) => {
-      activities.push({
-        type: 'ZONE_CREATED',
-        description: `Created zone: ${zone.title}`,
-        createdAt: zone.createdAt,
-        relatedId: zone.id,
-        relatedType: 'zone',
-      });
-    });
-
-    const joinRequests = await this.prisma.zoneJoinRequest.findMany({
-      where: { userId },
-      include: { zone: true },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-    });
-
-    joinRequests.forEach((request) => {
-      activities.push({
-        type: `JOIN_REQUEST_${request.status}`,
-        description: `Join request for "${request.zone.title}" - ${request.status}`,
-        createdAt: request.createdAt,
-        relatedId: request.id,
-        relatedType: 'join_request',
-      });
-    });
-
-    const groupMembers = await this.prisma.groupMember.findMany({
-      where: { userId },
-      include: { group: { include: { zone: true } } },
-      orderBy: { joinedAt: 'desc' },
-      take: 10,
-    });
-
-    groupMembers.forEach((member) => {
-      activities.push({
-        type: 'GROUP_JOINED',
-        description: `Joined group for zone: ${member.group.zone.title}`,
-        createdAt: member.joinedAt,
-        relatedId: member.groupId,
-        relatedType: 'group',
-      });
-    });
-
-    activities.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-
-    return activities.slice(0, 20);
   }
 
   async banUser(userId: string, adminId?: string) {

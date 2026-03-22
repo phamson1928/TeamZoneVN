@@ -778,55 +778,6 @@ curl -s "http://localhost:3000/users/search?query=john&role=USER&status=ACTIVE&p
 
 ---
 
-### GET `/users/:id/activities`
-
-Xem lịch sử hoạt động của user (Admin only).
-
-**Auth Required:** Yes (Admin)
-
-```bash
-curl -s http://localhost:3000/users/9e0a44d5-65a0-4ee4-810f-ed6a77db6e53/activities \
-  -H "Authorization: Bearer <admin_token>"
-```
-
-**Response:**
-
-```json
-[
-  {
-    "type": "ZONE_CREATED",
-    "description": "Created zone: Looking for Valorant teammates",
-    "createdAt": "2026-02-03T08:30:00.000Z",
-    "relatedId": "zone-uuid",
-    "relatedType": "zone"
-  },
-  {
-    "type": "JOIN_REQUEST_APPROVED",
-    "description": "Join request for \"CS:GO 5v5\" - APPROVED",
-    "createdAt": "2026-02-02T15:20:00.000Z",
-    "relatedId": "request-uuid",
-    "relatedType": "join_request"
-  },
-  {
-    "type": "GROUP_JOINED",
-    "description": "Joined group for zone: Diamond rank squad",
-    "createdAt": "2026-02-01T12:00:00.000Z",
-    "relatedId": "group-uuid",
-    "relatedType": "group"
-  }
-]
-```
-
-**Activity Types:**
-
-- `ZONE_CREATED` - User tạo zone mới
-- `JOIN_REQUEST_PENDING` - Gửi yêu cầu join zone
-- `JOIN_REQUEST_APPROVED` - Request được chấp nhận
-- `JOIN_REQUEST_REJECTED` - Request bị từ chối
-- `GROUP_JOINED` - Join vào group
-
----
-
 ### PATCH `/users/:id/ban`
 
 Ban một user (Admin only).
@@ -1712,9 +1663,10 @@ Lấy danh sách tất cả zones (Admin only, bypass ownership).
 |-------|------|---------|-------------|
 | page | number | 1 | Trang hiện tại |
 | limit | number | 20 | Số items/trang (max 100) |
+| query | string | - | Tìm kiếm theo title hoặc username của owner (case-insensitive) |
 
 ```bash
-curl -s "http://localhost:3000/zones/admin?page=1&limit=20" \
+curl -s "http://localhost:3000/zones/admin?page=1&limit=20&query=valorant" \
   -H "Authorization: Bearer <admin_token>"
 ```
 
@@ -1737,7 +1689,13 @@ curl -s "http://localhost:3000/zones/admin?page=1&limit=20" \
       "owner": {
         "id": "user-uuid",
         "username": "testuser",
-        "email": "test@example.com"
+        "email": "test@example.com",
+        "avatarUrl": "https://example.com/avatar.jpg"
+      },
+      "game": {
+        "id": "game-uuid",
+        "name": "League of Legends",
+        "iconUrl": "https://example.com/lol-icon.png"
       },
       "_count": {
         "joinRequests": 2
@@ -1752,6 +1710,8 @@ curl -s "http://localhost:3000/zones/admin?page=1&limit=20" \
   }
 }
 ```
+
+> **Thay đổi so với phiên bản cũ:** Response nay bao gồm `owner.avatarUrl` và object `game` (id, name, iconUrl) để Dashboard hiển thị đầy đủ thông tin. Thêm query param `query` hỗ trợ tìm kiếm theo title zone hoặc username.
 
 ### DELETE `/zones/admin/:id`
 
@@ -2829,8 +2789,10 @@ curl -s -X PATCH http://localhost:3000/reports/report-uuid \
 **Request Body:**
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| status | enum | Yes | Chỉ nhận RESOLVED |
 | resolutionNote | string | No | Ghi chú xử lý (max 500 ký tự) |
+
+**Behavior:**
+- Khi một report được chuyển sang trạng thái `RESOLVED`, hệ thống sẽ tự động gửi một thông báo (Notification) real-time tới người gửi báo cáo (Reporter) để thông báo kết quả xử lý.
 
 **Response:**
 ```json
@@ -3457,12 +3419,6 @@ FRIEND_REQUEST    // Lời mời kết bạn mới
 FRIEND_ACCEPTED   // Kết bạn thành công
 ZONE_INVITE       // Lời mời vào Zone
 QUICK_MATCH_FOUND // Tìm thấy trận đấu phù hợp
-```
-
----
-
----
-
 ## 25. Modules chưa implement đầy đủ
 
 Các modules sau chỉ có boilerplate, cần implement thêm:

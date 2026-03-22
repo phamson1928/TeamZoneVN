@@ -22,7 +22,6 @@ import {
   UserResponseDto,
   PublicUserResponseDto,
   SearchUsersDto,
-  UserActivityDto,
 } from './dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -94,33 +93,13 @@ export class UsersController {
   @ApiResponse({ status: 403, description: 'Không có quyền (Cần Admin)' })
   async searchUsers(
     @Query() searchDto: SearchUsersDto,
-    @Query() pagination: PaginationDto,
   ): Promise<any> {
-    const { page = 1, limit = 20 } = pagination;
+    const { page = 1, limit = 20 } = searchDto;
     return this.usersService.searchUsers(
       searchDto,
       Number(page),
       Number(limit),
     );
-  }
-
-  @Get(':id/activities')
-  @UseGuards(RolesGuard)
-  @Roles('ADMIN')
-  @ApiOperation({ summary: 'Lấy lịch sử hoạt động của người dùng [ADMIN ONLY]' })
-  @ApiParam({ name: 'id', description: 'User ID (UUID)' })
-  @ApiResponse({
-    status: 200,
-    description: 'Lịch sử hoạt động',
-    type: [UserActivityDto],
-  })
-  @ApiResponse({ status: 401, description: 'Chưa xác thực' })
-  @ApiResponse({ status: 403, description: 'Không có quyền (Cần Admin)' })
-  @ApiResponse({ status: 404, description: 'Người dùng không tồn tại' })
-  async getUserActivities(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<UserActivityDto[]> {
-    return this.usersService.getUserActivities(id);
   }
 
   @Get(':id')

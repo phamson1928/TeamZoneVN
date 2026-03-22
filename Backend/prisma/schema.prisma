@@ -8,9 +8,292 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-////////////////////
-/// ENUMS
-////////////////////
+model User {
+  id                    String               @id @default(uuid())
+  email                 String               @unique
+  passwordHash          String?
+  username              String               @unique
+  avatarUrl             String?
+  role                  UserRole             @default(USER)
+  status                UserStatus           @default(ACTIVE)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  authProvider          AuthProvider         @default(LOCAL)
+  googleId              String?              @unique
+  listReceiveFriendship Friendship[]         @relation("FriendFriend")
+  listSendFriendship    Friendship[]         @relation("FriendUser")
+  groupsLed             Group[]              @relation("GroupLeader")
+  groupMembers          GroupMember[]
+  messages              Message[]
+  notifications         Notification[]
+  passwordResetTokens   PasswordResetToken[]
+  quickMatchQueue       QuickMatchQueue?
+  refreshTokens         RefreshToken[]
+  reports               Report[]             @relation("ReportReporter")
+  resolvedReports       Report[]             @relation("ReportResolver")
+  blocksReceived        UserBlock[]          @relation("BlockedUser")
+  blocksSent            UserBlock[]          @relation("BlockerUser")
+  gameProfiles          UserGameProfile[]
+  likesGiven            UserLike[]           @relation("LikerUser")
+  likesReceived         UserLike[]           @relation("LikedUser")
+  profile               UserProfile?
+  zones                 Zone[]               @relation("ZoneOwner")
+  receivedZoneInvites   ZoneInvite[]         @relation("ZoneInvitee")
+  sentZoneInvites       ZoneInvite[]         @relation("ZoneInviter")
+  joinRequests          ZoneJoinRequest[]
+}
+
+model UserProfile {
+  userId       String    @id
+  bio          String?
+  playStyle    String?
+  timezone     String?
+  lastActiveAt DateTime?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Game {
+  id               String            @id @default(uuid())
+  name             String
+  iconUrl          String?
+  bannerUrl        String?
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  platforms        Platform[]
+  groups           Group[]
+  quickMatchQueues QuickMatchQueue[]
+  userProfiles     UserGameProfile[]
+  zones            Zone[]
+}
+
+model UserGameProfile {
+  id        String    @id @default(uuid())
+  userId    String
+  gameId    String
+  rankLevel RankLevel
+  game      Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
+}
+
+model Zone {
+  id              String              @id @default(uuid())
+  gameId          String
+  ownerId         String
+  title           String
+  description     String
+  minRankLevel    RankLevel
+  maxRankLevel    RankLevel
+  requiredPlayers Int
+  status          ZoneStatus          @default(OPEN)
+  createdAt       DateTime            @default(now())
+  autoApprove     Boolean             @default(false)
+  group           Group?
+  game            Game                @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  owner           User                @relation("ZoneOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  contacts        ZoneContactMethod[]
+  zoneInvites     ZoneInvite[]
+  joinRequests    ZoneJoinRequest[]
+  tags            ZoneTagRelation[]
+
+  @@index([title])
+  @@index([ownerId])
+  @@index([gameId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ZoneTag {
+  id    String            @id @default(uuid())
+  name  String            @unique
+  zones ZoneTagRelation[]
+}
+
+model ZoneTagRelation {
+  zoneId String
+  tagId  String
+  tag    ZoneTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  zone   Zone    @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@id([zoneId, tagId])
+}
+
+model ZoneContactMethod {
+  id     String            @id @default(uuid())
+  zoneId String
+  type   ContactMethodType
+  value  String
+  zone   Zone              @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+}
+
+model ZoneJoinRequest {
+  id        String            @id @default(uuid())
+  zoneId    String
+  userId    String
+  status    JoinRequestStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  zone      Zone              @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@unique([zoneId, userId])
+}
+
+model Group {
+  id        String        @id @default(uuid())
+  zoneId    String        @unique
+  leaderId  String
+  gameId    String
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  game      Game          @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  leader    User          @relation("GroupLeader", fields: [leaderId], references: [id], onDelete: Cascade)
+  zone      Zone          @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  members   GroupMember[]
+  messages  Message[]
+}
+
+model GroupMember {
+  groupId  String
+  userId   String
+  role     GroupMemberRole
+  joinedAt DateTime        @default(now())
+  group    Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  groupId   String
+  senderId  String
+  content   String   @db.VarChar(2000)
+  createdAt DateTime @default(now())
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, createdAt])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  data      Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  title     String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model Report {
+  id             String           @id @default(uuid())
+  reporterId     String
+  targetType     ReportTargetType
+  targetId       String
+  reason         String
+  status         ReportStatus     @default(OPEN)
+  createdAt      DateTime         @default(now())
+  resolutionNote String?
+  resolvedAt     DateTime?
+  resolvedById   String?
+  severity       ReportSeverity   @default(MEDIUM)
+  reporter       User             @relation("ReportReporter", fields: [reporterId], references: [id])
+  resolvedBy     User?            @relation("ReportResolver", fields: [resolvedById], references: [id])
+
+  @@index([status])
+  @@index([targetType, targetId])
+  @@index([reporterId])
+  @@index([createdAt])
+}
+
+model Friendship {
+  id         String       @id @default(uuid())
+  senderId   String
+  receiverId String
+  status     FriendStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+  receiver   User         @relation("FriendFriend", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender     User         @relation("FriendUser", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+}
+
+model ZoneInvite {
+  id        String           @id @default(uuid())
+  zoneId    String
+  inviterId String
+  inviteeId String
+  status    ZoneInviteStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+  invitee   User             @relation("ZoneInvitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+  inviter   User             @relation("ZoneInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  zone      Zone             @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@unique([zoneId, inviteeId])
+  @@index([inviteeId, status])
+}
+
+model QuickMatchQueue {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  gameId          String
+  rankLevel       RankLevel
+  requiredPlayers Int
+  createdAt       DateTime  @default(now())
+  game            Game      @relation(fields: [gameId], references: [id])
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([gameId, rankLevel])
+}
+
+model UserLike {
+  id        String   @id @default(uuid())
+  userId    String
+  likerId   String
+  createdAt DateTime @default(now())
+  liker     User     @relation("LikerUser", fields: [likerId], references: [id], onDelete: Cascade)
+  user      User     @relation("LikedUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, likerId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model UserBlock {
+  id        String   @id @default(uuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+  blocked   User     @relation("BlockedUser", fields: [blockedId], references: [id], onDelete: Cascade)
+  blocker   User     @relation("BlockerUser", fields: [blockerId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
 
 enum UserRole {
   ADMIN
@@ -104,6 +387,7 @@ enum NotificationType {
   FRIEND_ACCEPTED
   ZONE_INVITE
   QUICK_MATCH_FOUND
+  REPORT_RESOLVED
 }
 
 enum ZoneInviteStatus {
@@ -116,381 +400,4 @@ enum FriendStatus {
   PENDING
   ACCEPTED
   REJECTED
-}
-
-////////////////////
-/// USER & AUTH
-////////////////////
-
-model User {
-  id           String       @id @default(uuid())
-  email        String       @unique
-  passwordHash String?
-  username     String       @unique
-  avatarUrl    String?
-  role         UserRole     @default(USER)
-  status       UserStatus   @default(ACTIVE)
-  authProvider AuthProvider @default(LOCAL)
-  googleId     String?      @unique
-
-  profile             UserProfile?
-  refreshTokens       RefreshToken[]
-  passwordResetTokens PasswordResetToken[]
-
-  gameProfiles    UserGameProfile[]
-  zones           Zone[]            @relation("ZoneOwner")
-  joinRequests    ZoneJoinRequest[]
-  groupsLed       Group[]           @relation("GroupLeader")
-  groupMembers    GroupMember[]
-  messages        Message[]
-  notifications   Notification[]
-  reports         Report[]          @relation("ReportReporter")
-  resolvedReports Report[]          @relation("ReportResolver")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  listSendFriendship    Friendship[]     @relation("FriendUser")
-  listReceiveFriendship Friendship[]     @relation("FriendFriend")
-  sentZoneInvites       ZoneInvite[]     @relation("ZoneInviter")
-  receivedZoneInvites   ZoneInvite[]     @relation("ZoneInvitee")
-  quickMatchQueue       QuickMatchQueue?
-  likesReceived         UserLike[]       @relation("LikedUser")
-  likesGiven            UserLike[]       @relation("LikerUser")
-
-  blocksSent     UserBlock[] @relation("BlockerUser")
-  blocksReceived UserBlock[] @relation("BlockedUser")
-}
-
-model UserProfile {
-  userId       String    @id
-  bio          String?
-  playStyle    String?
-  timezone     String?
-  lastActiveAt DateTime?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model RefreshToken {
-  id        String   @id @default(uuid())
-  userId    String
-  token     String
-  expiresAt DateTime
-  revoked   Boolean  @default(false)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model PasswordResetToken {
-  id        String   @id @default(uuid())
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  used      Boolean  @default(false)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-}
-
-////////////////////
-/// GAME
-////////////////////
-
-model Game {
-  id        String     @id @default(uuid())
-  name      String
-  iconUrl   String?
-  bannerUrl String?
-  isActive  Boolean    @default(true)
-  platforms Platform[]
-
-  zones Zone[]
-
-  groups       Group[]
-  userProfiles UserGameProfile[]
-
-  createdAt        DateTime          @default(now())
-  quickMatchQueues QuickMatchQueue[]
-}
-
-model UserGameProfile {
-  id        String    @id @default(uuid())
-  userId    String
-  gameId    String
-  rankLevel RankLevel
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, gameId])
-}
-
-////////////////////
-/// ZONE (TÌM BẠN)
-////////////////////
-
-model Zone {
-  id              String     @id @default(uuid())
-  gameId          String
-  ownerId         String
-  title           String
-  description     String
-  minRankLevel    RankLevel
-  maxRankLevel    RankLevel
-  requiredPlayers Int
-  autoApprove     Boolean    @default(false)
-  status          ZoneStatus @default(OPEN)
-
-  game  Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  owner User @relation("ZoneOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-
-  tags         ZoneTagRelation[]
-  contacts     ZoneContactMethod[]
-  joinRequests ZoneJoinRequest[]
-  group        Group?
-
-  createdAt   DateTime     @default(now())
-  zoneInvites ZoneInvite[]
-
-  @@index([title])
-  @@index([ownerId])
-  @@index([gameId])
-  @@index([status])
-  @@index([createdAt])
-}
-
-model ZoneTag {
-  id   String @id @default(uuid())
-  name String @unique
-
-  zones ZoneTagRelation[]
-}
-
-model ZoneTagRelation {
-  zoneId String
-  tagId  String
-
-  zone Zone    @relation(fields: [zoneId], references: [id], onDelete: Cascade)
-  tag  ZoneTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@id([zoneId, tagId])
-}
-
-model ZoneContactMethod {
-  id     String            @id @default(uuid())
-  zoneId String
-  type   ContactMethodType
-  value  String
-
-  zone Zone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
-}
-
-////////////////////
-/// MATCHING & GROUP
-////////////////////
-
-model ZoneJoinRequest {
-  id     String            @id @default(uuid())
-  zoneId String
-  userId String
-  status JoinRequestStatus @default(PENDING)
-
-  zone Zone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@unique([zoneId, userId])
-}
-
-model Group {
-  id       String  @id @default(uuid())
-  zoneId   String  @unique
-  leaderId String
-  gameId   String
-  isActive Boolean @default(true)
-
-  zone   Zone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
-  leader User @relation("GroupLeader", fields: [leaderId], references: [id], onDelete: Cascade)
-  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
-
-  members  GroupMember[]
-  messages Message[]
-
-  createdAt DateTime @default(now())
-}
-
-model GroupMember {
-  groupId String
-  userId  String
-  role    GroupMemberRole
-
-  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  joinedAt DateTime @default(now())
-
-  @@id([groupId, userId])
-}
-
-////////////////////
-/// CHAT
-////////////////////
-
-model Message {
-  id       String @id @default(uuid())
-  groupId  String
-  senderId String
-  content  String @db.VarChar(2000)
-
-  group  Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  sender User  @relation(fields: [senderId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@index([groupId, createdAt])
-}
-
-////////////////////
-/// NOTIFICATION
-////////////////////
-
-model Notification {
-  id     String           @id @default(uuid())
-  userId String
-  type   NotificationType
-  title  String
-  data   Json?
-  isRead Boolean          @default(false)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@index([userId, createdAt(sort: Desc)])
-}
-
-////////////////////
-/// REPORT / MODERATION
-////////////////////
-
-model Report {
-  id             String           @id @default(uuid())
-  reporterId     String
-  targetType     ReportTargetType
-  targetId       String
-  reason         String
-  severity       ReportSeverity   @default(MEDIUM)
-  status         ReportStatus     @default(OPEN)
-  resolutionNote String?
-  resolvedAt     DateTime?
-  resolvedById   String?
-
-  reporter   User  @relation("ReportReporter", fields: [reporterId], references: [id])
-  resolvedBy User? @relation("ReportResolver", fields: [resolvedById], references: [id])
-
-  createdAt DateTime @default(now())
-
-  @@index([status])
-  @@index([targetType, targetId])
-  @@index([reporterId])
-  @@index([createdAt])
-}
-
-////////////////////
-/// FRIENDS
-////////////////////
-
-model Friendship {
-  id         String       @id @default(uuid())
-  senderId   String
-  receiverId String
-  status     FriendStatus @default(PENDING)
-
-  sender   User @relation("FriendUser", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User @relation("FriendFriend", fields: [receiverId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@unique([senderId, receiverId])
-}
-
-////////////////////
-/// ZONE INVITES
-////////////////////
-
-model ZoneInvite {
-  id        String           @id @default(uuid())
-  zoneId    String
-  inviterId String
-  inviteeId String
-  status    ZoneInviteStatus @default(PENDING)
-
-  zone    Zone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
-  inviter User @relation("ZoneInviter", fields: [inviterId], references: [id], onDelete: Cascade)
-  invitee User @relation("ZoneInvitee", fields: [inviteeId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@unique([zoneId, inviteeId])
-  @@index([inviteeId, status])
-}
-
-////////////////////
-/// QUICK MATCH
-////////////////////
-
-model QuickMatchQueue {
-  id              String    @id @default(uuid())
-  userId          String    @unique
-  gameId          String
-  rankLevel       RankLevel
-  requiredPlayers Int
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  game Game @relation(fields: [gameId], references: [id])
-
-  createdAt DateTime @default(now())
-
-  @@index([gameId, rankLevel])
-}
-
-////////////////////
-/// USER LIKES
-////////////////////
-
-model UserLike {
-  id      String @id @default(uuid())
-  userId  String // người được like
-  likerId String // người like
-
-  user  User @relation("LikedUser", fields: [userId], references: [id], onDelete: Cascade)
-  liker User @relation("LikerUser", fields: [likerId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@unique([userId, likerId])
-  @@index([userId])
-  @@index([createdAt])
-}
-
-////////////////////
-/// BLOCKING SYSTEM
-////////////////////
-
-model UserBlock {
-  id        String @id @default(uuid())
-  blockerId String
-  blockedId String
-
-  blocker User @relation("BlockerUser", fields: [blockerId], references: [id], onDelete: Cascade)
-  blocked User @relation("BlockedUser", fields: [blockedId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@unique([blockerId, blockedId])
-  @@index([blockerId])
-  @@index([blockedId])
 }

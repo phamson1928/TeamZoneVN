@@ -85,9 +85,9 @@ export class ZonesController {
   @ApiOperation({ summary: 'Lấy danh sách tất cả zones [ADMIN ONLY]' })
   @ApiResponse({ status: 200, description: 'Success' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  findAllByAdmin(@Query() pagination: PaginationDto) {
+  findAllByAdmin(@Query() pagination: PaginationDto, @Query('query') query?: string) {
     const { page, limit } = pagination;
-    return this.zonesService.findAllByAdmin(Number(page), Number(limit));
+    return this.zonesService.findAllByAdmin(Number(page), Number(limit), query);
   }
 
   @Delete('admin/:id')
