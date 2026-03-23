@@ -11,7 +11,6 @@ import {
     Download,
     Gamepad2,
     Trophy,
-    Shield,
     Heart
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -32,7 +31,6 @@ const fetchQuickMatchChart = async () => await apiClient.get('/dashboard/charts/
 const fetchReportsChart = async () => await apiClient.get('/dashboard/charts/reports?period=7d') as any;
 const fetchEngagementChart = async () => await apiClient.get('/dashboard/charts/engagement?period=7d') as any;
 const fetchTopGamesChart = async () => await apiClient.get('/dashboard/charts/top-games') as any;
-const fetchModerationChart = async () => await apiClient.get('/dashboard/charts/moderation') as any;
 const fetchLeaderboardTop = async () => await apiClient.get('/dashboard/charts/leaderboard-top') as any;
 
 
@@ -45,7 +43,6 @@ export const Overview = () => {
     const { data: reportsChart, isLoading: isReportsChartLoading } = useQuery({ queryKey: ['dashboard-reports-chart'], queryFn: fetchReportsChart });
     const { data: engagementChart, isLoading: isEngagementChartLoading } = useQuery({ queryKey: ['dashboard-engagement-chart'], queryFn: fetchEngagementChart });
     const { data: topGamesChart, isLoading: isTopGamesChartLoading } = useQuery({ queryKey: ['dashboard-top-games-chart'], queryFn: fetchTopGamesChart });
-    const { data: moderationChart, isLoading: isModerationChartLoading } = useQuery({ queryKey: ['dashboard-moderation-chart'], queryFn: fetchModerationChart });
     const { data: leaderboardTop, isLoading: isLeaderboardLoading } = useQuery({ queryKey: ['dashboard-leaderboard-top'], queryFn: fetchLeaderboardTop });
 
     if (isStatsLoading) {
@@ -212,7 +209,7 @@ export const Overview = () => {
                         <div className="flex items-center gap-3.5">
                             <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)] flex items-center justify-center animate-pulse"></div>
-                                <span className="text-[12.5px] font-semibold text-gray-500">{reports.total} Cần xử lý</span>
+                                <span className="text-[12.5px] font-semibold text-gray-500">{reports.open} Chưa xử lý</span>
                             </div>
                         </div>
                     </div>
@@ -425,35 +422,8 @@ export const Overview = () => {
             </StaggerContainer>
 
             {/* Moderation & Top Games Row */}
-            <StaggerContainer className="grid grid-cols-1 lg:grid-cols-2 gap-6" delayOrder={0.3}>
-                {/* Moderation Workload */}
-                <StaggerItem className="p-8 bg-white/80 backdrop-blur-xl rounded-[32px] border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col min-h-[400px]">
-                    <div className="mb-6">
-                        <h3 className="text-xl font-bold text-gray-900">Khối lượng Kiểm duyệt</h3>
-                        <p className="text-sm font-medium text-gray-500 mt-1">Phân bổ báo cáo theo ngày và trạng thái</p>
-                    </div>
-                    <div className="flex-1 w-full relative">
-                        {isModerationChartLoading ? (
-                            <div className="absolute inset-0 flex justify-center items-center"><Loader2 className="animate-spin h-6 w-6 text-gray-400" /></div>
-                        ) : moderationChart?.data?.length ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={moderationChart.data} margin={{ top: 0, right: 30, left: -20, bottom: 0 }}>
-                                    <XAxis dataKey="date" tickFormatter={(str) => { const d = new Date(str); return `${d.getDate()}/${d.getMonth() + 1}`; }} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af', fontWeight: 600 }} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#374151', fontWeight: 700 }} />
-                                    <CartesianGrid vertical={false} stroke="#f3f4f6" strokeDasharray="4 4" />
-                                    <Tooltip contentStyle={{ borderRadius: '16px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontWeight: 600 }} />
-                                    <Bar dataKey="resolved" name="Đã xử lý" stackId="a" fill="#10b981" radius={[0, 0, 4, 4]} barSize={30} />
-                                    <Bar dataKey="open" name="Chưa xử lý (Mở)" stackId="a" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={30} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="h-full w-full flex flex-col items-center justify-center text-gray-400 opacity-60">
-                               <Shield className="w-10 h-10 mb-2 opacity-20" />
-                               <p className="text-sm font-bold">Chưa có dữ liệu kiểm duyệt</p>
-                            </div>
-                        )}
-                    </div>
-                </StaggerItem>
+            <StaggerContainer className="grid grid-cols-1 gap-6" delayOrder={0.3}>
+
 
                 {/* Top Games Chart */}
                 <StaggerItem className="p-8 bg-white/80 backdrop-blur-xl rounded-[32px] border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col min-h-[400px]">
@@ -507,7 +477,6 @@ export const Overview = () => {
                                     <tr>
                                         <th className="px-6 py-4">Hạng</th>
                                         <th className="px-6 py-4">Người dùng</th>
-                                        <th className="px-6 py-4">Cấp độ/Role</th>
                                         <th className="px-6 py-4 text-right">Lượt thích</th>
                                     </tr>
                                 </thead>
@@ -534,11 +503,7 @@ export const Overview = () => {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-5">
-                                                <span className={`inline-block px-3 py-1 bg-gray-100 text-[11px] font-bold text-gray-600 rounded-lg uppercase tracking-wider`}>
-                                                    {user.role}
-                                                </span>
-                                            </td>
+
                                             <td className="px-6 py-5 text-right">
                                                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 font-bold rounded-xl text-sm">
                                                     <Heart className="w-4 h-4 fill-rose-500 text-rose-500" />

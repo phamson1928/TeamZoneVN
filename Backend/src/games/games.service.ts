@@ -5,7 +5,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class GamesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(dto: CreateGameDto) {
     return this.prisma.game.create({
@@ -23,6 +23,8 @@ export class GamesService {
         isActive: true,
         platforms: true,
         createdAt: true,
+        iconUrl: true,
+        bannerUrl: true,
         _count: {
           select: { groups: true },
         },

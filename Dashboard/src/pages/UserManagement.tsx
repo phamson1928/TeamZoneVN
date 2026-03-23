@@ -4,6 +4,7 @@ import {
   Search, 
   Filter, 
   Ban, 
+  ShieldCheck,
   Trash2,
   TrendingUp,
   Eye,
@@ -123,9 +124,20 @@ export default function UserManagement() {
     onError: () => toast.error('Lỗi khi xóa người dùng'),
   });
 
+  const unbanMutation = useMutation({
+    mutationFn: (userId: string) => userApi.patch(`/users/${userId}/unban`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Đã mở khóa người dùng');
+      setConfirmDialog({ open: false, action: null, userId: null });
+    },
+    onError: () => toast.error('Lỗi khi mở khóa người dùng'),
+  });
+
   const confirmAction = () => {
     if (!confirmDialog.userId) return;
     if (confirmDialog.action === 'ban') banMutation.mutate(confirmDialog.userId);
+    if (confirmDialog.action === 'unban') unbanMutation.mutate(confirmDialog.userId);
     if (confirmDialog.action === 'delete') deleteMutation.mutate(confirmDialog.userId);
   };
 
@@ -237,9 +249,13 @@ export default function UserManagement() {
                       </td>
                       <td className="px-6 py-4 text-right">
                          <div className="flex justify-end gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
-                            <button onClick={() => setSelectedUser(user)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/80 rounded-[10px] transition-all active:scale-95" title="Xem chi tiết"><Eye className="w-4 h-4" /></button>
-                            <button onClick={() => setConfirmDialog({ open: true, action: 'ban', userId: user.id })} className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50/80 rounded-[10px] transition-all active:scale-95" title="Cấm người dùng"><Ban className="w-4 h-4" /></button>
-                            <button onClick={() => setConfirmDialog({ open: true, action: 'delete', userId: user.id })} className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50/80 rounded-[10px] transition-all active:scale-95" title="Xóa người dùng"><Trash2 className="w-4 h-4" /></button>
+                             <button onClick={() => setSelectedUser(user)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/80 rounded-[10px] transition-all active:scale-95" title="Xem chi tiết"><Eye className="w-4 h-4" /></button>
+                             {user.status === 'BANNED' ? (
+                               <button onClick={() => setConfirmDialog({ open: true, action: 'unban', userId: user.id })} className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50/80 rounded-[10px] transition-all active:scale-95" title="Mở khóa"><ShieldCheck className="w-4 h-4" /></button>
+                             ) : (
+                               <button onClick={() => setConfirmDialog({ open: true, action: 'ban', userId: user.id })} className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50/80 rounded-[10px] transition-all active:scale-95" title="Cấm người dùng"><Ban className="w-4 h-4" /></button>
+                             )}
+                             <button onClick={() => setConfirmDialog({ open: true, action: 'delete', userId: user.id })} className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50/80 rounded-[10px] transition-all active:scale-95" title="Xóa người dùng"><Trash2 className="w-4 h-4" /></button>
                          </div>
                       </td>
                     </tr>

@@ -298,6 +298,21 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 - [x] `GET /dashboard/charts/zones` - Zones theo game (phân bố)
 - [x] `GET /dashboard/charts/activity` - Hoạt động theo giờ
 
+### 8.4 Advanced Violation Handling (Upcoming) 🚀
+- [ ] **Moderation Actions (Phase A):**
+  - [ ] Schema: Thêm `ModerationAction` enum & `ModerationLog` model
+  - [ ] Backend: Cập nhật `PATCH /reports/:id` với logic chọn action (Warn/Ban/Dismiss)
+  - [ ] Notification: Gửi `ACCOUNT_WARNED` cho người vi phạm khi bị cảnh cáo
+  - [ ] Dashboard: UI tích hợp Action Picker vào Modal xử lý báo cáo
+- [ ] **Auto-Escalation & Temp Ban (Phase B):**
+  - [ ] Schema: Thêm `warnCount` và `tempBannedUntil` cho User
+  - [ ] Logic: Tự động khóa tài khoản tạm thời/vĩnh viễn theo số lần cảnh cáo (1-7-30-Permanent)
+  - [ ] Auth: Cập nhật Guard kiểm tra thời hạn ban tạm
+- [ ] **Appeal System (Phase C):**
+  - [ ] Schema: Thêm `Appeal` model cho việc kháng lệnh
+  - [ ] API: Endpoints gửi và duyệt đơn kháng lệnh
+
+
 ---
 
 ## Phase 9: Social & Discovery (Week 12-14)
@@ -557,10 +572,11 @@ src/
 | Priority          | Features                                                        |
 | ----------------- | --------------------------------------------------------------- |
 | P0 (Must have)    | Auth, Users, Games, Zones, Join Requests, Groups                |
-| P1 (Should have)  | Chat, Notifications, **Admin User Management, Admin Dashboard** |
+| P1 (Should have)  | Chat, Notifications, **Admin User Management, Admin Dashboard**, **Advanced Moderation (Warn/Escalation)** |
 | P2 (Nice to have) | Reports, Advanced filters, Caching                             |
 | P3 (Phase 9)      | **Friend List**, **Zone Invite**, **Quick Match**, **Suggested Zones**, **Top User (Like)** |
 | P4 (Phase 11-12)  | **Dockerization**, **CI/CD**, **Landing Page**, **Production Launch** |
+
 
 ---
 
@@ -590,6 +606,14 @@ src/
 - View reported messages
 - Force delete messages
 - View auto-flagged content
+
+### Violation Handling (Phase 8.4)
+
+- Warn users via Report Resolve
+- View violation logs (`ModerationLog`)
+- Auto temp-ban based on warn count
+- Auto permanent-ban after 5 warns
+
 
 ### Dashboard (Phase 8.3 + 10.0)
 
@@ -621,3 +645,5 @@ src/
 | 5   | `CreateTagDto` thiếu validation (`@IsString`, `@IsNotEmpty`)                                               | `create-tag.dto.ts` | 🟡 Medium   | ✅ Đã sửa       |
 | 6   | `TagsService.getAllTags` throw Error khi không có tags — nên return `[]`                                   | `tags.service.ts`   | 🟠 Low      | ✅ Đã sửa       |
 | 7   | Duplicate methods: `findAllByAdmin` và `findAllForAdmin` gần giống nhau                                    | `zones.service.ts`  | 🟠 Low      | ✅ Đã xóa trùng |
+
+

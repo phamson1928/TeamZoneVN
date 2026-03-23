@@ -1,0 +1,30 @@
+﻿[Valorant]
+  iconUrl:   https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/icons/valorant.png
+  bannerUrl: https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/banners/valorant-banner.jpg
+[League of Legends]
+  iconUrl:   https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/icons/lienminh.png
+  bannerUrl: https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/banners/lienminh-banner.jpg
+[Genshin Impact]
+  iconUrl:   https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/icons/genshin.png
+  bannerUrl: https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/banners/genshin-banner.jpg
+[Wild Rift]
+  iconUrl:   https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/icons/tocchien.png
+  bannerUrl: https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/banners/tocchien-banner.jpg
+[PUBG Mobile]
+  iconUrl:   https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/icons/pubg-mobile.png
+  bannerUrl: https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/banners/pubg-mobile-banner.jpg
+[CS2]
+  iconUrl:   https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/icons/cs2.png
+  bannerUrl: https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/banners/cs2-banner.jpg
+[FC ONLINE 4]
+  iconUrl:   https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/icons/fconline.png
+  bannerUrl: https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/banners/fconline-banner.jpg
+[Teamfight Tactics]
+  iconUrl:   https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/icons/dautruongchanli.png
+  bannerUrl: https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/banners/dautruongchanli-banner.jpg
+[Free Fire]
+  iconUrl:   https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/icons/freefire.png
+  bannerUrl: https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/banners/freefire-banner.jpg
+[Arena of Valor]
+  iconUrl:   https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/icons/lienquan.png
+  bannerUrl: https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/banners/lienquan-banner.jpg

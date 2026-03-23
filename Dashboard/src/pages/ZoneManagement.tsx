@@ -258,14 +258,10 @@ export default function ZoneManagement() {
                  Tất cả bài phân tích và nhóm chơi game hiển thị realtime. Điều phối phòng, khóa vi phạm và xóa phòng trống chỉ bằng 1 click.
               </p>
               
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-10">
                  <div className="bg-white/5 hover:bg-white/10 transition-colors duration-300 backdrop-blur-2xl rounded-[20px] p-5 border border-white/5 group">
                     <p className="text-sm text-zinc-400 font-medium mb-1">Đang Active</p>
                     <p className="text-3xl font-extrabold text-white group-hover:scale-105 transition-transform origin-left">{zonesData?.meta?.total || 0}</p>
-                 </div>
-                 <div className="bg-white/5 hover:bg-white/10 transition-colors duration-300 backdrop-blur-2xl rounded-[20px] p-5 border border-white/5 group">
-                    <p className="text-sm text-zinc-400 font-medium mb-1">Cảnh báo vi phạm</p>
-                    <p className="text-3xl font-extrabold text-white group-hover:scale-105 transition-transform origin-left">0</p>
                  </div>
               </div>
             </div>

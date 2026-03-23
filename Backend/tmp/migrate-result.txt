@@ -1,0 +1,20 @@
+﻿[dotenv@17.2.3] injecting env (0) from .env -- tip: đŸ”‘ add access controls to secrets: https://dotenvx.com/ops
+đŸ”„ Migrating URLs
+   OLD: hrvxrxnkbcqrftagzuso.supabase.co
+   NEW: jgdnolcmyvpcsaphxtwm.supabase.co
+
+â­ï¸  [Valorant] â€” no change needed
+â­ï¸  [League of Legends] â€” no change needed
+â­ï¸  [Genshin Impact] â€” no change needed
+â­ï¸  [Wild Rift] â€” no change needed
+â­ï¸  [PUBG Mobile] â€” no change needed
+â­ï¸  [CS2] â€” no change needed
+â­ï¸  [FC ONLINE 4] â€” no change needed
+â­ï¸  [Teamfight Tactics] â€” no change needed
+â­ï¸  [Free Fire] â€” no change needed
+â­ï¸  [Arena of Valor] â€” no change needed
+
+âœ¨ Done! Updated 0/10 games.
+
+â ï¸  IMPORTANT: Make sure the image files exist in the NEW Supabase Storage bucket!
+   Upload them to: https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets/

@@ -796,8 +796,40 @@ curl -s -X PATCH http://localhost:3000/users/user-uuid/ban \
   "success": true,
   "message": "User has been banned successfully",
   "data": {
-    "id": "user-uuid",
     "username": "banned_user",
+    "status": "BANNED"
+  },
+  "timestamp": "2026-03-23T15:50:00.000Z"
+}
+```
+
+---
+
+### PATCH `/users/:id/unban`
+
+Bỏ ban người dùng (Admin only).
+
+**Auth Required:** Yes (Admin)
+
+```bash
+curl -s -X PATCH http://localhost:3000/users/user-uuid/unban \
+  -H "Authorization: Bearer <admin_token>"
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "User has been unbanned successfully",
+  "data": {
+    "id": "user-uuid",
+    "username": "active_user",
+    "status": "ACTIVE"
+  },
+  "timestamp": "2026-03-23T15:52:00.000Z"
+}
+```
     "avatarUrl": "https://example.com/avatar.jpg",
     "profile": {
       "bio": "Former user",
@@ -1035,6 +1067,8 @@ curl -s http://localhost:3000/games/admin \
     {
       "id": "472515e6-f4be-4c35-88bb-a8fb3a52680a",
       "name": "League of Legends",
+      "iconUrl": "https://example.com/lol.png",
+      "bannerUrl": "https://example.com/lol-banner.png",
       "isActive": true,
       "createdAt": "2026-01-31T17:14:07.742Z",
       "_count": {
@@ -2635,7 +2669,36 @@ Admin lấy danh sách tất cả messages trong hệ thống (pagination). Ch�
 | page | number | 1 | Trang hiện tại |
 | limit | number | 20 | Số lượng mỗi trang |
 
-**Response:** Giống GET messages theo group nhưng bao gồm cả tin nhắn đã xóa.
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "id": "message-uuid",
+      "content": "Hello team!",
+      "createdAt": "2026-03-23T15:43:52.000Z",
+      "sender": {
+        "id": "user-uuid",
+        "username": "progamer",
+        "avatarUrl": "https://example.com/avatar.jpg"
+      },
+      "group": {
+        "id": "group-uuid",
+        "zone": {
+          "title": "Looking for Valorant teammates"
+        }
+      }
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 100,
+    "totalPages": 5
+  }
+}
+```
 
 ---
 

@@ -123,7 +123,12 @@ export class MessagesService {
             select: { id: true, username: true, avatarUrl: true },
           },
           group: {
-            select: { id: true },
+            select: {
+              id: true,
+              zone: {
+                select: { title: true }
+              }
+            },
           },
         },
         orderBy: { createdAt: 'desc' },

@@ -251,39 +251,57 @@ export default function GameManagement() {
             </div>
             <div className="space-y-1.5">
                <label className="text-xs font-black uppercase text-gray-500 tracking-wider">Icon Game</label>
-               <div className="relative flex items-center gap-4">
-                 {formData.iconUrl ? (
-                   <img src={formData.iconUrl} alt="Icon Preview" className="w-16 h-16 rounded-2xl object-cover border border-gray-200 shadow-sm" />
-                 ) : (
-                   <div className="w-16 h-16 rounded-2xl bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center flex-shrink-0">
-                     <ImageIcon className="w-6 h-6 text-gray-300" />
-                   </div>
-                 )}
+               <div className="relative flex items-center gap-5">
+                 <div className="flex-shrink-0 group/preview relative">
+                    {formData.iconUrl ? (
+                      <div className="relative group">
+                         <img 
+                            src={formData.iconUrl} 
+                            alt="Icon Preview" 
+                            className="w-20 h-20 rounded-2xl object-cover border border-gray-100 shadow-md transition-transform group-hover:scale-105" 
+                            onError={(e) => {
+                               (e.target as HTMLImageElement).src = 'https://placehold.co/80x80?text=Error';
+                               toast.error('Không thể load ảnh từ URL: ' + formData.iconUrl);
+                            }}
+                         />
+                         <div className="absolute inset-x-0 -bottom-8 bg-gray-900 text-white text-[8px] p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity truncate max-w-[100px] z-50 pointer-events-none">
+                            {formData.iconUrl}
+                         </div>
+                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity flex items-center justify-center">
+                            <UploadCloud className="w-5 h-5 text-white" />
+                         </div>
+                      </div>
+                    ) : (
+                      <div className="w-20 h-20 rounded-2xl bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center">
+                        <ImageIcon className="w-7 h-7 text-gray-300" />
+                      </div>
+                    )}
+                 </div>
                  <div className="flex-1 relative">
-                   <input 
-                      type="file" 
-                      accept="image/*"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        setUploadingField('icon');
-                        try {
-                          const fData = new FormData();
-                          fData.append('file', file);
-                          const res: any = await apiClient.post('/files/upload/game-icon', fData, { headers: { 'Content-Type': 'multipart/form-data' }});
-                          setFormData(p => ({ ...p, iconUrl: res?.url || res?.data?.url || '' }));
-                        } catch (err) {
-                          toast.error('Lỗi khi tải ảnh lên');
-                        } finally {
-                          setUploadingField(null);
-                        }
-                      }}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                   />
-                   <div className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-[14px] flex justify-between items-center text-sm font-bold text-indigo-600 hover:bg-slate-100 transition-all pointer-events-none">
-                     <span>{uploadingField === 'icon' ? 'Đang tải lên...' : 'Chọn hoặc thả ảnh từ máy...'}</span>
-                     {uploadingField === 'icon' ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-5 h-5" />}
-                   </div>
+                    <input 
+                       type="file" 
+                       accept="image/*"
+                       onChange={async (e) => {
+                         const file = e.target.files?.[0];
+                         if (!file) return;
+                         setUploadingField('icon');
+                         try {
+                           const fData = new FormData();
+                           fData.append('file', file);
+                           const res: any = await apiClient.post('/files/upload/game-icon', fData, { headers: { 'Content-Type': 'multipart/form-data' }});
+                           setFormData(p => ({ ...p, iconUrl: res?.url || res?.data?.url || '' }));
+                         } catch (err) {
+                           toast.error('Lỗi khi tải ảnh lên');
+                         } finally {
+                           setUploadingField(null);
+                         }
+                       }}
+                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className="w-full px-4 py-4 bg-gray-50 border border-transparent rounded-[18px] flex justify-between items-center text-sm font-bold text-indigo-600 hover:bg-slate-100 transition-all pointer-events-none border border-dashed border-indigo-200">
+                      <span>{uploadingField === 'icon' ? 'Đang tải lên...' : 'Chọn hoặc thả ảnh từ máy...'}</span>
+                      {uploadingField === 'icon' ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-5 h-5" />}
+                    </div>
                  </div>
                </div>
                <div className="relative mt-2">
@@ -293,40 +311,60 @@ export default function GameManagement() {
              
              <div className="space-y-1.5">
                <label className="text-xs font-black uppercase text-gray-500 tracking-wider">Banner Game</label>
-               <div className="relative flex items-center gap-4">
-                 {formData.bannerUrl ? (
-                   <img src={formData.bannerUrl} alt="Banner Preview" className="w-24 h-16 rounded-xl object-cover border border-gray-200 shadow-sm" />
-                 ) : (
-                   <div className="w-24 h-16 rounded-xl bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center flex-shrink-0">
-                     <ImageIcon className="w-6 h-6 text-gray-300" />
-                   </div>
-                 )}
-                 <div className="flex-1 relative">
-                   <input 
-                      type="file" 
-                      accept="image/*"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        setUploadingField('banner');
-                        try {
-                          const fData = new FormData();
-                          fData.append('file', file);
-                          const res: any = await apiClient.post('/files/upload/game-banner', fData, { headers: { 'Content-Type': 'multipart/form-data' }});
-                          setFormData(p => ({ ...p, bannerUrl: res?.url || res?.data?.url || '' }));
-                        } catch (err) {
-                          toast.error('Lỗi khi tải ảnh lên');
-                        } finally {
-                          setUploadingField(null);
-                        }
-                      }}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                   />
-                   <div className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-[14px] flex justify-between items-center text-sm font-bold text-indigo-600 hover:bg-slate-100 transition-all pointer-events-none">
-                     <span>{uploadingField === 'banner' ? 'Đang tải lên...' : 'Chọn hoặc thả ảnh từ máy...'}</span>
-                     {uploadingField === 'banner' ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-5 h-5" />}
-                   </div>
+               <div className="relative flex items-center gap-5">
+                 <div className="flex-shrink-0 group/preview relative">
+                    {formData.bannerUrl ? (
+                      <div className="relative group">
+                        <img 
+                          src={formData.bannerUrl} 
+                          alt="Banner Preview" 
+                          className="w-32 h-20 rounded-2xl object-cover border border-gray-100 shadow-md transition-transform group-hover:scale-105" 
+                          onError={(e) => {
+                             (e.target as HTMLImageElement).src = 'https://placehold.co/128x80?text=Error';
+                          }}
+                        />
+                        <div className="absolute inset-x-0 -bottom-8 bg-gray-900 text-white text-[8px] p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity truncate max-w-[128px] z-50 pointer-events-none">
+                            {formData.bannerUrl}
+                        </div>
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity flex items-center justify-center">
+                            <UploadCloud className="w-5 h-5 text-white" />
+                         </div>
+                      </div>
+                    ) : (
+                      <div className="w-32 h-20 rounded-2xl bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center">
+                        <ImageIcon className="w-7 h-7 text-gray-300" />
+                      </div>
+                    )}
                  </div>
+                 <div className="flex-1 relative">
+                    <input 
+                       type="file" 
+                       accept="image/*"
+                       onChange={async (e) => {
+                         const file = e.target.files?.[0];
+                         if (!file) return;
+                         setUploadingField('banner');
+                         try {
+                           const fData = new FormData();
+                           fData.append('file', file);
+                           const res: any = await apiClient.post('/files/upload/game-banner', fData, { headers: { 'Content-Type': 'multipart/form-data' }});
+                           setFormData(p => ({ ...p, bannerUrl: res?.url || res?.data?.url || '' }));
+                         } catch (err) {
+                           toast.error('Lỗi khi tải ảnh lên');
+                         } finally {
+                           setUploadingField(null);
+                         }
+                       }}
+                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className="w-full px-4 py-4 bg-gray-50 border border-transparent rounded-[18px] flex justify-between items-center text-sm font-bold text-indigo-600 hover:bg-slate-100 transition-all pointer-events-none border border-dashed border-indigo-200">
+                      <span>{uploadingField === 'banner' ? 'Đang tải lên...' : 'Chọn hoặc thả ảnh từ máy...'}</span>
+                      {uploadingField === 'banner' ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-5 h-5" />}
+                    </div>
+                 </div>
+               </div>
+               <div className="relative mt-2">
+                 <input type="url" value={formData.bannerUrl} onChange={e => setFormData(p => ({...p, bannerUrl: e.target.value}))} placeholder="Hoặc nhập URL banner trực tiếp" className="w-full px-4 py-2 bg-gray-50/50 border border-gray-100 rounded-[10px] text-xs font-medium text-gray-600 outline-none focus:bg-white focus:border-indigo-500/30" />
                </div>
              </div>
              <div className="space-y-1.5 pt-2">
