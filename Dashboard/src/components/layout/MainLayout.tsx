@@ -2,6 +2,7 @@ import React from 'react';
 import { Sidebar } from './Sidebar';
 import { TopHeader } from './TopHeader';
 import { Toaster } from 'sonner';
+import { PageTransition } from './PageTransition';
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
     return (
@@ -12,9 +13,9 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="lg:pl-[252px] flex flex-col flex-1 min-w-0">
                 <TopHeader />
                 <main className="flex-1 p-4 pt-4 overflow-y-auto w-full">
-                    <div className="max-w-[1600px] mx-auto w-full animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <PageTransition className="max-w-[1600px] mx-auto w-full">
                         {children}
-                    </div>
+                    </PageTransition>
                 </main>
             </div>
             <Toaster position="bottom-right" theme="light" closeButton richColors />

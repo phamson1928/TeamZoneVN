@@ -19,7 +19,14 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
-import { reportApi, messageApi } from '../lib/api';
+import { reportApi, messageApi, tagApi } from '../lib/api';
+import { StaggerContainer, StaggerItem } from '../components/layout/PageTransition';
+import { AppleModal } from '../components/common/AppleModal';
+
+interface Tag {
+  id: string;
+  name: string;
+}
 
 interface Report {
   id: string;
@@ -62,7 +69,7 @@ interface Message {
 
 export default function Moderation() {
   const queryClient = useQueryClient();
-  const [activeTab, setTab] = useState<'reports' | 'messages'>('reports');
+  const [activeTab, setTab] = useState<'reports' | 'messages' | 'tags'>('reports');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [isLimitOpen, setIsLimitOpen] = useState(false);
@@ -72,6 +79,11 @@ export default function Moderation() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [resolutionNote, setResolutionNote] = useState('');
+
+  // Tag modal states
+  const [editTagModal, setEditTagModal] = useState<{ open: boolean; tag: Tag | null }>({ open: false, tag: null });
+  const [deleteTagDialog, setDeleteTagDialog] = useState<{ open: boolean; tagId: string | null }>({ open: false, tagId: null });
+  const [tagName, setTagName] = useState('');
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -89,8 +101,7 @@ export default function Moderation() {
     queryFn: async () => {
        const params: any = { page, limit };
        if (filter !== 'ALL') params.status = filter;
-       const res = await reportApi.getAll(params);
-       return res.data?.success ? res.data.data : res.data;
+       return await reportApi.getAll(params);
     },
     enabled: activeTab === 'reports'
   });
@@ -101,11 +112,63 @@ export default function Moderation() {
     queryFn: async () => {
        const params: any = { page, limit };
        if (searchQuery) params.query = searchQuery;
-       const res = await messageApi.getAll(params);
-       return res.data?.success ? res.data.data : res.data;
+       return await messageApi.getAll(params);
     },
     enabled: activeTab === 'messages'
   });
+
+  // --- Tags Query ---
+  const { data: tagsData, isLoading: tagsLoading } = useQuery({
+    queryKey: ['admin-tags'],
+    queryFn: async () => {
+       return await tagApi.getAll();
+    },
+    enabled: activeTab === 'tags'
+  });
+
+  const createTagMutation = useMutation({
+    mutationFn: (name: string) => tagApi.create({ name }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-tags'] });
+      toast.success('Đã thêm Tag');
+      setEditTagModal({ open: false, tag: null });
+      setTagName('');
+    },
+    onError: () => toast.error('Không thể thêm Tag')
+  });
+
+  const updateTagMutation = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) => tagApi.update(id, { name }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-tags'] });
+      toast.success('Đã cập nhật Tag');
+      setEditTagModal({ open: false, tag: null });
+      setTagName('');
+    },
+    onError: () => toast.error('Không thể cập nhật Tag')
+  });
+
+  const deleteTagMutation = useMutation({
+    mutationFn: (id: string) => tagApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-tags'] });
+      toast.success('Đã xóa Tag');
+      setDeleteTagDialog({ open: false, tagId: null });
+    },
+    onError: () => toast.error('Không thể xóa Tag')
+  });
+
+  const handleSaveTag = () => {
+     if (!tagName.trim()) {
+       toast.error('Tên tag không được để trống');
+       return;
+     }
+     if (editTagModal.tag) {
+       updateTagMutation.mutate({ id: editTagModal.tag.id, name: tagName });
+     } else {
+       createTagMutation.mutate(tagName);
+     }
+  };
 
   const resolveMutation = useMutation({
     mutationFn: (id: string) => reportApi.resolve(id, { resolutionNote }),
@@ -156,30 +219,45 @@ export default function Moderation() {
            >
              Tin nhắn (Logs)
            </button>
+           <button 
+             onClick={() => { setTab('tags'); resetPagination(); }}
+             className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'tags' ? 'bg-gray-900 text-white shadow-lg shadow-gray-200' : 'text-gray-500 hover:text-gray-900 hover:bg-white/80'}`}
+           >
+             Tags (Từ khóa)
+           </button>
         </div>
       </div>
 
-      <div className="relative z-10 bg-white/80 backdrop-blur-3xl rounded-[40px] border border-white/40 shadow-sm overflow-hidden min-h-[600px] flex flex-col">
+      <StaggerContainer className="flex-1 min-h-[600px] flex flex-col">
+      <StaggerItem className="relative z-10 bg-white/80 backdrop-blur-3xl rounded-[40px] border border-white/40 shadow-sm overflow-hidden flex-1 flex flex-col">
         {/* Header toolbar */}
         <div className="p-8 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
-           <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+           <div className="relative flex-1 max-w-md group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
               <input 
                 type="text" 
                 placeholder="Tìm kiếm nội dung..." 
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-[20px] focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 transition-all outline-none font-medium text-gray-800"
+                className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-transparent rounded-[14px] focus:bg-white focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-medium text-gray-900 placeholder:text-gray-400"
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); resetPagination(); }}
               />
            </div>
            
            {activeTab === 'reports' && (
-             <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-gray-400 mr-2" />
-                <button onClick={() => { setFilter('OPEN'); resetPagination(); }} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${filter === 'OPEN' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>Đang mở</button>
-                <button onClick={() => { setFilter('RESOLVED'); resetPagination(); }} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${filter === 'RESOLVED' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>Đã xử lý</button>
-                <button onClick={() => { setFilter('ALL'); resetPagination(); }} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${filter === 'ALL' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>Tất cả</button>
+             <div className="flex items-center gap-1">
+                <Filter className="w-4 h-4 text-gray-400 mr-2" />
+                <button onClick={() => { setFilter('OPEN'); resetPagination(); }} className={`px-4 py-2 rounded-[12px] text-xs font-bold transition-all active:scale-95 ${filter === 'OPEN' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100/50' : 'bg-transparent text-gray-500 hover:bg-gray-100/80 hover:text-gray-900'}`}>Đang mở</button>
+                <button onClick={() => { setFilter('RESOLVED'); resetPagination(); }} className={`px-4 py-2 rounded-[12px] text-xs font-bold transition-all active:scale-95 ${filter === 'RESOLVED' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100/50' : 'bg-transparent text-gray-500 hover:bg-gray-100/80 hover:text-gray-900'}`}>Đã xử lý</button>
+                <button onClick={() => { setFilter('ALL'); resetPagination(); }} className={`px-4 py-2 rounded-[12px] text-xs font-bold transition-all active:scale-95 ${filter === 'ALL' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100/50' : 'bg-transparent text-gray-500 hover:bg-gray-100/80 hover:text-gray-900'}`}>Tất cả</button>
              </div>
+           )}
+           {activeTab === 'tags' && (
+              <button 
+                onClick={() => { setTagName(''); setEditTagModal({ open: true, tag: null }); }}
+                className="px-5 py-2.5 bg-gray-900 hover:bg-black text-white rounded-[14px] text-sm font-bold shadow-xl shadow-gray-900/20 transition-all active:scale-95 flex items-center gap-2"
+              >
+                 Thêm Tag
+              </button>
            )}
         </div>
 
@@ -228,14 +306,16 @@ export default function Moderation() {
                                 <span className="font-bold text-gray-700">{report.reporter?.username}</span>
                              </div>
                           </td>
-                          <td className="px-8 py-5 text-right">
-                             <button 
-                               onClick={() => setSelectedReport(report)}
-                               className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white rounded-xl text-xs font-bold transition-all border border-indigo-100 hover:border-indigo-600 shadow-sm"
-                             >
-                                <Eye className="w-3.5 h-3.5" /> Xem xét
-                             </button>
-                          </td>
+                           <td className="px-8 py-5 text-right">
+                              <div className="flex justify-end opacity-60 hover:opacity-100 transition-opacity">
+                                 <button 
+                                   onClick={() => setSelectedReport(report)}
+                                   className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-indigo-50 text-gray-600 hover:text-indigo-600 rounded-[10px] text-xs font-bold transition-all active:scale-95"
+                                 >
+                                    <Eye className="w-3.5 h-3.5" /> Xem xét
+                                 </button>
+                              </div>
+                           </td>
                         </tr>
                      ))}
                    </tbody>
@@ -248,7 +328,7 @@ export default function Moderation() {
                  )}
                </div>
              )
-          ) : (
+          ) : activeTab === 'messages' ? (
             // --- Messages Tab Content ---
             messagesLoading ? (
               <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>
@@ -295,36 +375,89 @@ export default function Moderation() {
                                </div>
                             </td>
                             <td className="px-8 py-5 text-right">
-                               {!msg.isDeleted && (
-                                  <button 
-                                    onClick={() => {
-                                      if(confirm('Bạn có chắc muốn xóa tin nhắn này vì vi phạm quy tắc?')) {
-                                        deleteMsgMutation.mutate(msg.id);
-                                      }
-                                    }}
-                                    className="p-2.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all opacity-0 group-hover/row:opacity-100"
-                                  >
-                                     <Trash2 className="w-4 h-4" />
-                                  </button>
-                               )}
+                               <div className="flex justify-end opacity-0 group-hover/row:opacity-100 transition-opacity">
+                                  {!msg.isDeleted && (
+                                     <button 
+                                       onClick={() => {
+                                         if(confirm('Bạn có chắc muốn xóa tin nhắn này vì vi phạm quy tắc?')) {
+                                           deleteMsgMutation.mutate(msg.id);
+                                         }
+                                       }}
+                                       className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50/80 rounded-[10px] transition-all active:scale-95"
+                                     >
+                                        <Trash2 className="w-4 h-4" />
+                                     </button>
+                                  )}
+                               </div>
                             </td>
                          </tr>
                       ))}
                    </tbody>
                 </table>
-                {!messagesData?.data?.length && (
-                   <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                      <CheckCircle2 className="w-12 h-12 mb-4 opacity-10" />
-                      <p className="font-bold">Sạch sẽ! Không có tin nhắn nào.</p>
-                   </div>
-                )}
-              </div>
-            )
-          )}
+                 {!messagesData?.data?.length && (
+                    <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                       <CheckCircle2 className="w-12 h-12 mb-4 opacity-10" />
+                       <p className="font-bold">Sạch sẽ! Không có tin nhắn nào.</p>
+                    </div>
+                 )}
+               </div>
+             )
+           ) : (
+             // --- Tags Tab Content ---
+             tagsLoading ? (
+               <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>
+             ) : (
+               <div className="overflow-x-auto">
+                 <table className="w-full text-sm text-left align-middle border-collapse">
+                    <thead className="bg-[#fcfcfc] text-gray-400 font-medium border-b border-gray-100/80 uppercase tracking-widest text-[10px]">
+                      <tr>
+                         <th className="px-8 py-5">Tên Tag</th>
+                         <th className="px-8 py-5 text-right">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100/80">
+                       {tagsData?.map((tag: Tag) => {
+                          if (searchQuery && !tag.name.toLowerCase().includes(searchQuery.toLowerCase())) return null;
+                          return (
+                          <tr key={tag.id} className="hover:bg-gray-50/40 transition-colors group/row">
+                             <td className="px-8 py-5">
+                                <span className="inline-block px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl text-sm border border-gray-200 shadow-sm">
+                                   #{tag.name}
+                                </span>
+                             </td>
+                             <td className="px-8 py-5 text-right">
+                                <div className="flex justify-end gap-2 opacity-60 hover:opacity-100 transition-opacity">
+                                   <button 
+                                     onClick={() => { setTagName(tag.name); setEditTagModal({ open: true, tag }); }}
+                                     className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/80 rounded-[10px] transition-all active:scale-95"
+                                   >
+                                      <Eye className="w-4 h-4" />
+                                   </button>
+                                   <button 
+                                     onClick={() => setDeleteTagDialog({ open: true, tagId: tag.id })}
+                                     className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50/80 rounded-[10px] transition-all active:scale-95"
+                                   >
+                                      <Trash2 className="w-4 h-4" />
+                                   </button>
+                                </div>
+                             </td>
+                          </tr>
+                       )})}
+                    </tbody>
+                 </table>
+                 {!tagsData?.length && (
+                    <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                       <CheckCircle2 className="w-12 h-12 mb-4 opacity-10" />
+                       <p className="font-bold">Chưa có Tag nào.</p>
+                    </div>
+                 )}
+               </div>
+             )
+           )}
         </div>
 
         {/* --- Unified Pagination Footer --- */}
-        {((activeTab === 'reports' ? reportsData : messagesData)?.meta?.totalPages > 0) && (
+        {activeTab !== 'tags' && ((activeTab === 'reports' ? reportsData : messagesData)?.meta?.totalPages > 0) && (
           <div className="p-6 flex items-center justify-between bg-white/40 border-t border-gray-100/60 backdrop-blur-md">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2 px-4 py-2 bg-white/60 border border-white/80 rounded-2xl shadow-sm">
@@ -367,11 +500,11 @@ export default function Moderation() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 p-1.5 bg-white/60 border border-white/80 rounded-[20px] shadow-sm">
+            <div className="flex items-center gap-1 p-1 bg-white border border-gray-100 rounded-[14px] shadow-sm">
               <button 
                 onClick={() => setPage(p => Math.max(1, p - 1))} 
                 disabled={page === 1} 
-                className="p-2.5 hover:bg-gray-50 text-gray-700 disabled:opacity-30 rounded-xl transition-all"
+                className="p-2 hover:bg-gray-50 text-gray-600 disabled:opacity-30 disabled:hover:bg-transparent rounded-[10px] transition-all active:scale-95"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -379,20 +512,25 @@ export default function Moderation() {
               <button 
                 onClick={() => setPage(p => Math.min((activeTab === 'reports' ? reportsData : messagesData).meta.totalPages, p + 1))} 
                 disabled={page === (activeTab === 'reports' ? reportsData : messagesData).meta.totalPages} 
-                className="p-2.5 hover:bg-gray-50 text-gray-700 disabled:opacity-30 rounded-xl transition-all"
+                className="p-2 hover:bg-gray-50 text-gray-600 disabled:opacity-30 disabled:hover:bg-transparent rounded-[10px] transition-all active:scale-95"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
-      </div>
+      </StaggerItem>
+      </StaggerContainer>
 
       {/* --- Detail Report Modal --- */}
-      {selectedReport && (
-         <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-            <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-               <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-white relative">
+      <AppleModal
+         isOpen={!!selectedReport}
+         onClose={() => setSelectedReport(null)}
+         width="2xl"
+      >
+         {selectedReport && (
+           <>
+               <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-white/50 relative">
                   <div className="flex items-center gap-4">
                      <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl border border-rose-100">
                         <AlertTriangle className="w-6 h-6" />
@@ -498,9 +636,60 @@ export default function Moderation() {
                      </button>
                   </div>
                )}
-            </div>
+           </>
+         )}
+      </AppleModal>
+
+      {/* --- Detail Tag Edit/Add Modal --- */}
+      <AppleModal
+         isOpen={editTagModal.open}
+         onClose={() => setEditTagModal({ open: false, tag: null })}
+         width="sm"
+      >
+         <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-white/50 relative">
+            <h3 className="text-xl font-black text-gray-900 tracking-tight">{editTagModal.tag ? 'Chỉnh sửa Tag' : 'Thêm Tag Mới'}</h3>
          </div>
-      )}
+         <div className="p-8 space-y-4">
+            <label className="text-xs font-black uppercase text-gray-500 tracking-wider">Tên Tag</label>
+            <input 
+              type="text" 
+              value={tagName}
+              onChange={(e) => setTagName(e.target.value)}
+              placeholder="Ví dụ: Rank Cao"
+              className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-[14px] focus:bg-white focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-bold text-gray-900"
+            />
+         </div>
+         <div className="p-8 border-t border-gray-100 bg-gray-50/50 flex gap-3">
+             <button onClick={() => setEditTagModal({ open: false, tag: null })} className="flex-1 py-3.5 font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-[16px] transition-all active:scale-95">Hủy</button>
+             <button onClick={handleSaveTag} disabled={createTagMutation.isPending || updateTagMutation.isPending} className="flex-1 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[16px] font-bold shadow-xl shadow-indigo-600/25 transition-all flex items-center justify-center">
+                 {createTagMutation.isPending || updateTagMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Lưu lại'}
+             </button>
+         </div>
+      </AppleModal>
+
+      {/* --- Delete Tag Confirm Modal --- */}
+      <AppleModal
+         isOpen={deleteTagDialog.open}
+         onClose={() => setDeleteTagDialog({ open: false, tagId: null })}
+         width="sm"
+      >
+         <div className="p-8">
+             <div className="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-rose-50 text-rose-500">
+                <AlertTriangle className="w-7 h-7" />
+             </div>
+             <div className="text-center space-y-2 mb-8">
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">Xóa Tag</h3>
+                <p className="text-sm font-medium text-gray-500 leading-relaxed">Bạn có chắc chắn muốn xóa Tag này? Hành động này sẽ loại bỏ Tag khỏi tất cả Zones liên quan.</p>
+             </div>
+             <div className="flex gap-3">
+                <button onClick={() => setDeleteTagDialog({ open: false, tagId: null })} className="flex-1 py-3.5 font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-[18px] transition-all active:scale-95">Hủy</button>
+                <button onClick={() => deleteTagDialog.tagId && deleteTagMutation.mutate(deleteTagDialog.tagId)} disabled={deleteTagMutation.isPending} className="flex-1 py-3.5 bg-rose-500 hover:bg-rose-600 text-white rounded-[18px] font-bold shadow-xl shadow-rose-500/25 transition-all">
+                   {deleteTagMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Xóa ngay'}
+                </button>
+             </div>
+         </div>
+      </AppleModal>
+
     </div>
   );
 }

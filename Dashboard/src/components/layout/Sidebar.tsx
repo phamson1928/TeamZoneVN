@@ -7,12 +7,14 @@ import {
     ShieldAlert,
     LogOut,
     ShieldCheck,
+    Gamepad2,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 const navigationMenuItems = [
     { name: 'Tổng quan', to: '/', icon: LayoutDashboard },
     { name: 'Người dùng', to: '/users', icon: Users },
+    { name: 'Game', to: '/games', icon: Gamepad2 },
     { name: 'Zone', to: '/zones', icon: MapPin },
     { name: 'Nhóm', to: '/groups', icon: UsersRound },
     { name: 'Kiểm duyệt', to: '/moderation', icon: ShieldAlert },

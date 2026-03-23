@@ -26,20 +26,21 @@ export const Login = () => {
     const onSubmit = async (data: LoginFormValues) => {
         try {
             setIsLoading(true);
-            // Gọi API đăng nhập
-            const res = await apiClient.post('/auth/login', data);
-            const result = res.data;
+            // Gọi API đăng nhập - apiClient (qua interceptor) trả về chính result.data
+            const result: any = await apiClient.post('/auth/login', data);
 
-            if (result.success) {
+            if (result && result.tokens) {
                 // Lưu token tạm để gọi API Get Profile kiểm tra Role
-                localStorage.setItem('access_token', result.data.tokens.accessToken);
-                localStorage.setItem('refresh_token', result.data.tokens.refreshToken);
+                localStorage.setItem('access_token', result.tokens.accessToken);
+                localStorage.setItem('refresh_token', result.tokens.refreshToken);
 
                 // Lấy thông tin User hiện tại để check role
-                const meRes = await apiClient.get('/users/me');
-                const user = meRes.data.data;
+                const user: any = await apiClient.get('/users/me');
 
-                if (user.role !== 'ADMIN') {
+                if (user && user.role !== 'ADMIN') {
+                    // Xóa token ngay lập tức nếu không phải Admin
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
                     throw new Error('Tài khoản của bạn không có quyền truy cập Admin Dashboard.');
                 }
 
@@ -50,18 +51,18 @@ export const Login = () => {
                 // Chuyển hướng về trang trước đó hoặc Overview
                 const origin = location.state?.from?.pathname || '/';
                 navigate(origin, { replace: true });
+            } else {
+                toast.error('Phản hồi từ máy chủ không hợp lệ.');
             }
         } catch (error: any) {
-            // Xóa tạm trong trường hợp login thành công nhưng không phải admin
+            // Xóa rác trong trường hợp login lỗi hoặc role sai
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
             localStorage.removeItem('user');
 
-            if (error?.response?.data?.errorCode === 'UNAUTHORIZED' || error?.response?.status === 401) {
-                toast.error('Sai email hoặc mật khẩu.');
-            } else {
-                toast.error(error.message || 'Lỗi hệ thống. Không thể đăng nhập.');
-            }
+            console.error('Login Error:', error);
+            const apiMessage = error?.response?.data?.message || error.message;
+            toast.error(Array.isArray(apiMessage) ? apiMessage.join(', ') : (apiMessage || 'Lỗi hệ thống. Không thể đăng nhập.'));
         } finally {
             setIsLoading(false);
         }

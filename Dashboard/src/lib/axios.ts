@@ -20,7 +20,13 @@ apiClient.interceptors.request.use(
 );
 
 apiClient.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // Automatically unpack NestJS "success: true, data: {...}" wrapper
+        if (response.data && response.data.success === true && response.data.data !== undefined) {
+            return response.data.data;
+        }
+        return response.data;
+    },
     (error) => {
         const status = error.response?.status;
         if (status === 401 || status === 403) {

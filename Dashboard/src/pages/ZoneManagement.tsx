@@ -15,6 +15,8 @@ import {
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, BarChart, Bar } from 'recharts';
 import { toast } from 'sonner';
 import { zoneApi } from '../lib/api';
+import { StaggerContainer, StaggerItem } from '../components/layout/PageTransition';
+import { AppleModal } from '../components/common/AppleModal';
 
 interface Zone {
   id: string;
@@ -56,6 +58,7 @@ export default function ZoneManagement() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLive, setIsLive] = useState(false);
   
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -69,8 +72,9 @@ export default function ZoneManagement() {
     queryKey: ['dashboard-zones-chart'],
     queryFn: async () => {
       const { apiClient } = await import('../lib/axios');
-      const chartRes = await apiClient.get('/dashboard/charts/zones');
-      const raw: { gameName: string; count: number }[] = chartRes.data?.data?.data || [];
+      // Interceptor unpacks: { success, data: { data: [...] } } → { data: [...] }
+      const payload: any = await apiClient.get('/dashboard/charts/zones');
+      const raw: { gameName: string; count: number }[] = payload?.data || [];
       return raw.map((item, i) => ({
         name: item.gameName,
         value: item.count,
@@ -84,10 +88,10 @@ export default function ZoneManagement() {
     queryFn: async () => {
       const { apiClient } = await import('../lib/axios');
       try {
-        const res = await apiClient.get('/dashboard/charts/engagement');
-        return res.data?.data?.data || [];
+        // Interceptor unpacks { success, data: { data: [...] } } → { data: [...] }
+        const payload: any = await apiClient.get('/dashboard/charts/engagement');
+        return payload?.data || [];
       } catch (e) {
-        // Fallback or empty state if API not ready yet (Phase 10)
         return [];
       }
     }
@@ -98,10 +102,11 @@ export default function ZoneManagement() {
     queryFn: async () => {
       const { apiClient } = await import('../lib/axios');
       try {
-         const res = await apiClient.get('/dashboard/charts/top-games');
-         return res.data?.data?.data || [];
+        // Interceptor unpacks { success, data: { data: [...] } } → { data: [...] }
+        const payload: any = await apiClient.get('/dashboard/charts/top-games');
+        return payload?.data || [];
       } catch (e) {
-         return [];
+        return [];
       }
     }
   });
@@ -114,10 +119,10 @@ export default function ZoneManagement() {
         limit: limit.toString(),
       });
       if (searchQuery) params.append('query', searchQuery);
-      
-      const response = await zoneApi.getAll(Object.fromEntries(params.entries()));
-      return response.data?.success ? response.data.data : response.data;
+      // GET /zones/admin returns { data: [...], meta: {} } (no success wrapper) → interceptor returns as-is
+      return await zoneApi.getAll(Object.fromEntries(params.entries()));
     },
+    refetchInterval: isLive ? 3000 : false,
   });
 
   const closeMutation = useMutation({
@@ -146,6 +151,38 @@ export default function ZoneManagement() {
     if (confirmDialog.action === 'delete') deleteMutation.mutate(confirmDialog.zoneId);
   };
 
+  const handleExport = () => {
+    if (!zonesData?.data || zonesData.data.length === 0) {
+      toast.error('Không có dữ liệu để xuất');
+      return;
+    }
+    
+    const timestamp = new Date().toISOString().split('T')[0];
+    const headers = ["ID", "Tiêu đề", "Trạng thái", "Trò chơi", "Người tạo", "Người đăng ký", "Giới hạn"];
+    const rows = zonesData.data.map(z => [
+        `="${z.id}"`, 
+        `"${z.title.replace(/"/g, '""')}"`,
+        z.status,
+        `"${(z.game?.name || 'Unknown').replace(/"/g, '""')}"`,
+        `"${(z.owner?.username || 'Unknown').replace(/"/g, '""')}"`,
+        z._count?.joinRequests ?? 0,
+        z.requiredPlayers
+    ]);
+
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+        + headers.join(",") + "\n"
+        + rows.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `zones_export_${timestamp}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Dữ liệu Zone đã được tải xuống.');
+  };
+
   return (
     <div className="p-6 md:p-8 space-y-8 max-w-[1400px] mx-auto auto-rows-max">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -153,18 +190,25 @@ export default function ZoneManagement() {
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Quản lý Zone</h1>
           <p className="text-gray-500 mt-2 font-medium">Giám sát bài đăng tìm bạn và phòng voice chat</p>
         </div>
-        <div className="flex items-center gap-3 bg-white p-1.5 rounded-full border border-gray-200/60 shadow-sm backdrop-blur-xl">
-           <button className="px-4 py-2 bg-gray-900 text-white rounded-full text-sm font-semibold hover:scale-105 active:scale-95 transition-transform duration-200">
+        <div className="flex bg-white/50 p-1 rounded-2xl border border-gray-200/60 shadow-sm backdrop-blur-xl">
+           <button 
+             onClick={() => setIsLive(!isLive)}
+             className={`px-5 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 flex items-center gap-2 ${isLive ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200' : 'bg-gray-100 text-gray-500 hover:text-gray-900 hover:bg-gray-200'}`}
+           >
+             {isLive && <span className="w-2 h-2 rounded-full bg-white animate-pulse" />}
              Live Data
            </button>
-           <button className="px-4 py-2 text-gray-600 rounded-full text-sm font-semibold hover:bg-gray-50 transition-colors">
+           <button 
+             onClick={handleExport}
+             className="px-5 py-2 text-gray-500 hover:text-gray-900 hover:bg-white/80 rounded-xl text-sm font-bold transition-all active:scale-95"
+           >
              Export
            </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 bg-white/70 backdrop-blur-3xl rounded-[32px] border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 relative overflow-hidden flex flex-col justify-between">
+      <StaggerContainer className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <StaggerItem className="lg:col-span-1 bg-white/70 backdrop-blur-3xl rounded-[32px] border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 relative overflow-hidden flex flex-col justify-between">
            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2" />
            
            <div className="relative z-10 flex items-center justify-between mb-6">
@@ -197,11 +241,11 @@ export default function ZoneManagement() {
                      itemStyle={{ color: '#111827', fontWeight: 600 }}
                   />
                 </PieChart>
-             </ResponsiveContainer>
+              </ResponsiveContainer>
            </div>
-        </div>
+        </StaggerItem>
 
-        <div className="lg:col-span-2 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-8 relative overflow-hidden flex flex-col justify-center border border-white/60 bg-gradient-to-br from-zinc-900 to-black">
+        <StaggerItem className="lg:col-span-2 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-8 relative overflow-hidden flex flex-col justify-center border border-white/60 bg-gradient-to-br from-zinc-900 to-black">
             <div className="absolute top-0 right-0 p-8 opacity-20 blur-[1px] pointer-events-none transform translate-x-4 -translate-y-4">
               <Gamepad2 className="w-64 h-64 text-white" strokeWidth={1} />
             </div>
@@ -225,13 +269,13 @@ export default function ZoneManagement() {
                  </div>
               </div>
             </div>
-        </div>
-      </div>
+        </StaggerItem>
+      </StaggerContainer>
 
       {/* Analytics Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <StaggerContainer className="grid grid-cols-1 lg:grid-cols-2 gap-6" delayOrder={0.15}>
         {/* Engagement Chart */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-[32px] border border-gray-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8">
+        <StaggerItem className="bg-white/80 backdrop-blur-xl rounded-[32px] border border-gray-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8">
            <div className="flex items-center justify-between mb-8">
               <div>
                 <h3 className="font-extrabold text-gray-900 text-xl flex items-center gap-2.5">
@@ -277,10 +321,10 @@ export default function ZoneManagement() {
                </div>
              )}
            </div>
-        </div>
+        </StaggerItem>
 
         {/* Top Games Chart */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-[32px] border border-gray-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8">
+        <StaggerItem className="bg-white/80 backdrop-blur-xl rounded-[32px] border border-gray-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8">
            <div className="flex items-center justify-between mb-8">
               <div>
                 <h3 className="font-extrabold text-gray-900 text-xl flex items-center gap-2.5">
@@ -296,9 +340,20 @@ export default function ZoneManagement() {
            <div className="w-full h-[280px]">
              {topGamesChart?.length ? (
                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={topGamesChart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <BarChart data={topGamesChart} margin={{ top: 10, right: 20, left: 10, bottom: 40 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af', fontWeight: 600 }} dy={10} />
+                    <XAxis 
+                      dataKey="name" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 10, fill: '#6b7280', fontWeight: 600 }} 
+                      interval={0}
+                      angle={-40}
+                      textAnchor="end"
+                      height={80}
+                      dx={0}
+                      dy={10}
+                    />
                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af', fontWeight: 500 }} />
                     <Tooltip 
                       cursor={{ fill: '#f9fafb' }}
@@ -316,19 +371,20 @@ export default function ZoneManagement() {
                </div>
              )}
            </div>
-        </div>
-      </div>
+        </StaggerItem>
+      </StaggerContainer>
 
-      <div className="bg-white/80 backdrop-blur-xl rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-200/50 overflow-hidden">
+      <StaggerContainer className="w-full" delayOrder={0.25}>
+      <StaggerItem className="bg-white/80 backdrop-blur-xl rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-200/50 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between bg-white/40">
-          <div className="relative w-full sm:w-[320px]">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <div className="relative w-full sm:w-[320px] group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
             <input
               type="text"
               placeholder="Search zones, titles, owners..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 bg-gray-50/50 border border-gray-200/60 rounded-full focus:bg-white focus:ring-4 focus:ring-gray-100 focus:border-gray-300 text-sm font-medium transition-all outline-none placeholder:text-gray-400"
+              className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-transparent rounded-[14px] focus:bg-white focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-medium text-gray-900 placeholder:text-gray-400"
             />
           </div>
         </div>
@@ -393,13 +449,13 @@ export default function ZoneManagement() {
                            </div>
                         </td>
                         <td className="px-6 py-5 text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <div className="flex items-center justify-end gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
                              {zone.status !== 'CLOSED' && (
-                               <button onClick={() => setConfirmDialog({ open: true, action: 'close', zoneId: zone.id })} className="p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-50 rounded-xl transition-all" title="Khóa Zone">
+                               <button onClick={() => setConfirmDialog({ open: true, action: 'close', zoneId: zone.id })} className="p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-50/80 rounded-[10px] transition-all active:scale-95" title="Khóa Zone">
                                  <Lock className="w-4 h-4" />
                                </button>
                              )}
-                             <button onClick={() => setConfirmDialog({ open: true, action: 'delete', zoneId: zone.id })} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Xóa Vĩnh Viễn">
+                             <button onClick={() => setConfirmDialog({ open: true, action: 'delete', zoneId: zone.id })} className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50/80 rounded-[10px] transition-all active:scale-95" title="Xóa Vĩnh Viễn">
                                  <Trash2 className="w-4 h-4" />
                              </button>
                           </div>
@@ -409,42 +465,46 @@ export default function ZoneManagement() {
                </tbody>
              </table>
              
-             {zonesData.meta && zonesData.meta.totalPages > 1 && (
+             {zonesData?.meta && zonesData.meta.totalPages > 1 && (
                <div className="p-6 flex items-center justify-between text-sm text-gray-500 font-medium bg-gray-50/30 border-t border-gray-100">
                  <div>Trang {page} / {zonesData.meta.totalPages} ({zonesData.meta.total} zones)</div>
-                 <div className="flex gap-2">
-                   <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-2 border border-gray-200 bg-white shadow-sm rounded-xl hover:bg-gray-50 disabled:opacity-40 transition-all">
-                     <ChevronLeft className="w-4 h-4 text-gray-700" />
+                 <div className="flex items-center gap-1 p-1 bg-white border border-gray-100 rounded-[14px] shadow-sm">
+                   <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-2 hover:bg-gray-50 text-gray-600 disabled:opacity-30 disabled:hover:bg-transparent rounded-[10px] transition-all active:scale-95">
+                     <ChevronLeft className="w-4 h-4" />
                    </button>
-                   <button onClick={() => setPage(p => Math.min(zonesData.meta.totalPages, p + 1))} disabled={page === zonesData.meta.totalPages} className="p-2 border border-gray-200 bg-white shadow-sm rounded-xl hover:bg-gray-50 disabled:opacity-40 transition-all">
-                     <ChevronRight className="w-4 h-4 text-gray-700" />
+                   <div className="w-[1px] h-4 bg-gray-100 mx-1" />
+                   <button onClick={() => setPage(p => Math.min(zonesData.meta?.totalPages || 1, p + 1))} disabled={page === (zonesData.meta?.totalPages || 1)} className="p-2 hover:bg-gray-50 text-gray-600 disabled:opacity-30 disabled:hover:bg-transparent rounded-[10px] transition-all active:scale-95">
+                     <ChevronRight className="w-4 h-4" />
                    </button>
                  </div>
                </div>
              )}
           </div>
         )}
-      </div>
+      </StaggerItem>
+      </StaggerContainer>
 
-      {confirmDialog.open && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[24px] shadow-xl w-full max-w-sm overflow-hidden transform scale-100 transition-all">
-            <div className={`h-2 ${confirmDialog.action === 'delete' ? 'bg-red-500' : 'bg-amber-500'}`}></div>
-            <div className="p-6 text-center">
-              <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4 ${confirmDialog.action === 'delete' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-500'}`}>
-                 {confirmDialog.action === 'delete' ? <Trash2 className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Xác nhận {confirmDialog.action === 'delete' ? 'Xóa' : 'Đóng'} Zone</h3>
-              <p className="text-sm text-gray-500 mb-6">Bạn có chắc chắn muốn thực hiện hành động này? Điều này không thể hoàn tác.</p>
-              
-              <div className="flex gap-3">
-                 <button onClick={() => setConfirmDialog({ open: false, action: null, zoneId: null })} className="flex-1 px-4 py-2.5 font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors">Hủy</button>
-                 <button onClick={confirmAction} className={`flex-1 px-4 py-2.5 font-bold text-white rounded-xl transition-colors ${confirmDialog.action === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-500 hover:bg-amber-600'}`}>Xác nhận</button>
-              </div>
-            </div>
+      <AppleModal
+         isOpen={confirmDialog.open}
+         onClose={() => setConfirmDialog({ open: false, action: null, zoneId: null })}
+         width="sm"
+      >
+        <div className={`h-1.5 ${confirmDialog.action === 'delete' ? 'bg-gradient-to-r from-red-500 to-rose-400' : 'bg-gradient-to-r from-amber-500 to-orange-400'}`} />
+        <div className="p-8">
+          <div className={`mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-6 ${confirmDialog.action === 'delete' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-500'}`}>
+             {confirmDialog.action === 'delete' ? <Trash2 className="w-7 h-7" /> : <Lock className="w-7 h-7" />}
+          </div>
+          <div className="text-center space-y-2 mb-8">
+            <h3 className="text-xl font-black text-gray-900 tracking-tight">Xác nhận {confirmDialog.action === 'delete' ? 'Xóa' : 'Đóng'} Zone</h3>
+            <p className="text-sm font-medium text-gray-500 leading-relaxed">Bạn có chắc chắn muốn thực hiện hành động này? Điều này không thể hoàn tác.</p>
+          </div>
+          
+          <div className="flex gap-3">
+             <button onClick={() => setConfirmDialog({ open: false, action: null, zoneId: null })} className="flex-1 px-4 py-3.5 font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-[18px] transition-all active:scale-95">Hủy</button>
+             <button onClick={confirmAction} className={`flex-1 px-4 py-3.5 font-bold text-white shadow-xl rounded-[18px] transition-all active:scale-95 ${confirmDialog.action === 'delete' ? 'bg-red-500 hover:bg-red-600 shadow-red-500/25' : 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/25'}`}>Xác nhận</button>
           </div>
         </div>
-      )}
+      </AppleModal>
     </div>
   );
 }

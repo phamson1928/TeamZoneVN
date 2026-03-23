@@ -12,6 +12,9 @@ import { PieChart as PieChartIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { groupApi } from '../lib/api';
 import { apiClient } from '../lib/axios';
+import { StaggerContainer, StaggerItem } from '../components/layout/PageTransition';
+import { AppleModal } from '../components/common/AppleModal';
+import { AlertTriangle } from 'lucide-react';
 
 interface GroupMember {
   id: string;
@@ -54,6 +57,8 @@ interface GroupsResponse {
   };
 }
 
+
+
 export default function GroupManagement() {
   const queryClient = useQueryClient();
   const [page] = useState(1);
@@ -68,8 +73,8 @@ export default function GroupManagement() {
   const { data: pieChart } = useQuery({
     queryKey: ['dashboard-groups-chart'],
     queryFn: async () => {
-      const chartRes = await apiClient.get('/dashboard/charts/zones');
-      const raw: { gameName: string; count: number }[] = chartRes.data?.data?.data || [];
+      const payload: any = await apiClient.get('/dashboard/charts/zones');
+      const raw: { gameName: string; count: number }[] = payload?.data || [];
       return raw.map((item, i) => ({
         name: item.gameName,
         value: item.count,
@@ -85,8 +90,7 @@ export default function GroupManagement() {
       const params: any = { page: page.toString(), limit: limit.toString() };
       if (searchQuery.trim()) params.query = searchQuery.trim();
       
-      const response = await groupApi.getAll(params);
-      return response.data?.success ? response.data.data : response.data;
+      return await groupApi.getAll(params);
     },
   });
 
@@ -95,9 +99,7 @@ export default function GroupManagement() {
     queryKey: ['group-messages', inspectingGroup?.id],
     queryFn: async () => {
       if (!inspectingGroup) return [];
-      const res = await groupApi.getMessages(inspectingGroup.id);
-      // Backend: { success: true, data: { data: [], meta: {} } }
-      const payload = res.data?.success ? res.data.data : res.data;
+      const payload: any = await groupApi.getMessages(inspectingGroup.id);
       return payload?.data || [];
     },
     enabled: !!inspectingGroup
@@ -128,8 +130,8 @@ export default function GroupManagement() {
         <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Quản lý Nhóm</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 bg-white/70 backdrop-blur-3xl rounded-[32px] border border-white/40 shadow-sm p-8">
+      <StaggerContainer className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <StaggerItem className="lg:col-span-1 bg-white/70 backdrop-blur-3xl rounded-[32px] border border-white/40 shadow-sm p-8">
            <h3 className="font-bold flex items-center gap-2 mb-6"><PieChartIcon className="w-5 h-5" strokeWidth={3} /> Tỷ lệ theo Game</h3>
            <div className="h-[240px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -141,24 +143,25 @@ export default function GroupManagement() {
                  </PieChart>
               </ResponsiveContainer>
            </div>
-        </div>
+        </StaggerItem>
 
-        <div className="lg:col-span-2 rounded-[32px] p-8 bg-black text-white relative flex flex-col justify-center overflow-hidden">
+        <StaggerItem className="lg:col-span-2 rounded-[32px] p-8 bg-black text-white relative flex flex-col justify-center overflow-hidden">
            <Users className="absolute right-0 bottom-0 opacity-10 w-64 h-64 -mb-10 -mr-10" />
            <p className="text-emerald-400 font-bold uppercase text-[10px] tracking-widest mb-4">● Live Data</p>
            <h2 className="text-4xl font-black mb-2">Group Monitor</h2>
            <p className="text-gray-400">Hệ thống giám sát nhóm và nội dung chat thời gian thực.</p>
-        </div>
-      </div>
+        </StaggerItem>
+      </StaggerContainer>
 
-      <div className="bg-white/80 backdrop-blur-3xl rounded-[32px] border border-white/40 shadow-sm overflow-hidden">
+      <StaggerContainer className="w-full" delayOrder={0.15}>
+      <StaggerItem className="bg-white/80 backdrop-blur-3xl rounded-[32px] border border-white/40 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex gap-4">
-           <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+           <div className="relative flex-1 group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
               <input 
                 type="text" 
                 placeholder="Tìm tiêu đề zone hoặc leader..." 
-                className="w-full pl-11 pr-4 py-2 bg-gray-50 border-none rounded-xl"
+                className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-transparent rounded-[14px] focus:bg-white focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-medium text-gray-900 placeholder:text-gray-400"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -179,36 +182,41 @@ export default function GroupManagement() {
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-gray-100">
-                    {groupsData?.data.map((group) => (
+                    {groupsData?.data?.map((group: any) => (
                        <tr key={group.id} className="hover:bg-gray-50 transition-colors group">
                           <td className="px-6 py-4 font-bold text-gray-900">{group.zone?.title}</td>
                           <td className="px-6 py-4 text-sm font-medium">{group.leader?.username}</td>
                           <td className="px-6 py-4 text-sm font-bold">{group._count.members} / 5</td>
-                          <td className="px-6 py-4 text-right">
-                             <div className="flex justify-end gap-2">
-                                <button onClick={() => setInspectingGroup(group)} className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100">Inspect Chat</button>
-                                <button onClick={() => setConfirmDialog({ open: true, groupId: group.id })} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
-                             </div>
-                          </td>
+                           <td className="px-6 py-4 text-right">
+                              <div className="flex justify-end gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
+                                 <button onClick={() => setInspectingGroup(group)} className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-indigo-50 text-gray-600 hover:text-indigo-600 rounded-[10px] text-xs font-bold transition-all active:scale-95">Inspect</button>
+                                 <button onClick={() => setConfirmDialog({ open: true, groupId: group.id })} className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50/80 rounded-[10px] transition-all active:scale-95"><Trash2 className="w-4 h-4" /></button>
+                              </div>
+                           </td>
                        </tr>
                     ))}
                  </tbody>
               </table>
            </div>
         )}
-      </div>
+      </StaggerItem>
+      </StaggerContainer>
 
-      {inspectingGroup && (
-         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[80] p-4">
-            <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col overflow-hidden animate-in zoom-in">
-               <div className="p-8 border-b border-gray-100 flex justify-between items-center">
+      <AppleModal
+         isOpen={!!inspectingGroup}
+         onClose={() => setInspectingGroup(null)}
+         width="2xl"
+      >
+         {inspectingGroup && (
+           <>
+               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-white/50">
                   <div>
-                    <h3 className="text-xl font-black">Group Chat Monitor</h3>
-                    <p className="text-xs text-gray-400 mt-1">{inspectingGroup.zone?.title}</p>
+                    <h3 className="text-xl font-black tracking-tight">Group Monitor</h3>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Zone: {inspectingGroup.zone?.title}</p>
                   </div>
-                  <button onClick={() => setInspectingGroup(null)} className="p-2 hover:bg-gray-100 rounded-full"><X /></button>
+                  <button onClick={() => setInspectingGroup(null)} className="p-2 hover:bg-gray-100 rounded-xl transition-all active:scale-90"><X className="w-6 h-6 text-gray-400" /></button>
                </div>
-               <div className="flex-1 overflow-y-auto p-8 space-y-4 bg-gray-50">
+               <div className="flex-1 overflow-y-auto p-8 space-y-4 bg-gray-50 max-h-[60vh]">
                   {isMessagesLoading ? (
                      <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin" /></div>
                   ) : (messages && Array.isArray(messages)) ? messages.map((msg: any) => (
@@ -233,25 +241,32 @@ export default function GroupManagement() {
                      <div className="h-full flex items-center justify-center text-gray-400">Không có tin nhắn nào.</div>
                   )}
                </div>
-               <div className="p-8 bg-white border-t border-gray-100">
-                  <button onClick={() => setInspectingGroup(null)} className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold">Thoát trình giám sát</button>
+               <div className="p-8 border-t border-gray-100 bg-gray-50/50">
+                  <button onClick={() => setInspectingGroup(null)} className="w-full py-4 bg-gray-900 hover:bg-black text-white rounded-[18px] font-bold transition-all active:scale-95 shadow-xl shadow-black/10 text-sm">Thoát trình giám sát</button>
                </div>
-            </div>
-         </div>
-      )}
+           </>
+         )}
+      </AppleModal>
 
-      {confirmDialog.open && (
-         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[90] p-4">
-            <div className="bg-white p-8 rounded-[32px] max-w-md w-full shadow-2xl animate-in zoom-in">
-               <h3 className="text-xl font-black mb-4">Giải tán nhóm?</h3>
-               <p className="text-gray-500 mb-8">Hành động này sẽ xóa hoàn toàn nhóm và cuộc hội thoại hiện tại.</p>
-               <div className="flex gap-4">
-                  <button onClick={() => setConfirmDialog({ open: false, groupId: null })} className="flex-1 py-3 bg-gray-100 rounded-2xl font-bold">Hủy</button>
-                  <button onClick={() => { if(confirmDialog.groupId) deleteGroupMutation.mutate(confirmDialog.groupId); }} className="flex-1 py-3 bg-rose-600 text-white rounded-2xl font-bold">Giải tán</button>
-               </div>
-            </div>
+      <AppleModal
+         isOpen={confirmDialog.open}
+         onClose={() => setConfirmDialog({ open: false, groupId: null })}
+         width="md"
+      >
+         <div className="p-8">
+             <div className="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-rose-50 text-rose-500">
+                <AlertTriangle className="w-7 h-7" />
+             </div>
+             <div className="text-center space-y-2 mb-8">
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">Giải tán nhóm?</h3>
+                <p className="text-sm font-medium text-gray-500 leading-relaxed">Hành động này sẽ xóa hoàn toàn nhóm và cuộc hội thoại hiện tại.</p>
+             </div>
+             <div className="flex gap-3">
+                <button onClick={() => setConfirmDialog({ open: false, groupId: null })} className="flex-1 py-3.5 font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-[18px] transition-all active:scale-95">Hủy</button>
+                <button onClick={() => { if(confirmDialog.groupId) deleteGroupMutation.mutate(confirmDialog.groupId); }} className="flex-1 py-3.5 bg-rose-600 text-white rounded-[18px] font-bold shadow-xl shadow-rose-500/25 transition-all active:scale-95">Giải tán</button>
+             </div>
          </div>
-      )}
+      </AppleModal>
     </div>
   );
 }
