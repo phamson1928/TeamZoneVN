@@ -65,8 +65,6 @@ export class GamesService {
           select: {
             title: true,
             description: true,
-            minRankLevel: true,
-            maxRankLevel: true,
             requiredPlayers: true,
           },
         },

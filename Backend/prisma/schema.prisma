@@ -9,17 +9,24 @@ datasource db {
 }
 
 model User {
-  id                    String               @id @default(uuid())
-  email                 String               @unique
-  passwordHash          String?
-  username              String               @unique
-  avatarUrl             String?
-  role                  UserRole             @default(USER)
-  status                UserStatus           @default(ACTIVE)
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
-  authProvider          AuthProvider         @default(LOCAL)
-  googleId              String?              @unique
+  id               String          @id @default(uuid())
+  email            String          @unique
+  passwordHash     String?
+  username         String          @unique
+  avatarUrl        String?
+  role             UserRole        @default(USER)
+  status           UserStatus      @default(ACTIVE)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  authProvider     AuthProvider    @default(LOCAL)
+  googleId         String?         @unique
+  warnCount        Int             @default(0)
+  tempBannedUntil  DateTime?
+  moderationLogs   ModerationLog[] @relation("UserLogs")
+  moderatedActions ModerationLog[] @relation("AdminLogs")
+  appeals          Appeal[]        @relation("UserAppeals")
+  resolvedAppeals  Appeal[]        @relation("AppealResolver")
+
   listReceiveFriendship Friendship[]         @relation("FriendFriend")
   listSendFriendship    Friendship[]         @relation("FriendUser")
   groupsLed             Group[]              @relation("GroupLeader")
@@ -89,7 +96,6 @@ model UserGameProfile {
   id        String    @id @default(uuid())
   userId    String
   gameId    String
-  rankLevel RankLevel
   game      Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -102,8 +108,6 @@ model Zone {
   ownerId         String
   title           String
   description     String
-  minRankLevel    RankLevel
-  maxRankLevel    RankLevel
   requiredPlayers Int
   status          ZoneStatus          @default(OPEN)
   createdAt       DateTime            @default(now())
@@ -209,19 +213,22 @@ model Notification {
 }
 
 model Report {
-  id             String           @id @default(uuid())
+  id             String            @id @default(uuid())
   reporterId     String
   targetType     ReportTargetType
   targetId       String
   reason         String
-  status         ReportStatus     @default(OPEN)
-  createdAt      DateTime         @default(now())
+  status         ReportStatus      @default(OPEN)
+  createdAt      DateTime          @default(now())
   resolutionNote String?
   resolvedAt     DateTime?
   resolvedById   String?
-  severity       ReportSeverity   @default(MEDIUM)
-  reporter       User             @relation("ReportReporter", fields: [reporterId], references: [id])
-  resolvedBy     User?            @relation("ReportResolver", fields: [resolvedById], references: [id])
+  severity       ReportSeverity    @default(MEDIUM)
+  action         ModerationAction?
+  moderationLogs ModerationLog[]
+
+  reporter   User  @relation("ReportReporter", fields: [reporterId], references: [id])
+  resolvedBy User? @relation("ReportResolver", fields: [resolvedById], references: [id])
 
   @@index([status])
   @@index([targetType, targetId])
@@ -260,13 +267,12 @@ model QuickMatchQueue {
   id              String    @id @default(uuid())
   userId          String    @unique
   gameId          String
-  rankLevel       RankLevel
   requiredPlayers Int
   createdAt       DateTime  @default(now())
   game            Game      @relation(fields: [gameId], references: [id])
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([gameId, rankLevel])
+  @@index([gameId])
 }
 
 model UserLike {
@@ -305,12 +311,7 @@ enum UserStatus {
   BANNED
 }
 
-enum RankLevel {
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-  PRO
-}
+
 
 enum ZoneStatus {
   OPEN
@@ -388,6 +389,52 @@ enum NotificationType {
   ZONE_INVITE
   QUICK_MATCH_FOUND
   REPORT_RESOLVED
+  ACCOUNT_WARNED
+  ACCOUNT_BANNED
+}
+
+model ModerationLog {
+  id           String           @id @default(uuid())
+  adminId      String
+  targetUserId String
+  reportId     String?
+  action       ModerationAction
+  reason       String
+  createdAt    DateTime         @default(now())
+  tempBanDays  Int?
+  expiresAt    DateTime?
+  admin        User             @relation("AdminLogs", fields: [adminId], references: [id])
+  report       Report?          @relation(fields: [reportId], references: [id])
+  targetUser   User             @relation("UserLogs", fields: [targetUserId], references: [id])
+  appeals      Appeal[]
+}
+
+model Appeal {
+  id              String        @id @default(uuid())
+  userId          String
+  moderationLogId String
+  reason          String
+  status          AppealStatus  @default(PENDING)
+  adminNote       String?
+  createdAt       DateTime      @default(now())
+  resolvedAt      DateTime?
+  resolvedById    String?
+  moderationLog   ModerationLog @relation(fields: [moderationLogId], references: [id])
+  resolvedBy      User?         @relation("AppealResolver", fields: [resolvedById], references: [id])
+  user            User          @relation("UserAppeals", fields: [userId], references: [id])
+}
+
+enum ModerationAction {
+  DISMISSED
+  WARNED
+  TEMP_BANNED
+  BANNED
+}
+
+enum AppealStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum ZoneInviteStatus {

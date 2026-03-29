@@ -26,7 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     // Verify user still exists and is active
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, status: true },
+      select: { id: true, status: true, tempBannedUntil: true },
     });
 
     if (!user) {
@@ -34,7 +34,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
 
     if (user.status === 'BANNED') {
-      throw new UnauthorizedException('User account is banned');
+      throw new UnauthorizedException('Tài khoản của bạn đã bị khóa vĩnh viễn');
+    }
+
+    if (user.tempBannedUntil && user.tempBannedUntil > new Date()) {
+      const timeLeft = Math.ceil((user.tempBannedUntil.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      throw new UnauthorizedException(
+        `Tài khoản của bạn đang bị khóa tạm thời. Còn lại ${timeLeft} ngày.`
+      );
     }
 
     return payload;

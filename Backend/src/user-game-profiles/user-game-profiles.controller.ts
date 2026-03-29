@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   UseGuards,
@@ -17,7 +16,6 @@ import {
 } from '@nestjs/swagger';
 import { UserGameProfilesService } from './user-game-profiles.service';
 import { CreateUserGameProfileDto } from './dto/create-user-game-profile.dto';
-import { UpdateUserGameProfileDto } from './dto/update-user-game-profile.dto';
 import { CurrentUser, JwtAuthGuard } from '../common/index.js';
 
 @ApiTags('User Game Profiles')
@@ -54,18 +52,6 @@ export class UserGameProfilesController {
   @ApiResponse({ status: 404, description: 'Not Found' })
   findOne(@Param('id') id: string) {
     return this.userGameProfilesService.findOne(id);
-  }
-
-  @Patch(':id')
-  @ApiOperation({ summary: 'Cập nhật rank level của hồ sơ game' })
-  @ApiParam({ name: 'id', description: 'Profile ID (UUID)' })
-  @ApiResponse({ status: 200, description: 'Updated' })
-  update(
-    @CurrentUser('sub') userId: string,
-    @Param('id') id: string,
-    @Body() dto: UpdateUserGameProfileDto,
-  ) {
-    return this.userGameProfilesService.update(userId, id, dto);
   }
 
   @Delete(':id')

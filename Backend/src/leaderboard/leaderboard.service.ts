@@ -93,7 +93,7 @@ export class LeaderboardService {
                 username: true,
                 avatarUrl: true,
                 gameProfiles: gameId
-                    ? { where: { gameId }, select: { rankLevel: true, game: { select: { id: true, name: true } } } }
+                    ? { where: { gameId }, select: { game: { select: { id: true, name: true } } } }
                     : false,
             },
         });

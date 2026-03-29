@@ -1,11 +1,10 @@
 import {
+  Injectable,
   ConflictException,
   ForbiddenException,
-  Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateUserGameProfileDto } from './dto/create-user-game-profile.dto';
-import { UpdateUserGameProfileDto } from './dto/update-user-game-profile.dto';
+import { CreateUserGameProfileDto } from './dto/create-user-game-profile.dto.js';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -21,25 +20,25 @@ export class UserGameProfilesService {
       throw new NotFoundException('Game not found');
     }
 
-    try {
-      return await this.prisma.userGameProfile.create({
-        data: {
-          userId,
-          gameId: dto.gameId,
-          rankLevel: dto.rankLevel,
-        },
-        include: {
-          game: {
-            select: { name: true, iconUrl: true },
-          },
-        },
-      });
-    } catch (error) {
-      if (error === 'P2002') {
-        throw new ConflictException('You already have a profile for this game');
-      }
-      throw error;
+    // Check if profile already exists for this game
+    const existing = await this.prisma.userGameProfile.findUnique({
+      where: { userId_gameId: { userId, gameId: dto.gameId } },
+    });
+    if (existing) {
+      throw new ConflictException('You already have a profile for this game');
     }
+
+    return this.prisma.userGameProfile.create({
+      data: {
+        userId,
+        gameId: dto.gameId,
+      },
+      include: {
+        game: {
+          select: { name: true, iconUrl: true },
+        },
+      },
+    });
   }
 
   async findAllByMe(userId: string) {
@@ -66,19 +65,6 @@ export class UserGameProfilesService {
       throw new NotFoundException('User game profile not found');
     }
     return profile;
-  }
-
-  async update(userId: string, id: string, dto: UpdateUserGameProfileDto) {
-    const profile = await this.findOne(id);
-
-    if (profile.userId !== userId) {
-      throw new ForbiddenException('You can only update your own profile');
-    }
-
-    return this.prisma.userGameProfile.update({
-      where: { id },
-      data: { rankLevel: dto.rankLevel },
-    });
   }
 
   async remove(userId: string, id: string) {

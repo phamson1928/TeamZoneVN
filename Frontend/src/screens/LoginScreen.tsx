@@ -115,7 +115,11 @@ export const LoginScreen = ({ navigation }: Props) => {
 
       setAuth(userResponse.data.data, tokens.accessToken, tokens.refreshToken);
     } catch (error: any) {
-      const message = error.response?.data?.message || STRINGS.LOGIN_FAILED;
+      let message: string =
+        error.response?.data?.message || error.message || STRINGS.LOGIN_FAILED;
+      if (error.code === 'ECONNABORTED' || error.message === 'Network Error') {
+        message = STRINGS.API_UNREACHABLE_HINT;
+      }
       Alert.alert(STRINGS.LOGIN_FAILED, Array.isArray(message) ? message[0] : message);
     } finally {
       setLoading(false);

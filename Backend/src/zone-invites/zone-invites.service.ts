@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
+import { GroupsService } from 'src/groups/groups.service';
 import { CreateZoneInviteDto } from './dto/create-zone-invite.dto';
 import { HandleZoneInviteDto } from './dto/handle-zone-invite.dto';
 import { NotificationType, ZoneInviteStatus } from '@prisma/client';
@@ -16,6 +17,7 @@ export class ZoneInvitesService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly notifications: NotificationsService,
+        private readonly groupsService: GroupsService,
     ) { }
 
     async inviteToZone(inviterId: string, zoneId: string, dto: CreateZoneInviteDto) {
@@ -155,6 +157,9 @@ export class ZoneInvitesService {
                 });
             }
         });
+
+        // Trigger tạo group nếu zone đã đủ người (nhất quán với approve thủ công)
+        await this.groupsService.createGroupFromZone(invite.zoneId);
 
         return { message: 'Đã chấp nhận lời mời, bạn đã tham gia zone' };
     }

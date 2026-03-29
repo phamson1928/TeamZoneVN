@@ -298,19 +298,21 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 - [x] `GET /dashboard/charts/zones` - Zones theo game (phân bố)
 - [x] `GET /dashboard/charts/activity` - Hoạt động theo giờ
 
-### 8.4 Advanced Violation Handling (Upcoming) 🚀
-- [ ] **Moderation Actions (Phase A):**
-  - [ ] Schema: Thêm `ModerationAction` enum & `ModerationLog` model
-  - [ ] Backend: Cập nhật `PATCH /reports/:id` với logic chọn action (Warn/Ban/Dismiss)
-  - [ ] Notification: Gửi `ACCOUNT_WARNED` cho người vi phạm khi bị cảnh cáo
-  - [ ] Dashboard: UI tích hợp Action Picker vào Modal xử lý báo cáo
-- [ ] **Auto-Escalation & Temp Ban (Phase B):**
-  - [ ] Schema: Thêm `warnCount` và `tempBannedUntil` cho User
-  - [ ] Logic: Tự động khóa tài khoản tạm thời/vĩnh viễn theo số lần cảnh cáo (1-7-30-Permanent)
-  - [ ] Auth: Cập nhật Guard kiểm tra thời hạn ban tạm
-- [ ] **Appeal System (Phase C):**
-  - [ ] Schema: Thêm `Appeal` model cho việc kháng lệnh
-  - [ ] API: Endpoints gửi và duyệt đơn kháng lệnh
+### 8.4 Advanced Violation Handling ✅ COMPLETED
+
+**Moderation Actions (Phase A):**
+- [x] Schema: Thêm `ModerationAction` enum & `ModerationLog` model
+- [x] Backend: Cập nhật `PATCH /reports/:id` với logic chọn action (Warn/Ban/Dismiss)
+- [x] Notification: Gửi `ACCOUNT_WARNED` cho người vi phạm khi bị cảnh cáo
+- [x] Dashboard: UI tích hợp Action Picker vào Modal xử lý báo cáo
+- [x] Fix: Tự động xác định targetUser chịu trách nhiệm khi báo cáo Zone/Group (vượt qua lỗi 500)
+
+**Auto-Escalation & Temp Ban (Phase B):**
+- [x] Schema: Thêm `warnCount` và `tempBannedUntil` cho User
+- [x] Logic: Tự động khóa tài khoản tạm thời/vĩnh viễn theo số lần cảnh cáo (1-7-30-Permanent)
+- [x] Auth: Cập nhật Guard kiểm tra thời hạn ban tạm (Trả lỗi tiếng Việt + Countdown)
+- [x] Dashboard: Hiển thị Warn count & Ban status trong trang User Management
+- [x] Refactor: Di chuyển quản lý Tags sang Zone Management cho đúng UX 
 
 
 ---

@@ -58,7 +58,7 @@ export class JoinRequestsService {
 
     // Auto-approve: tự động chấp nhận + trigger tạo group nếu đủ người
     if (checkZone.autoApprove) {
-      await this.prisma.zoneJoinRequest.create({
+      const request = await this.prisma.zoneJoinRequest.create({
         data: {
           userId,
           zoneId,
@@ -66,7 +66,14 @@ export class JoinRequestsService {
         },
       });
 
-      await this.groupsService.createGroupFromZone(zoneId);
+      const group = await this.groupsService.createGroupFromZone(zoneId);
+
+      // Gửi notification cho user biết họ được chấp nhận tự động
+      await this.notificationsService.create(userId, {
+        type: NotificationType.REQUEST_APPROVED,
+        title: 'Yêu cầu tham gia đã được chấp nhận tự động',
+        data: { zoneId, requestId: request.id, groupId: group?.id },
+      });
 
       return { message: 'Bạn đã được tự động chấp nhận vào zone' };
     }
@@ -96,7 +103,7 @@ export class JoinRequestsService {
       );
     }
     const requests = await this.prisma.zoneJoinRequest.findMany({
-      where: { zoneId },
+      where: { zoneId, status: 'PENDING' },
       include: {
         user: {
           select: {

@@ -126,6 +126,13 @@ export class AuthService {
       throw new UnauthorizedException('Your account has been banned');
     }
 
+    // Check temporary ban
+    if (user.tempBannedUntil && user.tempBannedUntil > new Date()) {
+      throw new UnauthorizedException(
+        `Your account is temporarily suspended until ${user.tempBannedUntil.toISOString()}`,
+      );
+    }
+
     // Google-only users cannot login with password
     if (!user.passwordHash) {
       throw new UnauthorizedException(

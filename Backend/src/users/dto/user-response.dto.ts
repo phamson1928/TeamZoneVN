@@ -36,6 +36,12 @@ export class UserResponseDto {
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
   createdAt: Date;
 
+  @ApiProperty({ example: 0 })
+  warnCount: number;
+
+  @ApiPropertyOptional({ example: '2024-02-01T00:00:00.000Z' })
+  tempBannedUntil?: Date | null;
+
   @ApiPropertyOptional({ type: UserProfileResponseDto })
   profile?: UserProfileResponseDto | null;
 }

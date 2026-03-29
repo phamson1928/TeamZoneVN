@@ -29,16 +29,23 @@ export class NotificationsService {
   }
 
   async createMany(userIds: string[], createNotificationDto: CreateNotificationDto) {
-    const results: unknown[] = [];
-    for (const userId of userIds) {
-      const notification = await this.prisma.notification.create({
-        data: { ...createNotificationDto, userId },
-      });
-      results.push(notification);
-      const unreadCount = await this.getUnreadCount(userId);
-      this.chatGateway.emitNotificationToUser(userId, { notification, unreadCount });
-    }
-    return { count: results.length };
+    // 1 query duy nhất thay vì N queries tuần tự
+    const notifications = await this.prisma.notification.createManyAndReturn({
+      data: userIds.map((userId) => ({ ...createNotificationDto, userId })),
+    });
+
+    // Lấy unread count và emit WS song song cho tất cả users
+    await Promise.all(
+      notifications.map(async (notification) => {
+        const unreadCount = await this.getUnreadCount(notification.userId);
+        this.chatGateway.emitNotificationToUser(notification.userId, {
+          notification,
+          unreadCount,
+        });
+      }),
+    );
+
+    return { count: notifications.length };
   }
 
   async findForUser(page: number, limit: number, userId: string) {

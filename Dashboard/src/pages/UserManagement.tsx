@@ -16,7 +16,8 @@ import {
   ChevronDown,
   Activity,
   Heart,
-  Clock
+  Clock,
+  ShieldAlert
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
@@ -33,6 +34,8 @@ interface DashboardUser {
   avatarUrl?: string;
   role: 'USER' | 'ADMIN';
   status: 'ACTIVE' | 'BANNED';
+  warnCount: number;
+  tempBannedUntil?: string | null;
   createdAt: string;
   profile?: {
     bio?: string;
@@ -243,9 +246,21 @@ export default function UserManagement() {
                       </td>
                       <td className="px-6 py-4 text-sm">{user.email}</td>
                       <td className="px-6 py-4">
-                        <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-md ${user.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                          {user.status}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className={cn(
+                            "text-[10px] w-fit font-black uppercase px-2 py-1 rounded-md",
+                            user.status === 'ACTIVE' 
+                              ? (user.tempBannedUntil && new Date(user.tempBannedUntil) > new Date() ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600')
+                              : 'bg-rose-50 text-rose-600'
+                          )}>
+                            {user.status === 'ACTIVE' 
+                              ? (user.tempBannedUntil && new Date(user.tempBannedUntil) > new Date() ? 'TEMP BANNED' : 'ACTIVE')
+                              : 'BANNED'}
+                          </span>
+                          {user.warnCount > 0 && (
+                             <span className="text-[9px] font-bold text-gray-400 italic">Warns: {user.warnCount}</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-right">
                          <div className="flex justify-end gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
@@ -411,6 +426,39 @@ export default function UserManagement() {
                                  <p className="text-sm font-bold text-gray-900 leading-none mt-1">{userDetails?.profile?.lastActiveAt ? new Date(userDetails.profile.lastActiveAt).toLocaleDateString() : 'Không rõ'}</p>
                               </div>
                            </div>
+
+                           <div className={cn(
+                              "p-5 border rounded-[20px] shadow-sm flex items-center gap-4 transition-colors",
+                              (userDetails?.warnCount || 0) > 0 ? "bg-amber-50/30 border-amber-100" : "bg-white border-gray-100"
+                           )}>
+                              <div className={cn(
+                                 "p-3 rounded-xl",
+                                 (userDetails?.warnCount || 0) > 0 ? "bg-amber-100 text-amber-600 shadow-lg shadow-amber-100" : "bg-gray-50 text-gray-400"
+                              )}>
+                                 <ShieldAlert className="w-5 h-5" />
+                              </div>
+                              <div>
+                                 <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Số lần vi phạm</p>
+                                 <p className={cn(
+                                    "text-xl font-black leading-none mt-1",
+                                    (userDetails?.warnCount || 0) > 0 ? "text-amber-700" : "text-gray-900"
+                                 )}>{userDetails?.warnCount || 0}</p>
+                              </div>
+                           </div>
+                           
+                           {(userDetails?.tempBannedUntil && new Date(userDetails.tempBannedUntil) > new Date()) && (
+                              <div className="col-span-2 p-5 bg-rose-50 border border-rose-100 rounded-[24px] shadow-sm flex items-center gap-4 animate-in fade-in zoom-in duration-500">
+                                 <div className="p-3 bg-rose-500 rounded-xl text-white shadow-lg shadow-rose-200">
+                                    <Ban className="w-5 h-5" />
+                                 </div>
+                                 <div className="flex-1">
+                                    <p className="text-[10px] font-black uppercase text-rose-500 tracking-widest">Đang bị khóa tài khoản tạm thời</p>
+                                    <p className="text-sm font-bold text-rose-900 mt-1">
+                                       Dự kiến mở khóa: <span className="font-black text-rose-600">{new Date(userDetails.tempBannedUntil).toLocaleDateString()}</span>
+                                    </p>
+                                 </div>
+                              </div>
+                           )}
                        </div>
                     )}
                  </div>

@@ -26,6 +26,9 @@ export const STRINGS = {
   SHORT_PASSWORD: 'Mật khẩu phải có ít nhất 6 ký tự',
   REGISTRATION_FAILED: 'Đăng ký thất bại',
   LOGIN_FAILED: 'Đăng nhập thất bại',
+  /** Khi hết timeout hoặc không tới được server */
+  API_UNREACHABLE_HINT:
+    'Không kết nối được máy chủ. Bật Backend (port 3000), kiểm tra WiFi/firewall. Emulator Android: 10.0.2.2; máy thật: tạo file .env với EXPO_PUBLIC_API_URL=http://IP máy tính:3000',
   ERROR_TITLE: 'Lỗi',
 
   // Home / Lobby

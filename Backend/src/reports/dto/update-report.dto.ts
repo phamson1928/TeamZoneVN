@@ -1,7 +1,17 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import { ModerationAction } from '@prisma/client';
 
 export class UpdateReportDto {
+    @ApiPropertyOptional({
+        description: 'Hành động xử lý báo cáo',
+        enum: ModerationAction,
+        example: ModerationAction.WARNED,
+    })
+    @IsOptional()
+    @IsEnum(ModerationAction, { message: 'Hành động xử lý không hợp lệ' })
+    action?: ModerationAction;
+
     @ApiPropertyOptional({
         description: 'Ghi chú khi resolve report (tối đa 500 ký tự)',
         maxLength: 500,

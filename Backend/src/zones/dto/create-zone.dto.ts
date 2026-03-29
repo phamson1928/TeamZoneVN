@@ -1,4 +1,4 @@
-import { RankLevel, ContactMethodType } from '@prisma/client';
+import { ContactMethodType } from '@prisma/client';
 import {
   IsBoolean,
   IsEnum,
@@ -47,14 +47,6 @@ export class CreateZoneDto {
   @ValidateNested({ each: true })
   @Type(() => ZoneContactDto)
   contacts?: ZoneContactDto[];
-
-  @ApiProperty({ enum: RankLevel, example: 'BEGINNER' })
-  @IsEnum(RankLevel)
-  minRankLevel: RankLevel = 'BEGINNER';
-
-  @ApiProperty({ enum: RankLevel, example: 'PRO' })
-  @IsEnum(RankLevel)
-  maxRankLevel: RankLevel = 'PRO';
 
   @ApiProperty({ example: 2 })
   @IsNotEmpty()

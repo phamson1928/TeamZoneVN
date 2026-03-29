@@ -1,4 +1,4 @@
-import { PrismaClient, Platform, RankLevel, GroupMemberRole, ZoneStatus, ReportSeverity } from '@prisma/client';
+import { PrismaClient, Platform, GroupMemberRole, ZoneStatus, ReportSeverity } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -26,6 +26,8 @@ async function main() {
   await prisma.refreshToken.deleteMany({ where: myUserExists ? { userId: { not: MY_USER_ID } } : {} });
   await prisma.passwordResetToken.deleteMany();
   await prisma.notification.deleteMany();
+  await prisma.appeal.deleteMany();
+  await prisma.moderationLog.deleteMany();
   await prisma.report.deleteMany();
   await prisma.friendship.deleteMany();
   await prisma.userLike.deleteMany();
@@ -43,9 +45,10 @@ async function main() {
     { email: 'admin@teamzonevn.com', username: 'Admin_Master', role: 'ADMIN', bio: 'Hệ thống TeamZoneVN', style: 'Competitive' },
     { email: 'son.pham@example.com', username: 'SonGoku_VN', role: 'USER', bio: 'Main Mid, tìm team leo Rank Cao Thủ', style: 'Aggressive' },
     { email: 'linh.nguyen@example.com', username: 'Linh_Xinh_Genshin', role: 'USER', bio: 'Chỉ thích đi ngắm cảnh và đánh Boss', style: 'Casual' },
-    { email: 'tuan.tran@example.com', username: 'Tuan_Fps_God', role: 'USER', bio: 'Bắn mọi thể loại FPS', style: 'Competitive' },
+    { email: 'tuan.tran@example.com', username: 'Tuan_Fps_God', role: 'USER', bio: 'Bắn mọi thể loại FPS', style: 'Competitive', warnCount: 1 },
     { email: 'huong.le@example.com', username: 'Huong_Support', role: 'USER', bio: 'Main SP, không toxic, chơi vui là chính', style: 'Supportive' },
-    { email: 'duy.nguyen@example.com', username: 'Duy_Solo_Top', role: 'USER', bio: 'Thử thách 100 ngày leo rank', style: 'Hardcore' },
+    { email: 'duy.nguyen@example.com', username: 'Duy_Solo_Top', role: 'USER', bio: 'Thử thách 100 ngày leo rank', style: 'Hardcore', warnCount: 3, tempBannedUntil: new Date(Date.now() + 86400000 * 7) },
+    { email: 'toxic.player@example.com', username: 'Toxic_Yashuo', role: 'USER', bio: 'Gánh team hoặc feed', style: 'Aggressive', warnCount: 5, status: 'BANNED' },
   ];
 
   for (const u of userData) {
@@ -57,6 +60,9 @@ async function main() {
         username: u.username,
         passwordHash,
         role: u.role as any,
+        status: (u.status as any) || 'ACTIVE',
+        warnCount: u.warnCount || 0,
+        tempBannedUntil: u.tempBannedUntil || null,
         profile: {
           create: {
             bio: u.bio,
@@ -111,15 +117,15 @@ async function main() {
   console.log('📊 Creating game profiles...');
   await prisma.userGameProfile.createMany({
     data: [
-      { userId: users['SonGoku_VN'].id, gameId: games['Valorant'].id, rankLevel: RankLevel.ADVANCED },
-      { userId: users['SonGoku_VN'].id, gameId: games['League of Legends'].id, rankLevel: RankLevel.PRO },
-      { userId: users['Linh_Xinh_Genshin'].id, gameId: games['Genshin Impact'].id, rankLevel: RankLevel.INTERMEDIATE },
-      { userId: users['Tuan_Fps_God'].id, gameId: games['Valorant'].id, rankLevel: RankLevel.PRO },
-      { userId: users['Tuan_Fps_God'].id, gameId: games['CS2'].id, rankLevel: RankLevel.ADVANCED },
-      { userId: users['Huong_Support'].id, gameId: games['Wild Rift'].id, rankLevel: RankLevel.INTERMEDIATE },
-      { userId: users['Huong_Support'].id, gameId: games['Arena of Valor'].id, rankLevel: RankLevel.ADVANCED },
-      { userId: users['Duy_Solo_Top'].id, gameId: games['League of Legends'].id, rankLevel: RankLevel.ADVANCED },
-      { userId: users['Duy_Solo_Top'].id, gameId: games['Free Fire'].id, rankLevel: RankLevel.INTERMEDIATE },
+      { userId: users['SonGoku_VN'].id, gameId: games['Valorant'].id },
+      { userId: users['SonGoku_VN'].id, gameId: games['League of Legends'].id },
+      { userId: users['Linh_Xinh_Genshin'].id, gameId: games['Genshin Impact'].id },
+      { userId: users['Tuan_Fps_God'].id, gameId: games['Valorant'].id },
+      { userId: users['Tuan_Fps_God'].id, gameId: games['CS2'].id },
+      { userId: users['Huong_Support'].id, gameId: games['Wild Rift'].id },
+      { userId: users['Huong_Support'].id, gameId: games['Arena of Valor'].id },
+      { userId: users['Duy_Solo_Top'].id, gameId: games['League of Legends'].id },
+      { userId: users['Duy_Solo_Top'].id, gameId: games['Free Fire'].id },
     ]
   });
 
@@ -129,63 +135,63 @@ async function main() {
     {
       owner: 'SonGoku_VN', game: 'Valorant', title: 'Leo Rank Ascendant/Immortal',
       desc: 'Cần Duelist hoặc Sentinel cứng, có mic Discord giao tiếp tốt. Chơi nghiêm túc không toxic.',
-      min: RankLevel.ADVANCED, max: RankLevel.PRO, players: 2,
+      players: 2,
       tags: ['Leo Rank', 'Có Mic', 'Hardcore'],
       contacts: [{ type: 'DISCORD', value: 'SonGoku#1234' }]
     },
     {
       owner: 'Linh_Xinh_Genshin', game: 'Genshin Impact', title: 'Farm Thánh Di Vật - Chill',
       desc: 'Cần tìm bạn đi coop farm bí cảnh, mình hụt damage quá. Newbie friendly!',
-      min: RankLevel.BEGINNER, max: RankLevel.ADVANCED, players: 3,
+      players: 3,
       tags: ['Chill', 'Người Mới', 'Vui Vẻ'],
       contacts: [{ type: 'INGAME', value: '812345678' }]
     },
     {
       owner: 'Tuan_Fps_God', game: 'CS2', title: 'Premier Mode 15k+ Elo',
       desc: 'Tìm 3 ông bắn Premier, hiểu map, smoke chuẩn. Vào việc luôn.',
-      min: RankLevel.ADVANCED, max: RankLevel.PRO, players: 3,
+      players: 3,
       tags: ['Leo Rank', 'Pro', 'Có Mic'],
       contacts: [{ type: 'DISCORD', value: 'TuanFPS#9999' }]
     },
     {
       owner: 'Huong_Support', game: 'Wild Rift', title: 'Tìm AD leo rank Vàng',
       desc: 'Mình main Seraphine/Lulu, tìm AD bắn chắc tay. Chơi buổi tối hàng ngày nhé.',
-      min: RankLevel.BEGINNER, max: RankLevel.INTERMEDIATE, players: 1,
+      players: 1,
       tags: ['Duo', 'Vui Vẻ', 'Chơi Đêm'],
       contacts: [{ type: 'INGAME', value: 'HuongCute#WR' }]
     },
     {
       owner: 'Huong_Support', game: 'Arena of Valor', title: 'Leo Rank Cao Thủ - Cần Rừng',
       desc: 'Đang ở rank Tinh Anh, tìm rừng cứng gánh team leo Cao Thủ. Ko toxic nhé.',
-      min: RankLevel.INTERMEDIATE, max: RankLevel.ADVANCED, players: 1,
+      players: 1,
       tags: ['Leo Rank', 'Có Mic', 'Vui Vẻ'],
       contacts: [{ type: 'INGAME', value: 'HuongSupport' }]
     },
     {
       owner: 'Duy_Solo_Top', game: 'League of Legends', title: 'Custom 5vs5 - Net Cỏ',
       desc: 'Team đang thiếu 1 người đi rừng để làm kèo custom với hội bạn. Ai rảnh vào giao lưu!',
-      min: RankLevel.INTERMEDIATE, max: RankLevel.ADVANCED, players: 1,
+      players: 1,
       tags: ['Giao Lưu', 'Custom', 'Có Mic'],
       contacts: [{ type: 'DISCORD', value: 'DuyTop#111' }]
     },
     {
       owner: 'Duy_Solo_Top', game: 'Free Fire', title: 'Squad Sinh Tồn - Tối Nay',
       desc: 'Tìm 2 ông bắn Squad sinh tồn vui vẻ, mình bắn giải trí thôi.',
-      min: RankLevel.BEGINNER, max: RankLevel.INTERMEDIATE, players: 2,
+      players: 2,
       tags: ['Vui Vẻ', 'Chill'],
       contacts: [{ type: 'INGAME', value: 'DuyFF' }]
     },
     {
       owner: 'SonGoku_VN', game: 'League of Legends', title: 'Clash Weekend - Tìm Team',
       desc: 'Cần tìm team cho giải Clash cuối tuần này. Mình đánh được mọi lane nhưng tốt nhất là Mid.',
-      min: RankLevel.ADVANCED, max: RankLevel.PRO, players: 4,
+      players: 4,
       tags: ['Tournament', 'Leo Rank', 'Hardcore'],
       contacts: [{ type: 'DISCORD', value: 'SonGoku#1234' }]
     },
     {
       owner: 'Tuan_Fps_God', game: 'Valorant', title: 'Squad 5 bắn Unrated vui vẻ',
       desc: 'Bắn khuya cho vui, không quan trọng thắng thua, chủ yếu chém gió.',
-      min: RankLevel.BEGINNER, max: RankLevel.PRO, players: 4,
+      players: 4,
       tags: ['Vui Vẻ', 'Chill', 'Chơi Đêm'],
       contacts: [{ type: 'DISCORD', value: 'TuanFPS#9999' }]
     }
@@ -199,8 +205,6 @@ async function main() {
         gameId: games[z.game].id,
         title: z.title,
         description: z.desc,
-        minRankLevel: z.min,
-        maxRankLevel: z.max,
         requiredPlayers: z.players,
         status: ZoneStatus.OPEN,
         tags: {
@@ -319,7 +323,6 @@ async function main() {
     data: {
       userId: users['Duy_Solo_Top'].id,
       gameId: games['League of Legends'].id,
-      rankLevel: RankLevel.ADVANCED,
       requiredPlayers: 5
     }
   });
@@ -351,6 +354,48 @@ async function main() {
       }
     ]
   });
+
+  // 11. Create Moderation Logs & Appeals
+  console.log('⚖️ Creating moderation logs & appeals...');
+  const modLog1 = await prisma.moderationLog.create({
+    data: {
+      adminId: users['Admin_Master'].id,
+      targetUserId: users['Duy_Solo_Top'].id,
+      action: 'TEMP_BANNED',
+      reason: 'Cố tình feed trong 3 trận liên tiếp, đã bị cảnh cáo nhiều lần.',
+      tempBanDays: 7,
+    }
+  });
+
+  const modLog2 = await prisma.moderationLog.create({
+    data: {
+      adminId: users['Admin_Master'].id,
+      targetUserId: users['Toxic_Yashuo'].id,
+      action: 'BANNED',
+      reason: 'Sử dụng phần mềm thứ ba (hack/cheat) trong game Valorant.',
+    }
+  });
+
+  await prisma.appeal.createMany({
+    data: [
+      {
+        userId: users['Duy_Solo_Top'].id,
+        moderationLogId: modLog1.id,
+        reason: 'Hôm qua mạng nhà em bị lag giật chứ em không cố tình feed, admin xem xét lại gỡ ban giúp em với!',
+        status: 'PENDING'
+      },
+      {
+        userId: users['Toxic_Yashuo'].id,
+        moderationLogId: modLog2.id,
+        reason: 'Máy ngoài net bị cài keylogger em không biết gì hết.',
+        status: 'REJECTED',
+        adminNote: 'Log hệ thống ghi nhận chính xác phần mềm hack được kích hoạt chủ động.',
+        resolvedAt: new Date(),
+        resolvedById: users['Admin_Master'].id
+      }
+    ]
+  });
+
 
   console.log('\n🚀 SEEDING COMPLETED SUCCESSFULLY!');
   console.log('-----------------------------------');

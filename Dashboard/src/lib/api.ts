@@ -53,7 +53,7 @@ export const reportApi = {
     return apiClient.get(`/reports${queryString}`) as any;
   },
   getById: (id: string) => apiClient.get(`/reports/${id}`) as any,
-  resolve: (id: string, data: { resolutionNote: string }) => 
+  resolve: (id: string, data: { action?: string; resolutionNote: string }) => 
     apiClient.patch(`/reports/${id}`, data) as any,
 };
 

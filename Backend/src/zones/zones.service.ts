@@ -9,7 +9,6 @@ import { UpdateZoneDto } from './dto/update-zone.dto.js';
 import { SearchZonesDto, ZoneSortBy } from './dto/search-zones.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma, ContactMethodType } from '@prisma/client';
-import type { RankLevel } from '@prisma/client';
 
 @Injectable()
 export class ZonesService {
@@ -18,13 +17,13 @@ export class ZonesService {
   async create(ownerId: string, createZoneDto: CreateZoneDto) {
     const { tagIds, contacts, ...zoneData } = createZoneDto;
 
-    // Kiểm tra giới hạn tạo zone
+    // Kiểm tra giới hạn tạo zone – chỉ đếm zone đang OPEN hoặc FULL, không đếm zone đã CLOSED
     const zoneCount = await this.prisma.zone.count({
-      where: { ownerId },
+      where: { ownerId, status: { in: ['OPEN', 'FULL'] } },
     });
     if (zoneCount >= 4) {
       throw new BadRequestException(
-        'Bạn đã đạt giới hạn tạo zone (tối đa 4 zone)',
+        'Bạn đã đạt giới hạn tạo zone (tối đa 4 zone đang hoạt động)',
       );
     }
 
@@ -36,16 +35,7 @@ export class ZonesService {
       throw new BadRequestException('Game không tồn tại');
     }
 
-    // Kiểm tra rank level logic
-    const rankOrder = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'PRO'];
-    if (
-      rankOrder.indexOf(zoneData.minRankLevel) >
-      rankOrder.indexOf(zoneData.maxRankLevel)
-    ) {
-      throw new BadRequestException(
-        'Rank tối thiểu không thể lớn hơn rank tối đa',
-      );
-    }
+
 
     // Tạo zone + tags + contacts trong transaction để tránh partial data
     const zone = await this.prisma.$transaction(async (tx) => {
@@ -165,7 +155,7 @@ export class ZonesService {
           },
           _count: {
             select: {
-              joinRequests: true,
+              joinRequests: { where: { status: 'APPROVED' } },
             },
           },
         },
@@ -203,7 +193,7 @@ export class ZonesService {
         },
         _count: {
           select: {
-            joinRequests: true,
+            joinRequests: { where: { status: 'APPROVED' } },
           },
         },
       },
@@ -391,17 +381,9 @@ export class ZonesService {
       throw new ForbiddenException('Bạn không có quyền sửa zone này');
     }
 
-    // Kiểm tra rank level logic trước transaction
-    if (Object.keys(zoneData).length > 0) {
-      const minRank = zoneData.minRankLevel || zone.minRankLevel;
-      const maxRank = zoneData.maxRankLevel || zone.maxRankLevel;
-      const rankOrder = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'PRO'];
-
-      if (rankOrder.indexOf(minRank) > rankOrder.indexOf(maxRank)) {
-        throw new BadRequestException(
-          'Rank tối thiểu không thể lớn hơn rank tối đa',
-        );
-      }
+    // Không cho phép sửa zone đã đóng
+    if (zone.status === 'CLOSED') {
+      throw new BadRequestException('Không thể chỉnh sửa zone đã đóng');
     }
 
     // Cập nhật zone + tags + contacts trong transaction để tránh partial data
@@ -514,18 +496,29 @@ export class ZonesService {
   }
 
   async getSuggestedZones(userId: string, limit = 10) {
-    const RANK_ORDER = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'PRO'];
-
-    // Lấy danh sách game profile của user để biết game và rank
+    // Lấy danh sách game profile của user để biết game yêu thích
     const userGameProfiles = await this.prisma.userGameProfile.findMany({
       where: { userId },
-      select: { gameId: true, rankLevel: true },
+      select: { gameId: true },
     });
+
+    // Loại trừ zone user đã có request (mọi status)
+    const userRequests = await this.prisma.zoneJoinRequest.findMany({
+      where: { userId },
+      select: { zoneId: true },
+    });
+    const excludeZoneIds = userRequests.map((r) => r.zoneId);
+
+    const baseWhere = {
+      status: 'OPEN' as const,
+      id: { notIn: excludeZoneIds },
+      ownerId: { not: userId },
+    };
 
     if (userGameProfiles.length === 0) {
       // Fallback: trả về zones mới nhất đang OPEN
       return this.prisma.zone.findMany({
-        where: { status: 'OPEN' },
+        where: baseWhere,
         orderBy: { createdAt: 'desc' },
         take: limit,
         include: {
@@ -537,30 +530,13 @@ export class ZonesService {
       });
     }
 
-    // Loại trừ zone user đã join hoặc đã rejected
-    const userRequests = await this.prisma.zoneJoinRequest.findMany({
-      where: { userId },
-      select: { zoneId: true },
-    });
-    const excludeZoneIds = userRequests.map((r) => r.zoneId);
+    // Ưu tiên zones cùng game với user, không lọc theo trình độ
+    const preferredGameIds = userGameProfiles.map((p) => p.gameId);
 
-    // Build OR conditions: mỗi game profile → các zone cùng game + rank tương thích
-    const orConditions = userGameProfiles.map((profile) => {
-      const rankIdx = RANK_ORDER.indexOf(profile.rankLevel);
-      const compatibleRanks = RANK_ORDER.filter((_, i) => Math.abs(i - rankIdx) <= 1) as RankLevel[];
-      return {
-        gameId: profile.gameId,
-        minRankLevel: { in: compatibleRanks },
-        maxRankLevel: { in: compatibleRanks },
-      };
-    });
-
-    const zones = await this.prisma.zone.findMany({
+    return this.prisma.zone.findMany({
       where: {
-        status: 'OPEN',
-        id: { notIn: excludeZoneIds },
-        ownerId: { not: userId },
-        OR: orConditions,
+        ...baseWhere,
+        gameId: { in: preferredGameIds },
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -571,7 +547,5 @@ export class ZonesService {
         _count: { select: { joinRequests: { where: { status: 'APPROVED' } } } },
       },
     });
-
-    return zones;
   }
 }

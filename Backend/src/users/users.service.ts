@@ -275,19 +275,14 @@ export class UsersService {
       throw new BadRequestException('You cannot delete yourself');
     }
 
-    const deletedUser = await this.prisma.user.update({
+    await this.prisma.user.delete({
       where: { id: userId },
-      data: {
-        status: 'BANNED',
-        email: `deleted_${userId}@deleted.com`,
-        username: `deleted_${userId}`,
-      },
     });
 
     return {
       success: true,
       message: 'User has been deleted successfully',
-      data: { id: deletedUser.id },
+      data: { id: userId },
     };
   }
 
@@ -317,6 +312,8 @@ export class UsersService {
     avatarUrl: string | null;
     role: string;
     status: string;
+    warnCount: number;
+    tempBannedUntil: Date | null;
     createdAt: Date;
     profile?: {
       bio: string | null;
@@ -332,6 +329,8 @@ export class UsersService {
       avatarUrl: user.avatarUrl,
       role: user.role,
       status: user.status,
+      warnCount: user.warnCount,
+      tempBannedUntil: user.tempBannedUntil,
       createdAt: user.createdAt,
       profile: user.profile
         ? {

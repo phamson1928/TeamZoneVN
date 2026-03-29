@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RankLevel } from '@prisma/client';
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsUUID } from 'class-validator';
 
+// UpdateUserGameProfileDto: không còn trường nào để cập nhật ngoài gameId
+// Giữ file lại để không break import, nhưng thực tế endpoint update có thể bị loại bỏ
 export class UpdateUserGameProfileDto {
-  @ApiProperty({ enum: RankLevel, example: RankLevel.INTERMEDIATE })
-  @IsEnum(RankLevel)
+  @ApiProperty({ example: 'game-uuid-here' })
+  @IsUUID()
   @IsNotEmpty()
-  rankLevel: RankLevel;
+  gameId: string;
 }

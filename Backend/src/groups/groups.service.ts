@@ -111,8 +111,6 @@ export class GroupsService {
             title: true,
             description: true,
             status: true,
-            minRankLevel: true,
-            maxRankLevel: true,
           },
         },
         game: { select: { id: true, name: true, iconUrl: true } },
@@ -265,9 +263,10 @@ export class GroupsService {
       where: { groupId_userId: { groupId, userId: targetUserId } },
     });
 
-    await this.notificationsService.create(group.leaderId, {
+    // Notify người bị kick (không phải leader)
+    await this.notificationsService.create(targetUserId, {
       type: NotificationType.MEMBER_LEFT,
-      title: 'Có thành viên rời group',
+      title: 'Bạn đã bị kick khỏi group',
       data: { groupId },
     });
 
