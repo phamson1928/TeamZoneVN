@@ -1,32 +1,50 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   ScrollView,
   TouchableOpacity,
-  Alert,
-  ActivityIndicator
+  ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Edit2, Trash2, Gamepad2, Users, Star, Trophy, MapPin, Settings, LogOut, Zap, UserPlus } from 'lucide-react-native';
+import {
+  Edit2,
+  Trash2,
+  Gamepad2,
+  Users,
+  Heart,
+  Trophy,
+  MapPin,
+  Settings,
+  LogOut,
+  Zap,
+  UserPlus,
+} from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Container } from '../components/Container';
 import { useAuthStore } from '../store/useAuthStore';
-import { theme, getBorderColorById } from '../theme';
+import { theme } from '../theme';
 import { Button } from '../components/Button';
+import { ThemedDialog } from '../components/ThemedDialog';
+import type { ThemedDialogVariant } from '../components/ThemedDialog';
 import { STRINGS } from '../constants/strings';
 import { apiClient } from '../api/client';
-import { UserGameProfile, RankLevel } from '../types';
-import { RANK_COLORS, getRankDisplay } from '../utils/rank';
+import { UserGameProfile } from '../types';
 
 export const ProfileScreen = () => {
   const navigation = useNavigation();
   const { user, logout } = useAuthStore();
   const queryClient = useQueryClient();
+  const [notice, setNotice] = useState<{
+    title: string;
+    message: string;
+    variant: ThemedDialogVariant;
+  } | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const { data: gameProfiles, isLoading } = useQuery({
     queryKey: ['user-game-profiles'],
@@ -36,28 +54,76 @@ export const ProfileScreen = () => {
     },
   });
 
+  const { data: friendsTotal } = useQuery({
+    queryKey: ['friends', 'count'],
+    queryFn: async () => {
+      const res = await apiClient.get('/friends?limit=1&page=1');
+      return res.data.data.meta?.total ?? 0;
+    },
+    enabled: !!user,
+  });
+
+  const { data: mePayload } = useQuery({
+    queryKey: ['users', 'me'],
+    queryFn: async () => {
+      const res = await apiClient.get('/users/me');
+      return res.data.data as { likesReceived?: number };
+    },
+    enabled: !!user,
+  });
+
   const deleteProfileMutation = useMutation({
     mutationFn: async (id: string) => {
       await apiClient.delete(`/user-game-profiles/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-game-profiles'] });
-      Alert.alert('Thành công', 'Đã xóa hồ sơ game');
+      setNotice({
+        title: 'Thành công',
+        message: 'Đã xóa hồ sơ game.',
+        variant: 'success',
+      });
     },
     onError: () => {
-      Alert.alert('Lỗi', 'Không thể xóa hồ sơ game');
+      setNotice({
+        title: 'Lỗi',
+        message: 'Không thể xóa hồ sơ game.',
+        variant: 'error',
+      });
     },
   });
 
   const handleDelete = (id: string) => {
-    Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa hồ sơ game này?', [
-      { text: 'Hủy', style: 'cancel' },
-      { text: 'Xóa', style: 'destructive', onPress: () => deleteProfileMutation.mutate(id) },
-    ]);
+    setConfirmDeleteId(id);
   };
 
   return (
     <Container>
+      <ThemedDialog
+        visible={notice !== null}
+        title={notice?.title ?? ''}
+        message={notice?.message ?? ''}
+        variant={notice?.variant ?? 'info'}
+        primaryLabel="Đóng"
+        onPrimary={() => setNotice(null)}
+        onBackdrop={() => setNotice(null)}
+      />
+      <ThemedDialog
+        visible={confirmDeleteId !== null}
+        title="Xác nhận xóa"
+        message="Bạn có chắc muốn xóa hồ sơ game này?"
+        variant="info"
+        secondaryLabel="Hủy"
+        onSecondary={() => setConfirmDeleteId(null)}
+        onBackdrop={() => setConfirmDeleteId(null)}
+        primaryLabel="Xóa"
+        primaryDestructive
+        onPrimary={() => {
+          if (confirmDeleteId) deleteProfileMutation.mutate(confirmDeleteId);
+          setConfirmDeleteId(null);
+        }}
+      />
+
       {/* Top Bar */}
       <View style={styles.topBar}>
         <View style={styles.headerTitleContainer}>
@@ -72,7 +138,10 @@ export const ProfileScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Hero Card */}
         <View style={styles.heroCard}>
           <LinearGradient
@@ -83,13 +152,24 @@ export const ProfileScreen = () => {
           <View style={styles.avatarSection}>
             <View style={styles.avatarWrapper}>
               {user?.avatarUrl ? (
-                <Image source={{ uri: user.avatarUrl }} style={styles.avatar} contentFit="cover" transition={500} cachePolicy="disk" />
+                <Image
+                  source={{ uri: user.avatarUrl }}
+                  style={styles.avatar}
+                  contentFit="cover"
+                  transition={500}
+                  cachePolicy="disk"
+                />
               ) : (
-                <LinearGradient colors={['#2563FF', '#7C3AED']} style={styles.avatarPlaceholder}>
+                <View
+                  style={[
+                    styles.avatarPlaceholder,
+                    { backgroundColor: theme.colors.buttonSolidPrimary },
+                  ]}
+                >
                   <Text style={styles.avatarInitial}>
                     {user?.username?.charAt(0).toUpperCase()}
                   </Text>
-                </LinearGradient>
+                </View>
               )}
               <View style={styles.onlineBadge} />
             </View>
@@ -99,7 +179,9 @@ export const ProfileScreen = () => {
               <View style={styles.roleBadge}>
                 <Zap size={10} color="#F59E0B" fill="#F59E0B" />
                 <Text style={styles.roleText}>
-                  {user?.role === 'ADMIN' ? STRINGS.ROLE_ADMIN : STRINGS.ROLE_USER}
+                  {user?.role === 'ADMIN'
+                    ? STRINGS.ROLE_ADMIN
+                    : STRINGS.ROLE_USER}
                 </Text>
               </View>
               <View style={styles.playStyleBadge}>
@@ -120,9 +202,24 @@ export const ProfileScreen = () => {
         {/* Stats Row */}
         <View style={styles.statsRow}>
           {[
-            { icon: Trophy, color: theme.colors.primary, value: gameProfiles?.length || 0, label: 'Games' },
-            { icon: Users, color: '#22C55E', value: 142, label: 'Bạn bè' },
-            { icon: Star, color: '#F59E0B', value: '4.9', label: 'Rating' },
+            {
+              icon: Trophy,
+              color: theme.colors.primary,
+              value: gameProfiles?.length || 0,
+              label: 'Games',
+            },
+            {
+              icon: Users,
+              color: '#22C55E',
+              value: friendsTotal ?? 0,
+              label: 'Bạn bè',
+            },
+            {
+              icon: Heart,
+              color: '#EF4444',
+              value: mePayload?.likesReceived ?? 0,
+              label: 'Lượt tim',
+            },
           ].map((stat, idx) => (
             <View key={idx} style={styles.statCard}>
               <LinearGradient
@@ -144,30 +241,34 @@ export const ProfileScreen = () => {
             <Gamepad2 size={18} color={theme.colors.primary} />
             <Text style={styles.sectionTitle}>GAME ĐÃ CHƠI</Text>
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate('AddGameProfile' as never)}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('AddGameProfile' as never)}
+          >
             <Text style={styles.addButton}>+ Thêm Game</Text>
           </TouchableOpacity>
         </View>
 
         {isLoading ? (
-          <ActivityIndicator color={theme.colors.primary} style={{ marginVertical: 24 }} />
+          <ActivityIndicator
+            color={theme.colors.primary}
+            style={{ marginVertical: 24 }}
+          />
         ) : gameProfiles?.length > 0 ? (
           gameProfiles.map((profile: UserGameProfile) => {
-            const borderColor = getBorderColorById(profile.id);
             return (
               <View key={profile.id} style={styles.gameProfileCard}>
-                <View style={[styles.gameCardAccent, { backgroundColor: borderColor }]} />
                 <Image
                   source={{ uri: profile.game.iconUrl }}
                   style={styles.gameProfileIcon}
-                  contentFit="cover" transition={500} cachePolicy="disk" />
+                  contentFit="cover"
+                  transition={500}
+                  cachePolicy="disk"
+                />
                 <View style={styles.gameProfileInfo}>
-                  <Text style={styles.gameProfileName}>{profile.game.name}</Text>
-                  <View style={[styles.rankPill, { backgroundColor: (RANK_COLORS[profile.rankLevel] || borderColor) + '20' }]}>
-                    <Text style={[styles.rankPillText, { color: RANK_COLORS[profile.rankLevel] || borderColor }]}>
-                      {getRankDisplay(profile.rankLevel)}
-                    </Text>
-                  </View>
+                  <Text style={styles.gameProfileName}>
+                    {profile.game.name}
+                  </Text>
+                  <Text style={styles.gameProfileSub}>Đã thêm vào hồ sơ</Text>
                 </View>
                 <TouchableOpacity
                   onPress={() => handleDelete(profile.id)}
@@ -180,8 +281,12 @@ export const ProfileScreen = () => {
           })
         ) : (
           <View style={styles.emptyContainer}>
-            <Gamepad2 size={40} color={theme.colors.primary} style={{ opacity: 0.3 }} />
-            <Text style={styles.emptyText}>{STRINGS.NO_RANKS}</Text>
+            <Gamepad2
+              size={40}
+              color={theme.colors.primary}
+              style={{ opacity: 0.3 }}
+            />
+            <Text style={styles.emptyText}>{STRINGS.NO_GAMES_IN_PROFILE}</Text>
             <Button
               title="Thêm Game Ngay"
               onPress={() => navigation.navigate('AddGameProfile' as never)}
@@ -197,10 +302,14 @@ export const ProfileScreen = () => {
             style={styles.actionBlock}
             onPress={() => navigation.navigate('Friends' as never)}
           >
-            <View style={styles.actionIconBg}><Users size={20} color={theme.colors.primary} /></View>
+            <View style={styles.actionIconBg}>
+              <Users size={20} color={theme.colors.primary} />
+            </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Bạn Bè</Text>
-              <Text style={styles.actionSubtitle}>Quản lý bạn bè và lời mời</Text>
+              <Text style={styles.actionSubtitle}>
+                Quản lý bạn bè và lời mời
+              </Text>
             </View>
           </TouchableOpacity>
 
@@ -208,27 +317,27 @@ export const ProfileScreen = () => {
             style={styles.actionBlock}
             onPress={() => navigation.navigate('Leaderboard' as never)}
           >
-            <View style={styles.actionIconBg}><Trophy size={20} color="#F59E0B" /></View>
+            <View style={styles.actionIconBg}>
+              <Trophy size={20} color="#F59E0B" />
+            </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Bảng Xếp Hạng</Text>
-              <Text style={styles.actionSubtitle}>Top người dùng yêu thích</Text>
+              <Text style={styles.actionSubtitle}>
+                Top người dùng yêu thích
+              </Text>
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.myZonesButton}
             onPress={() => navigation.navigate('MyZones' as never)}
+            activeOpacity={0.92}
           >
-            <LinearGradient colors={['#2563FF', '#7C3AED']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.myZonesGradient}>
-              <MapPin size={16} color="#FFF" />
-              <Text style={styles.myZonesText}>My Zones (Khu vực của tôi)</Text>
-            </LinearGradient>
+            <MapPin size={18} color="#FFF" strokeWidth={2.2} />
+            <Text style={styles.myZonesText}>My Zones (Khu vực của tôi)</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={logout}
-          >
+          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
             <LogOut size={16} color={theme.colors.error} />
             <Text style={styles.logoutText}>{STRINGS.LOGOUT}</Text>
           </TouchableOpacity>
@@ -483,11 +592,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  gameCardAccent: {
-    width: 3,
-    height: '100%',
-    alignSelf: 'stretch',
-  },
   gameProfileIcon: {
     width: 48,
     height: 48,
@@ -504,17 +608,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.text,
   },
-  rankPill: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  rankPillText: {
-    fontSize: 10,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  gameProfileSub: {
+    fontSize: 11,
+    color: theme.colors.textMuted,
+    fontWeight: '600',
   },
   deleteButton: {
     padding: 14,
@@ -545,20 +642,21 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   myZonesButton: {
-    borderRadius: 14,
-    overflow: 'hidden',
-    shadowColor: '#2563FF',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  myZonesGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    paddingVertical: 16,
+    paddingVertical: 15,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    backgroundColor: theme.colors.buttonSolidAccent,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   myZonesText: {
     color: '#FFF',

@@ -5,31 +5,29 @@ import {
   View,
   TouchableOpacity,
   FlatList,
-  Alert,
   ActivityIndicator} from 'react-native';
 import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Check, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, Check } from 'lucide-react-native';
 
 import { Container } from '../components/Container';
 import { Button } from '../components/Button';
+import { ThemedDialog, type ThemedDialogVariant } from '../components/ThemedDialog';
 import { apiClient } from '../api/client';
 import { theme } from '../theme';
-import { Game, RankLevel } from '../types';
-import { RANK_LEVELS, RANK_COLORS, getRankDisplay } from '../utils/rank';
-
-const RANK_OPTIONS = RANK_LEVELS.map(rank => ({
-  label: getRankDisplay(rank),
-  value: rank,
-  color: RANK_COLORS[rank],
-}));
+import { Game } from '../types';
 
 export const AddGameProfileScreen = () => {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
-  const [selectedRank, setSelectedRank] = useState<RankLevel | null>(null);
+  const [dialog, setDialog] = useState<{
+    title: string;
+    message: string;
+    variant: ThemedDialogVariant;
+    onClose: () => void;
+  } | null>(null);
 
   const { data: games, isLoading: isLoadingGames } = useQuery({
     queryKey: ['games', 'mobile'],
@@ -40,30 +38,43 @@ export const AddGameProfileScreen = () => {
   });
 
   const addGameProfileMutation = useMutation({
-    mutationFn: async (data: { gameId: string; rankLevel: RankLevel }) => {
+    mutationFn: async (data: { gameId: string }) => {
       const response = await apiClient.post('/user-game-profiles', data);
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-game-profiles'] });
-      Alert.alert('Thành công', 'Đã thêm hồ sơ game mới');
-      navigation.goBack();
+      setDialog({
+        title: 'Thành công',
+        message: 'Đã thêm game vào hồ sơ.',
+        variant: 'success',
+        onClose: () => {
+          setDialog(null);
+          navigation.goBack();
+        },
+      });
     },
-    onError: (error) => {
-      console.error('Add game profile error:', error);
-      Alert.alert('Lỗi', 'Không thể thêm hồ sơ game. Vui lòng thử lại.');
+    onError: () => {
+      setDialog({
+        title: 'Lỗi',
+        message: 'Không thể thêm hồ sơ game. Vui lòng thử lại.',
+        variant: 'error',
+        onClose: () => setDialog(null),
+      });
     },
   });
 
   const handleSubmit = () => {
-    if (!selectedGame || !selectedRank) {
-      Alert.alert('Thông báo', 'Vui lòng chọn game và cấp độ rank');
+    if (!selectedGame) {
+      setDialog({
+        title: 'Thông báo',
+        message: 'Vui lòng chọn game.',
+        variant: 'info',
+        onClose: () => setDialog(null),
+      });
       return;
     }
-    addGameProfileMutation.mutate({
-      gameId: selectedGame.id,
-      rankLevel: selectedRank,
-    });
+    addGameProfileMutation.mutate({ gameId: selectedGame.id });
   };
 
   const renderGameItem = ({ item }: { item: Game }) => (
@@ -88,66 +99,46 @@ export const AddGameProfileScreen = () => {
 
   return (
     <Container>
+      <ThemedDialog
+        visible={dialog !== null}
+        title={dialog?.title ?? ''}
+        message={dialog?.message ?? ''}
+        variant={dialog?.variant ?? 'info'}
+        primaryLabel="Đóng"
+        onPrimary={() => dialog?.onClose()}
+        onBackdrop={() => dialog?.onClose()}
+      />
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <ArrowLeft color={theme.colors.text} size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thêm Rank Game</Text>
+        <Text style={styles.headerTitle}>Thêm game</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <View style={styles.content}>
-        <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>Bước 1: Chọn Game</Text>
-          {isLoadingGames ? (
-            <ActivityIndicator color={theme.colors.primary} />
-          ) : (
-            <FlatList
-              data={games}
-              renderItem={renderGameItem}
-              keyExtractor={(item) => item.id}
-              numColumns={3}
-              columnWrapperStyle={styles.gameListColumn}
-              contentContainerStyle={styles.gameListContent}
-              showsVerticalScrollIndicator={false}
-              style={{ maxHeight: 250 }}
-            />
-          )}
-        </View>
-
-        {selectedGame && (
-          <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Bước 2: Chọn Rank</Text>
-            <View style={styles.rankContainer}>
-              {RANK_OPTIONS.map((rank) => (
-                <TouchableOpacity
-                  key={rank.value}
-                  style={[
-                    styles.rankBadge,
-                    { borderColor: rank.color },
-                    selectedRank === rank.value && { backgroundColor: rank.color },
-                  ]}
-                  onPress={() => setSelectedRank(rank.value)}
-                >
-                  <Text
-                    style={[
-                      styles.rankText,
-                      { color: selectedRank === rank.value ? '#fff' : rank.color },
-                    ]}
-                  >
-                    {rank.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+        <Text style={styles.stepTitle}>Chọn game đã chơi</Text>
+        {isLoadingGames ? (
+          <ActivityIndicator color={theme.colors.primary} />
+        ) : (
+          <FlatList
+            data={games}
+            renderItem={renderGameItem}
+            keyExtractor={(item) => item.id}
+            numColumns={3}
+            columnWrapperStyle={styles.gameListColumn}
+            contentContainerStyle={styles.gameListContent}
+            showsVerticalScrollIndicator={false}
+            style={{ maxHeight: 400 }}
+          />
         )}
 
         <View style={styles.footer}>
           <Button
             title="Hoàn tất"
             onPress={handleSubmit}
-            disabled={!selectedGame || !selectedRank || addGameProfileMutation.isPending}
+            disabled={!selectedGame || addGameProfileMutation.isPending}
             style={styles.submitButton}
           />
         </View>
@@ -179,9 +170,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: theme.spacing.lg,
-  },
-  stepContainer: {
-    marginBottom: theme.spacing.xl,
   },
   stepTitle: {
     fontSize: 16,
@@ -234,23 +222,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     borderRadius: 8,
     padding: 2,
-  },
-  rankContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.md,
-  },
-  rankBadge: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.full,
-    borderWidth: 2.5,
-    minWidth: '45%',
-    alignItems: 'center',
-  },
-  rankText: {
-    fontWeight: 'bold',
-    fontSize: 15,
   },
   footer: {
     marginTop: 'auto',

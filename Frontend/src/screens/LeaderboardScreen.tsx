@@ -32,7 +32,10 @@ export const LeaderboardScreen = () => {
         queryKey: ['leaderboard', period],
         queryFn: async () => {
             const res = await apiClient.get(`/leaderboard/users?period=${period}`);
-            return res.data.data as LeaderboardUser[];
+            // API: { success, data: { period, gameId, data: LeaderboardUser[] } }
+            const payload = res.data?.data;
+            const rows = Array.isArray(payload) ? payload : payload?.data;
+            return (rows ?? []) as LeaderboardUser[];
         },
     });
 
@@ -57,7 +60,12 @@ export const LeaderboardScreen = () => {
             >
                 <View style={styles.rankContainer}>
                     {isTop3 ? (
-                        <Medal size={24} color={rankColor} />
+                        <>
+                            <Medal size={22} color={rankColor} />
+                            <Text style={[styles.rankText, styles.rankTop3, { color: rankColor }]}>
+                                #{item.rank}
+                            </Text>
+                        </>
                     ) : (
                         <Text style={styles.rankText}>#{item.rank}</Text>
                     )}
@@ -91,8 +99,10 @@ export const LeaderboardScreen = () => {
                 <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                     <ArrowLeft color="#fff" size={24} />
                 </TouchableOpacity>
-                <Trophy color="#F1C40F" size={24} />
-                <Text style={styles.title}>BẢNG XẾP HẠNG</Text>
+                <View style={styles.headerTitleRow}>
+                    <Trophy color="#F1C40F" size={22} />
+                    <Text style={styles.title}>BẢNG XẾP HẠNG</Text>
+                </View>
                 <View style={{ width: 42 }} />
             </View>
 
@@ -137,8 +147,15 @@ const styles = StyleSheet.create({
         paddingBottom: theme.spacing.sm,
         gap: 12,
     },
-    title: {
+    headerTitleRow: {
         flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        minWidth: 0,
+    },
+    title: {
+        flexShrink: 1,
         fontSize: 20,
         fontWeight: '900',
         color: theme.colors.text,
@@ -191,14 +208,19 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     rankContainer: {
-        width: 40,
+        width: 44,
         alignItems: 'center',
         justifyContent: 'center',
+        gap: 2,
     },
     rankText: {
         fontSize: 16,
         fontWeight: '800',
         color: theme.colors.textMuted,
+    },
+    rankTop3: {
+        fontSize: 12,
+        marginTop: 2,
     },
     avatarWrapper: {
         width: 46,

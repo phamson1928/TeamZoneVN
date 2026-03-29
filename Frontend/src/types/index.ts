@@ -1,6 +1,5 @@
 export type UserRole = 'USER' | 'ADMIN';
 export type UserStatus = 'ACTIVE' | 'BANNED';
-export type RankLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'PRO';
 export type ZoneStatus = 'OPEN' | 'FULL' | 'CLOSED';
 export type Platform = 'PC' | 'CONSOLE' | 'MOBILE';
 export type ContactMethodType = 'DISCORD' | 'INGAME' | 'OTHER';
@@ -14,6 +13,8 @@ export interface User {
   status: UserStatus;
   createdAt: string;
   profile?: UserProfile | null;
+  /** Số tim nhận được (từ GET /users/me khi có) */
+  likesReceived?: number;
 }
 
 export interface UserProfile {
@@ -41,7 +42,6 @@ export interface UserGameProfile {
   id: string;
   userId: string;
   gameId: string;
-  rankLevel: RankLevel;
   game: {
     name: string;
     iconUrl: string;
@@ -55,8 +55,6 @@ export interface Zone {
   ownerId: string;
   title: string;
   description: string;
-  minRankLevel: RankLevel;
-  maxRankLevel: RankLevel;
   requiredPlayers: number;
   status: ZoneStatus;
   createdAt: string;
@@ -133,8 +131,6 @@ export interface Group {
     title: string;
     description?: string;
     status: ZoneStatus;
-    minRankLevel?: RankLevel;
-    maxRankLevel?: RankLevel;
   };
   game: {
     id: string;
@@ -211,9 +207,17 @@ export interface QuickMatchStatus {
   queuedSince?: string;
 }
 
+export type FriendshipRelation =
+  | 'NONE'
+  | 'FRIENDS'
+  | 'PENDING_SENT'
+  | 'PENDING_RECEIVED';
+
 export interface UserPublicProfile extends User {
   likeCount: number;
   isLikedByMe: boolean;
+  friendshipRelation: FriendshipRelation;
+  pendingFriendshipId: string | null;
 }
 
 export interface LeaderboardUser {

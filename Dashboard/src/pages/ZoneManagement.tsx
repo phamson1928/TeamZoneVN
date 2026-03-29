@@ -29,8 +29,6 @@ interface Zone {
   description: string;
   status: 'OPEN' | 'FULL' | 'CLOSED';
   requiredPlayers: number;
-  minRankLevel: string;
-  maxRankLevel: string;
   createdAt: string;
   owner: {
     id: string;
@@ -643,7 +641,7 @@ export default function ZoneManagement() {
               type="text" 
               value={tagName}
               onChange={(e) => setTagName(e.target.value)}
-              placeholder="Ví dụ: Rank Cao"
+              placeholder="Ví dụ: Có Mic"
               className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-[14px] focus:bg-white focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-bold text-gray-900"
             />
          </div>

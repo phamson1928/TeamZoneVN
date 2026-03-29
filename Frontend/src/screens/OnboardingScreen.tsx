@@ -21,7 +21,7 @@ const ONBOARDING_DATA = [
     {
         id: '1',
         title: 'TÌM KIẾM ĐỒNG ĐỘI',
-        description: 'Kết nối hàng nghìn game thủ cùng nhịp đập. Không còn nỗi lo "leo rank" đơn độc.',
+        description: 'Kết nối hàng nghìn game thủ cùng nhịp đập. Không còn chơi solo nếu không muốn.',
         icon: Gamepad2,
         colors: ['#2563FF', '#1E40AF'],
         accent: '#3B82F6',
@@ -29,7 +29,7 @@ const ONBOARDING_DATA = [
     {
         id: '2',
         title: 'CHIẾN THUẬT RÕ RÀNG',
-        description: 'Tạo vùng chiến sự (Zone), thiết lập yêu cầu trình độ, và định hình đội hình trong mơ của bạn.',
+        description: 'Tạo phòng (Zone), gắn tag, mời đúng người — đội hình trong mơ gần hơn bạn nghĩ.',
         icon: Crosshair,
         colors: ['#7C3AED', '#4C1D95'],
         accent: '#8B5CF6',

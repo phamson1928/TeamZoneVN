@@ -26,6 +26,13 @@ export const COLORS = {
   borderLight: 'rgba(255,255,255,0.08)',
   borderBlue: 'rgba(37,99,255,0.3)',
 
+  /**
+   * Nút phẳng (không gradient): 3 tông — chính / nhấn / trung tính.
+   */
+  buttonSolidPrimary: '#2563FF',
+  buttonSolidAccent: '#7C3AED',
+  buttonSolidMuted: '#334155',
+
   // === Legacy aliases kept for backward compatibility ===
   surfaceLight: '#1E293B',
   accent: '#F59E0B',

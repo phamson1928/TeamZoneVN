@@ -22,7 +22,7 @@ import {
   Mic,
   Zap,
   Gamepad2,
-  Trophy
+  Clock,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -30,7 +30,10 @@ import { apiClient } from '../api/client';
 import { theme, getBorderColorById } from '../theme';
 import { Zone, Game } from '../types';
 import { RootStackParamList } from '../navigation';
-import { getRankDisplay } from '../utils/rank';
+const formatZoneTime = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+};
 
 type TeamZoneVNsScreenRouteProp = RouteProp<RootStackParamList, 'TeamZoneVNs'>;
 
@@ -248,11 +251,9 @@ export const TeamZoneVNsScreen = () => {
                 style={[styles.progressFill, { width: `${progress * 100}%` }]}
               />
             </View>
-            <View style={styles.rankBadge}>
-              <Trophy size={11} color="#F59E0B" />
-              <Text style={styles.rankText}>
-                {getRankDisplay(item.minRankLevel)} - {getRankDisplay(item.maxRankLevel)}
-              </Text>
+            <View style={styles.timeBadge}>
+              <Clock size={11} color="#94A3B8" />
+              <Text style={styles.timeBadgeText}>{formatZoneTime(item.createdAt)}</Text>
             </View>
           </View>
         </View>
@@ -619,12 +620,12 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 3,
   },
-  rankBadge: {
+  timeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  rankText: {
+  timeBadgeText: {
     fontSize: 11,
     fontWeight: '700',
     color: '#F59E0B',

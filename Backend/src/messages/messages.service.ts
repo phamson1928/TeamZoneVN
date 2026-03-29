@@ -7,24 +7,29 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class MessagesService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   /**
- * Lấy lịch sử chat của một group (chỉ member mới được xem).
- * Trả về tin nhắn theo trang, mỗi trang mặc định 30 tin, sắp xếp mới nhất → cũ nhất.
- */
-  async getGroupMessages(userId: string, groupId: string, page: number = 1, limit: number = 30) {
+   * Lấy lịch sử chat của một group (chỉ member mới được xem).
+   * Trả về tin nhắn theo trang, mỗi trang mặc định 30 tin, sắp xếp mới nhất → cũ nhất.
+   */
+  async getGroupMessages(
+    userId: string,
+    groupId: string,
+    page: number = 1,
+    limit: number = 30,
+  ) {
     const member = await this.prisma.groupMember.findUnique({
       where: {
         groupId_userId: {
           groupId,
-          userId
-        }
-      }
-    })
+          userId,
+        },
+      },
+    });
 
     if (!member) {
-      throw new ForbiddenException('Bạn không phải thành viên của group này')
+      throw new ForbiddenException('Bạn không phải thành viên của group này');
     }
 
     const skip = (page - 1) * limit;
@@ -42,8 +47,8 @@ export class MessagesService {
             select: { id: true, username: true, avatarUrl: true },
           },
         },
-        // Lấy mới nhất trước để dễ phân trang
-        orderBy: { createdAt: 'desc' },
+        // Trả cũ -> mới ổn định để FE render đúng thứ tự chat
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       }),
       this.prisma.message.count({
         where: { groupId },
@@ -51,7 +56,7 @@ export class MessagesService {
     ]);
 
     return {
-      data: data.reverse(),// Đảo lại để hiển thị theo thứ tự cũ → mới
+      data,
       meta: {
         page,
         limit,
@@ -126,8 +131,8 @@ export class MessagesService {
             select: {
               id: true,
               zone: {
-                select: { title: true }
-              }
+                select: { title: true },
+              },
             },
           },
         },

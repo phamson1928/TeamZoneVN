@@ -39,7 +39,6 @@ import { apiClient } from '../api/client';
 import { theme, getBorderColorById } from '../theme';
 import { Zone } from '../types';
 import { RootStackParamList } from '../navigation';
-import { getRankDisplay, getRankColor } from '../utils/rank';
 
 const getStatusConfig = (status: string) => {
   switch (status) {
@@ -211,7 +210,7 @@ export const MyZonesScreen = () => {
       (r: any) => r.status === 'APPROVED',
     ).length;
     const currentPlayers = approvedCount + 1;
-    const rankColor = getRankColor(item.minRankLevel);
+    const tagCount = item.tags?.length ?? 0;
 
     return (
       <View style={styles.timelineItem}>
@@ -301,20 +300,20 @@ export const MyZonesScreen = () => {
               </View>
             </View>
 
-            {/* Rank */}
+            {/* Tags */}
             <View style={styles.infoItem}>
               <View
                 style={[
                   styles.infoIconBg,
-                  { backgroundColor: rankColor + '20' },
+                  { backgroundColor: 'rgba(245,158,11,0.15)' },
                 ]}
               >
-                <Trophy size={16} color={rankColor} />
+                <Trophy size={16} color="#F59E0B" />
               </View>
               <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Rank</Text>
+                <Text style={styles.infoLabel}>Tags</Text>
                 <Text style={styles.infoValue}>
-                  {getRankDisplay(item.minRankLevel)} - {getRankDisplay(item.maxRankLevel)}
+                  {tagCount > 0 ? `${tagCount} thẻ` : 'Chưa có'}
                 </Text>
               </View>
             </View>

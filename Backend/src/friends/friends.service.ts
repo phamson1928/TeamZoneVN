@@ -136,6 +136,9 @@ export class FriendsService {
                 where: {
                     OR: [{ senderId: userId }, { receiverId: userId }],
                     status: FriendStatus.ACCEPTED,
+                    /** Không trả bạn đã BANNED — tránh hiện trong list nhưng không mở được hồ sơ */
+                    sender: { status: 'ACTIVE' },
+                    receiver: { status: 'ACTIVE' },
                 },
                 include: {
                     sender: {
@@ -153,6 +156,8 @@ export class FriendsService {
                 where: {
                     OR: [{ senderId: userId }, { receiverId: userId }],
                     status: FriendStatus.ACCEPTED,
+                    sender: { status: 'ACTIVE' },
+                    receiver: { status: 'ACTIVE' },
                 },
             }),
         ]);
@@ -176,6 +181,7 @@ export class FriendsService {
             where: {
                 receiverId: userId,
                 status: FriendStatus.PENDING,
+                sender: { status: 'ACTIVE' },
             },
             include: {
                 sender: {

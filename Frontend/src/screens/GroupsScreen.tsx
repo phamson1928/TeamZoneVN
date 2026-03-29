@@ -1,9 +1,16 @@
 import React from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { Image } from 'expo-image';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
-import { Users, ChevronRight, MessageSquare } from 'lucide-react-native';
+import { Users, ChevronRight } from 'lucide-react-native';
 import { Container } from '../components/Container';
 import { Header } from '../components/Header';
 import { theme } from '../theme';
@@ -13,7 +20,11 @@ import { Group } from '../types';
 export const GroupsScreen = () => {
   const navigation = useNavigation<any>();
 
-  const { data: groups, isLoading, refetch } = useQuery({
+  const {
+    data: groups,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['my_groups'],
     queryFn: async () => {
       const response = await apiClient.get('/groups');
@@ -22,37 +33,48 @@ export const GroupsScreen = () => {
       if (Array.isArray(raw)) return raw as Group[];
       if (Array.isArray(raw?.data)) return raw.data as Group[];
       return [] as Group[];
-    }
+    },
   });
 
   useFocusEffect(
     React.useCallback(() => {
       refetch();
-    }, [refetch])
+    }, [refetch]),
   );
 
   const renderGroupItem = ({ item }: { item: Group }) => (
     <TouchableOpacity
       style={styles.groupCard}
       activeOpacity={0.7}
-      onPress={() => navigation.navigate('ChatRoom', { groupId: item.id, groupName: item.zone.title })}
+      onPress={() =>
+        navigation.navigate('ChatRoom', {
+          groupId: item.id,
+          groupName: item.zone.title,
+        })
+      }
     >
       <Image
         source={{ uri: item.game.iconUrl || 'https://via.placeholder.com/150' }}
         style={styles.gameIcon}
-        contentFit="cover" transition={500} cachePolicy="disk" />
+        contentFit="cover"
+        transition={500}
+        cachePolicy="disk"
+      />
       <View style={styles.groupInfo}>
-        <Text style={styles.groupTitle} numberOfLines={1}>{item.zone.title}</Text>
+        <Text style={styles.groupTitle} numberOfLines={1}>
+          {item.zone.title}
+        </Text>
         <Text style={styles.gameName}>{item.game.name}</Text>
         <View style={styles.metaContainer}>
-          <View style={styles.metaItem}>
+          <View style={styles.metaBadge}>
             <Users size={14} color={theme.colors.textSecondary} />
-            <Text style={styles.metaText}>{item._count?.members || 1} Thành viên</Text>
+            <Text style={styles.metaText}>
+              {item._count?.members || 1} Thành viên
+            </Text>
           </View>
         </View>
       </View>
       <View style={styles.actionContainer}>
-        <MessageSquare size={20} color={theme.colors.primary} />
         <ChevronRight size={20} color={theme.colors.textSecondary} />
       </View>
     </TouchableOpacity>
@@ -66,19 +88,36 @@ export const GroupsScreen = () => {
           <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
       ) : groups && groups.length > 0 ? (
-        <FlatList
-          data={groups}
-          keyExtractor={(item) => item.id}
-          renderItem={renderGroupItem}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
+        <>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryTitle}>Nhóm đã tham gia</Text>
+            <Text style={styles.summaryValue}>{groups.length}</Text>
+          </View>
+          <FlatList
+            data={groups}
+            keyExtractor={item => item.id}
+            renderItem={renderGroupItem}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          />
+        </>
       ) : (
         <View style={styles.center}>
           <View style={styles.placeholderCard}>
-            <Users size={48} color={theme.colors.textSecondary} style={{ marginBottom: theme.spacing.md }} />
-            <Text style={styles.placeholderText}>Bạn chưa tham gia đội nào.</Text>
-            <Text style={[styles.placeholderText, { fontSize: 14, marginTop: 8 }]}>Hãy tham gia một khu vực (Zone) để kết nối với những người chơi khác!</Text>
+            <Users
+              size={48}
+              color={theme.colors.textSecondary}
+              style={{ marginBottom: theme.spacing.md }}
+            />
+            <Text style={styles.placeholderText}>
+              Bạn chưa tham gia đội nào.
+            </Text>
+            <Text
+              style={[styles.placeholderText, { fontSize: 14, marginTop: 8 }]}
+            >
+              Hãy tham gia một khu vực (Zone) để kết nối với những người chơi
+              khác!
+            </Text>
           </View>
         </View>
       )}
@@ -94,20 +133,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    padding: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
+  },
+  summaryRow: {
+    marginHorizontal: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  summaryTitle: {
+    color: theme.colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  summaryValue: {
+    color: theme.colors.text,
+    fontSize: 14,
+    fontWeight: '800',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   groupCard: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#162338',
     padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    marginBottom: theme.spacing.sm,
+    borderRadius: 16,
+    marginTop: theme.spacing.sm,
     alignItems: 'center',
-    ...theme.shadows.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
   },
   gameIcon: {
-    width: 60,
-    height: 60,
+    width: 54,
+    height: 54,
     borderRadius: theme.borderRadius.md,
   },
   groupInfo: {
@@ -116,44 +181,51 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   groupTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#fff',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   gameName: {
-    fontSize: 14,
-    color: theme.colors.primary,
-    fontWeight: '600',
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    fontWeight: '500',
     marginBottom: 6,
   },
   metaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  metaItem: {
+  metaBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   metaText: {
     marginLeft: 6,
-    fontSize: 13,
+    fontSize: 12,
     color: theme.colors.textSecondary,
+    fontWeight: '600',
   },
   actionContainer: {
-    flexDirection: 'row',
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
   },
   placeholderCard: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#162338',
     padding: theme.spacing.xl,
     borderRadius: theme.borderRadius.xl,
     borderWidth: 1,
-    borderColor: theme.colors.primary,
+    borderColor: 'rgba(255,255,255,0.12)',
     borderStyle: 'dashed',
     alignItems: 'center',
-    ...theme.shadows.sm,
   },
   placeholderText: {
     color: theme.colors.textSecondary,
@@ -162,4 +234,3 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-

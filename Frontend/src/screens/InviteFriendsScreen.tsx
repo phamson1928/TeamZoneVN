@@ -20,6 +20,11 @@ import { apiClient } from '../api/client';
 import { Friendship, User } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 
+function sameUserId(a?: string | null, b?: string | null): boolean {
+    if (a == null || b == null) return false;
+    return a === b || a.toLowerCase() === b.toLowerCase();
+}
+
 export const InviteFriendsScreen = () => {
     const route = useRoute<any>();
     const navigation = useNavigation<any>();
@@ -59,20 +64,23 @@ export const InviteFriendsScreen = () => {
     const listData = friendsData || [];
 
     const renderItem = ({ item }: { item: Friendship }) => {
-        // Determine the "other user" depending on the context
-        let displayUser: User | undefined;
-        if (item.sender?.id === currentUserId) {
-            displayUser = item.receiver;
-        } else if (item.receiver?.id === currentUserId) {
-            displayUser = item.sender;
-        } else {
-            displayUser = item.sender || item.receiver || (item as unknown as User);
-        }
+        const peerUserId = sameUserId(currentUserId, item.senderId)
+            ? item.receiverId
+            : item.senderId;
+        const peer =
+            sameUserId(currentUserId, item.senderId) ? item.receiver : item.sender;
+        const displayUser: User =
+            peer ??
+            ({
+                id: peerUserId,
+                username: 'Người dùng',
+                avatarUrl: null,
+            } as User);
 
-        if (!displayUser) return null;
+        if (!peerUserId) return null;
 
-        const isInvited = invitedIds.has(displayUser.id);
-        const isInviting = inviteMutation.variables === displayUser.id && inviteMutation.isPending;
+        const isInvited = invitedIds.has(peerUserId);
+        const isInviting = inviteMutation.variables === peerUserId && inviteMutation.isPending;
 
         return (
             <View style={styles.userCard}>
@@ -93,7 +101,7 @@ export const InviteFriendsScreen = () => {
 
                 <TouchableOpacity
                     style={[styles.btnInvite, isInvited && styles.btnInvited]}
-                    onPress={() => handleInvite(displayUser!.id)}
+                    onPress={() => handleInvite(peerUserId)}
                     disabled={isInvited || isInviting}
                 >
                     {isInviting ? (

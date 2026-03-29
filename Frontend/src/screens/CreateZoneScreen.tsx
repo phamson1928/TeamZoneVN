@@ -23,15 +23,13 @@ import {
   Minus,
   Sparkles,
   Users,
-  Trophy,
   Gamepad2,
   Tag,
   AlertCircle
 } from 'lucide-react-native';
 import { apiClient } from '../api/client';
-import { Game, RankLevel, Tag as TagType } from '../types';
+import { Game, Tag as TagType } from '../types';
 import { RootStackParamList } from '../navigation';
-import { RANK_LEVELS, getRankColor, getRankDisplay } from '../utils/rank';
 
 type CreateZoneRouteProp = RouteProp<RootStackParamList, 'CreateZone'>;
 
@@ -46,8 +44,6 @@ export const CreateZoneScreen = () => {
   const [selectedGameId, setSelectedGameId] = useState<string | null>(initialGameId);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [minRank, setMinRank] = useState<RankLevel>('BEGINNER');
-  const [maxRank, setMaxRank] = useState<RankLevel>('PRO');
   const [requiredPlayers, setRequiredPlayers] = useState(2);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
@@ -110,8 +106,6 @@ export const CreateZoneScreen = () => {
       gameId: string;
       title: string;
       description: string;
-      minRankLevel: RankLevel;
-      maxRankLevel: RankLevel;
       requiredPlayers: number;
       tagIds: string[];
     }) => {
@@ -160,8 +154,6 @@ export const CreateZoneScreen = () => {
       gameId: selectedGameId,
       title: title.trim(),
       description: description.trim(),
-      minRankLevel: minRank,
-      maxRankLevel: maxRank,
       requiredPlayers: players,
       tagIds: selectedTagIds,
     });
@@ -233,7 +225,7 @@ export const CreateZoneScreen = () => {
         <View style={styles.inputWrap}>
           <TextInput
             style={styles.input}
-            placeholder="VD: Tìm đồng đội rank Vàng"
+            placeholder="VD: Tìm đồng đội có mic, chơi tối"
             placeholderTextColor="#475569"
             value={title}
             onChangeText={setTitle}
@@ -285,50 +277,6 @@ export const CreateZoneScreen = () => {
               );
             })
           )}
-        </View>
-
-        {/* ── Rank ── */}
-        <SectionLabel icon={<Trophy color="#2563FF" size={15} strokeWidth={2.5} />} title="Trình độ" />
-        <View style={styles.rankBox}>
-          <Text style={styles.rankLabel}>Tối thiểu</Text>
-          <View style={styles.rankRow}>
-            {RANK_LEVELS.map(rank => {
-              const sel = minRank === rank;
-              return (
-                <TouchableOpacity
-                  key={`min-${rank}`}
-                  style={[styles.rankBtn, sel && { backgroundColor: getRankColor(rank), borderColor: getRankColor(rank) }]}
-                  onPress={() => setMinRank(rank)}
-                  activeOpacity={0.75}
-                >
-                  <Text style={[styles.rankBtnText, sel && styles.rankBtnTextSel]}>
-                    {getRankDisplay(rank)}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          <View style={styles.divider} />
-
-          <Text style={styles.rankLabel}>Tối đa</Text>
-          <View style={styles.rankRow}>
-            {RANK_LEVELS.map(rank => {
-              const sel = maxRank === rank;
-              return (
-                <TouchableOpacity
-                  key={`max-${rank}`}
-                  style={[styles.rankBtn, sel && { backgroundColor: getRankColor(rank), borderColor: getRankColor(rank) }]}
-                  onPress={() => setMaxRank(rank)}
-                  activeOpacity={0.75}
-                >
-                  <Text style={[styles.rankBtnText, sel && styles.rankBtnTextSel]}>
-                    {getRankDisplay(rank)}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
         </View>
 
         {/* ── Players ── */}
@@ -621,51 +569,6 @@ const styles = StyleSheet.create({
   },
   tagTextSelected: {
     color: '#2563FF',
-  },
-
-  /* ─── rank ─── */
-  rankBox: {
-    backgroundColor: '#1E293B',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    marginBottom: 24,
-  },
-  rankLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#475569',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 10,
-  },
-  rankRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  rankBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.07)',
-    backgroundColor: 'rgba(255,255,255,0.03)',
-  },
-  rankBtnText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  rankBtnTextSel: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    marginVertical: 14,
   },
 
   /* ─── players counter ─── */

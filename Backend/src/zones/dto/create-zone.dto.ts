@@ -29,7 +29,7 @@ export class CreateZoneDto {
   @IsString()
   gameId: string = '';
 
-  @ApiProperty({ example: 'Leo rank Diamond, cần 2 bạn có mic' })
+  @ApiProperty({ example: 'Cần 2 bạn có mic, chơi buổi tối' })
   @IsString()
   description: string = '';
 

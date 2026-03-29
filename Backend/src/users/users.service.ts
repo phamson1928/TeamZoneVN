@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -10,7 +11,7 @@ import {
   PublicUserResponseDto,
   SearchUsersDto,
 } from './dto';
-import { Prisma } from '@prisma/client';
+import { FriendStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -21,6 +22,7 @@ export class UsersService {
       where: { id: userId },
       include: {
         profile: true,
+        _count: { select: { likesReceived: true } },
       },
     });
 
@@ -57,9 +59,20 @@ export class UsersService {
     return this.getMe(userId);
   }
 
-  async getPublicProfile(userId: string, requesterId?: string): Promise<PublicUserResponseDto & { likeCount: number; isLikedByMe: boolean }> {
+  async getPublicProfile(
+    userId: string,
+    requesterId?: string,
+  ): Promise<
+    PublicUserResponseDto & {
+      likeCount: number;
+      isLikedByMe: boolean;
+      friendshipRelation: 'NONE' | 'FRIENDS' | 'PENDING_SENT' | 'PENDING_RECEIVED';
+      pendingFriendshipId: string | null;
+    }
+  > {
+    const uid = userId.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: uid },
       include: {
         profile: true,
         _count: { select: { likesReceived: true } },
@@ -71,14 +84,43 @@ export class UsersService {
     }
 
     if (user.status === 'BANNED') {
-      throw new NotFoundException('User not found');
+      throw new ForbiddenException(
+        'Tài khoản này đã bị khóa và không thể xem hồ sơ.',
+      );
     }
 
-    const isLikedByMe = requesterId
+    const rid = requesterId?.trim().toLowerCase();
+
+    const isLikedByMe = rid
       ? !!(await this.prisma.userLike.findUnique({
-        where: { userId_likerId: { userId, likerId: requesterId } },
+        where: { userId_likerId: { userId: uid, likerId: rid } },
       }))
       : false;
+
+    let friendshipRelation: 'NONE' | 'FRIENDS' | 'PENDING_SENT' | 'PENDING_RECEIVED' =
+      'NONE';
+    let pendingFriendshipId: string | null = null;
+
+    if (rid && rid !== uid) {
+      const f = await this.prisma.friendship.findFirst({
+        where: {
+          OR: [
+            { senderId: rid, receiverId: uid },
+            { senderId: uid, receiverId: rid },
+          ],
+          status: { in: [FriendStatus.PENDING, FriendStatus.ACCEPTED] },
+        },
+        select: { id: true, status: true, senderId: true },
+      });
+
+      if (f?.status === FriendStatus.ACCEPTED) {
+        friendshipRelation = 'FRIENDS';
+      } else if (f?.status === FriendStatus.PENDING) {
+        pendingFriendshipId = f.id;
+        friendshipRelation =
+          f.senderId === rid ? 'PENDING_SENT' : 'PENDING_RECEIVED';
+      }
+    }
 
     return {
       id: user.id,
@@ -86,6 +128,8 @@ export class UsersService {
       avatarUrl: user.avatarUrl,
       likeCount: user._count.likesReceived,
       isLikedByMe,
+      friendshipRelation,
+      pendingFriendshipId,
       profile: user.profile
         ? {
           bio: user.profile.bio,
@@ -321,6 +365,7 @@ export class UsersService {
       timezone: string | null;
       lastActiveAt: Date | null;
     } | null;
+    _count?: { likesReceived: number };
   }): UserResponseDto {
     return {
       id: user.id,
@@ -332,6 +377,7 @@ export class UsersService {
       warnCount: user.warnCount,
       tempBannedUntil: user.tempBannedUntil,
       createdAt: user.createdAt,
+      likesReceived: user._count?.likesReceived ?? 0,
       profile: user.profile
         ? {
           bio: user.profile.bio,

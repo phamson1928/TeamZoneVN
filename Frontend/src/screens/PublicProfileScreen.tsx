@@ -10,30 +10,43 @@ import {
 import { Image } from 'expo-image';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Gamepad2, Heart, Trophy, ChevronLeft, MapPin, Search, UserX } from 'lucide-react-native';
+import { Gamepad2, Heart, ChevronLeft, UserX } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Alert } from 'react-native';
 
 import { Container } from '../components/Container';
 import { theme, getBorderColorById } from '../theme';
 import { apiClient } from '../api/client';
-import { UserPublicProfile, UserGameProfile } from '../types';
-import { RANK_COLORS, getRankDisplay } from '../utils/rank';
+import { UserPublicProfile } from '../types';
 import { STRINGS } from '../constants/strings';
 import { useAuthStore } from '../store/useAuthStore';
+
+const UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const PublicProfileScreen = () => {
     const route = useRoute<any>();
     const navigation = useNavigation<any>();
     const queryClient = useQueryClient();
-    const { userId } = route.params as { userId: string };
+    const paramId = route.params?.userId;
+    const userId = typeof paramId === 'string' ? paramId.trim() : '';
+    const userIdValid = UUID_RE.test(userId);
     const currentUserId = useAuthStore(state => state.user?.id);
 
-    const { data: profile, isLoading } = useQuery({
+    const { data: profile, isLoading, isFetching, isError, error } = useQuery({
         queryKey: ['public-profile', userId],
+        enabled: userIdValid,
         queryFn: async () => {
             const response = await apiClient.get(`/users/${userId}`);
-            return response.data.data as UserPublicProfile;
+            const raw = response.data?.data;
+            if (!raw?.id) {
+                throw new Error('INVALID_PROFILE_RESPONSE');
+            }
+            return {
+                ...raw,
+                friendshipRelation: raw.friendshipRelation ?? 'NONE',
+                pendingFriendshipId: raw.pendingFriendshipId ?? null,
+            } as UserPublicProfile;
         },
     });
 
@@ -78,9 +91,30 @@ export const PublicProfileScreen = () => {
             await apiClient.post(`/friends/request/${userId}`);
         },
         onSuccess: () => {
-            // Optional: show a toast or alert
-            queryClient.invalidateQueries({ queryKey: ['friends', 'status', userId] });
-        }
+            queryClient.invalidateQueries({ queryKey: ['public-profile', userId] });
+            queryClient.invalidateQueries({ queryKey: ['friends'] });
+        },
+    });
+
+    const acceptFriendMutation = useMutation({
+        mutationFn: async (friendshipId: string) => {
+            await apiClient.patch(`/friends/request/${friendshipId}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['public-profile', userId] });
+            queryClient.invalidateQueries({ queryKey: ['friends'] });
+        },
+    });
+
+    /** Người trong profile là sender — DELETE /friends/:profileUserId */
+    const declineFriendMutation = useMutation({
+        mutationFn: async () => {
+            await apiClient.delete(`/friends/${userId}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['public-profile', userId] });
+            queryClient.invalidateQueries({ queryKey: ['friends'] });
+        },
     });
 
     const blockUserMutation = useMutation({
@@ -111,7 +145,38 @@ export const PublicProfileScreen = () => {
 
     const isMe = currentUserId === userId;
 
-    if (isLoading) {
+    const friendPrimary = useMemo(() => {
+        if (!profile || isMe) return null;
+        const rel = profile.friendshipRelation;
+        if (rel === 'FRIENDS') {
+            return { kind: 'friends' as const };
+        }
+        if (rel === 'PENDING_SENT') {
+            return { kind: 'pending_sent' as const };
+        }
+        if (rel === 'PENDING_RECEIVED') {
+            return {
+                kind: 'pending_received' as const,
+                id: profile.pendingFriendshipId,
+            };
+        }
+        return { kind: 'none' as const };
+    }, [profile, isMe]);
+
+    if (!userIdValid) {
+        return (
+            <Container>
+                <TouchableOpacity style={[styles.backButton, { margin: theme.spacing.lg }]} onPress={() => navigation.goBack()}>
+                    <ChevronLeft color="#fff" size={24} />
+                </TouchableOpacity>
+                <Text style={{ color: '#fff', textAlign: 'center', marginTop: 24, paddingHorizontal: 24 }}>
+                    Liên kết hồ sơ không hợp lệ. Hãy quay lại và mở lại từ danh sách bạn bè.
+                </Text>
+            </Container>
+        );
+    }
+
+    if (isLoading || isFetching) {
         return (
             <Container>
                 <ActivityIndicator color={theme.colors.primary} style={{ marginTop: 50 }} />
@@ -119,10 +184,28 @@ export const PublicProfileScreen = () => {
         );
     }
 
-    if (!profile) {
+    if (isError || !profile) {
+        const status = (error as any)?.response?.status;
+        const apiMsg = (error as any)?.response?.data?.message;
+        const serverText = Array.isArray(apiMsg) ? apiMsg[0] : apiMsg;
+        const message =
+            status === 403
+                ? (typeof serverText === 'string'
+                    ? serverText
+                    : 'Tài khoản này đã bị khóa, không thể xem hồ sơ.')
+                : status === 404
+                  ? 'Không tìm thấy người dùng (có thể đã xóa tài khoản).'
+                  : status === 401
+                    ? 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.'
+                    : 'Không thể tải hồ sơ. Kiểm tra mạng và thử lại.';
         return (
             <Container>
-                <Text style={{ color: '#fff', textAlign: 'center', marginTop: 50 }}>Người dùng không tồn tại</Text>
+                <TouchableOpacity style={[styles.backButton, { margin: theme.spacing.lg }]} onPress={() => navigation.goBack()}>
+                    <ChevronLeft color="#fff" size={24} />
+                </TouchableOpacity>
+                <Text style={{ color: '#fff', textAlign: 'center', marginTop: 24, paddingHorizontal: 24 }}>
+                    {message}
+                </Text>
             </Container>
         );
     }
@@ -179,7 +262,7 @@ export const PublicProfileScreen = () => {
                         {profile.profile?.bio || STRINGS.BIO_PLACEHOLDER}
                     </Text>
 
-                    {!isMe && (
+                    {!isMe && friendPrimary && (
                         <View style={styles.actionButtons}>
                             <TouchableOpacity
                                 style={[styles.actionBtn, profile.isLikedByMe && styles.actionBtnActive]}
@@ -189,13 +272,50 @@ export const PublicProfileScreen = () => {
                                 <Text style={styles.actionBtnText}>{profile.isLikedByMe ? 'Đã thích' : 'Thích'}</Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity
-                                style={styles.actionBtnPrimary}
-                                onPress={() => sendFriendRequestMutation.mutate()}
-                                disabled={sendFriendRequestMutation.isPending}
-                            >
-                                <Text style={styles.actionBtnPrimaryText}>Kết bạn</Text>
-                            </TouchableOpacity>
+                            {friendPrimary.kind === 'pending_received' ? (
+                                <View style={styles.friendSplit}>
+                                    <TouchableOpacity
+                                        style={[styles.actionBtnPrimary, styles.friendSplitBtn]}
+                                        onPress={() =>
+                                            friendPrimary.id &&
+                                            acceptFriendMutation.mutate(friendPrimary.id)
+                                        }
+                                        disabled={
+                                            !friendPrimary.id ||
+                                            acceptFriendMutation.isPending ||
+                                            declineFriendMutation.isPending
+                                        }
+                                    >
+                                        <Text style={styles.actionBtnPrimaryText}>Chấp nhận</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.actionBtnOutline}
+                                        onPress={() => declineFriendMutation.mutate()}
+                                        disabled={
+                                            acceptFriendMutation.isPending ||
+                                            declineFriendMutation.isPending
+                                        }
+                                    >
+                                        <Text style={styles.actionBtnOutlineText}>Từ chối</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : friendPrimary.kind === 'friends' ? (
+                                <View style={[styles.actionBtnPrimary, styles.friendStateDisabled]}>
+                                    <Text style={styles.actionBtnPrimaryTextMuted}>Bạn bè</Text>
+                                </View>
+                            ) : friendPrimary.kind === 'pending_sent' ? (
+                                <View style={[styles.actionBtnPrimary, styles.friendStateDisabled]}>
+                                    <Text style={styles.actionBtnPrimaryTextMuted}>Đã gửi lời mời</Text>
+                                </View>
+                            ) : (
+                                <TouchableOpacity
+                                    style={styles.actionBtnPrimary}
+                                    onPress={() => sendFriendRequestMutation.mutate()}
+                                    disabled={sendFriendRequestMutation.isPending}
+                                >
+                                    <Text style={styles.actionBtnPrimaryText}>Kết bạn</Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
                     )}
                 </View>
@@ -206,7 +326,7 @@ export const PublicProfileScreen = () => {
                             <Heart size={20} color="#EF4444" />
                         </LinearGradient>
                         <Text style={styles.statValue}>{profile.likeCount || 0}</Text>
-                        <Text style={styles.statLabel}>Lượt thích</Text>
+                        <Text style={styles.statLabel}>Lượt được tim</Text>
                     </View>
                 </View>
             </ScrollView>
@@ -371,6 +491,37 @@ const styles = StyleSheet.create({
     actionBtnPrimaryText: {
         color: '#fff',
         fontWeight: '700',
+    },
+    actionBtnPrimaryTextMuted: {
+        color: 'rgba(255,255,255,0.55)',
+        fontWeight: '700',
+    },
+    friendStateDisabled: {
+        opacity: 1,
+        backgroundColor: 'rgba(37,99,255,0.35)',
+    },
+    friendSplit: {
+        flex: 1,
+        flexDirection: 'row',
+        gap: 8,
+    },
+    friendSplitBtn: {
+        flex: 1,
+    },
+    actionBtnOutline: {
+        paddingHorizontal: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
+        backgroundColor: 'rgba(255,255,255,0.05)',
+    },
+    actionBtnOutlineText: {
+        color: theme.colors.textSecondary,
+        fontWeight: '700',
+        fontSize: 13,
     },
     statsRow: {
         flexDirection: 'row',

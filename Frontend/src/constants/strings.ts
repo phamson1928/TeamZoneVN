@@ -17,7 +17,7 @@ export const STRINGS = {
   REGISTER_BUTTON: 'Tham gia ngay',
   HAVE_ACCOUNT: 'Đã có tài khoản? ',
   NO_ACCOUNT: 'Chưa có tài khoản? ',
-  TAGLINE: 'Tìm đồng đội - Leo rank thần tốc',
+  TAGLINE: 'Tìm đồng đội — chiến game cùng nhau',
 
   // Validation Messages
   REQUIRED_FIELD: 'Vui lòng điền đầy đủ thông tin',
@@ -63,9 +63,9 @@ export const STRINGS = {
   PROFILE_TITLE: 'HỒ SƠ',
   BIO_TITLE: 'GIỚI THIỆU',
   BIO_PLACEHOLDER: 'Chưa có giới thiệu. Hãy cho mọi người biết về bạn!',
-  GAME_RANKS_TITLE: 'XẾP HẠNG GAME',
-  NO_RANKS: 'Chưa cập nhật rank game nào.',
-  ADD_RANK_BUTTON: 'THÊM RANK GAME',
+  MY_GAMES_TITLE: 'GAME ĐÃ CHƠI',
+  NO_GAMES_IN_PROFILE: 'Chưa thêm game nào vào hồ sơ.',
+  ADD_GAME_BUTTON: 'THÊM GAME',
   ROLE_ADMIN: 'QUẢN TRỊ VIÊN',
   ROLE_USER: 'THÀNH VIÊN',
   PLAYSTYLE_CASUAL: 'VUI VẺ',

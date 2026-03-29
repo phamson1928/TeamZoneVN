@@ -49,8 +49,7 @@ export const QuickMatchScreen = () => {
 
             await apiClient.post('/quick-match', {
                 gameId: profile.gameId,
-                rankLevel: profile.rankLevel,
-                requiredPlayers: 5, // Default squad size
+                requiredPlayers: 5,
             });
         },
         onSuccess: () => {
@@ -133,7 +132,7 @@ export const QuickMatchScreen = () => {
                                         <Image source={{ uri: p.game.iconUrl }} style={styles.gameIcon} contentFit="cover" />
                                         <View style={styles.gameInfo}>
                                             <Text style={styles.gameName}>{p.game.name}</Text>
-                                            <Text style={styles.gameRank}>{p.rankLevel}</Text>
+                                            <Text style={styles.gameHint}>Ghép đội 5 người</Text>
                                         </View>
                                     </TouchableOpacity>
                                 ))}
@@ -231,7 +230,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
-    gameRank: {
+    gameHint: {
         color: theme.colors.primary,
         fontWeight: '600',
         fontSize: 12,

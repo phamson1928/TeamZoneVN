@@ -5,7 +5,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuthStore } from '../store/useAuthStore';
 import { theme } from '../theme';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   Home,
   Compass,
@@ -65,22 +64,17 @@ const Tab = createBottomTabNavigator();
 // Placeholder component for the center tab (does nothing, we handle navigation via custom button)
 const DummyScreen = () => null;
 
-// Custom center FAB (Create Zone)
+// FAB tạo zone — màu phẳng (primary), viền mảnh
 const AddZoneButton = ({ onPress }: { onPress: () => void }) => (
   <View style={styles.fabContainer}>
     <TouchableOpacity
       style={styles.fabWrapper}
       onPress={onPress}
-      activeOpacity={0.85}
+      activeOpacity={0.88}
     >
-      <LinearGradient
-        colors={['#2563FF', '#7C3AED']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.fabGradient}
-      >
+      <View style={styles.fabCircle}>
         <Plus color="#FFFFFF" size={26} strokeWidth={2.5} />
-      </LinearGradient>
+      </View>
     </TouchableOpacity>
     <Text style={styles.fabLabel}>Tạo mới</Text>
   </View>
@@ -288,23 +282,23 @@ const styles = StyleSheet.create({
     width: 64,
   },
   fabWrapper: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    overflow: 'hidden',
-    shadowColor: '#2563FF',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 14,
-    elevation: 10,
-    borderWidth: 3,
-    borderColor: '#111827',
-  },
-  fabGradient: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fabCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.buttonSolidPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 10,
   },
   fabLabel: {
     marginTop: 6,

@@ -5,17 +5,19 @@ import {
     View,
     FlatList,
     TouchableOpacity,
+    Pressable,
     ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, UserPlus, UserMinus, UserCheck } from 'lucide-react-native';
+import { ArrowLeft, UserMinus, UserCheck } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Container } from '../components/Container';
 import { theme } from '../theme';
 import { apiClient } from '../api/client';
+import { useAuthStore } from '../store/useAuthStore';
 import { Friendship, User } from '../types';
 
 const TABS = [
@@ -23,9 +25,16 @@ const TABS = [
     { value: 'requests', label: 'Lời Mời' },
 ];
 
+/** JWT / Prisma đôi khi khác chữ hoa thường — so khớp an toàn */
+function sameUserId(a?: string | null, b?: string | null): boolean {
+    if (a == null || b == null) return false;
+    return a === b || a.toLowerCase() === b.toLowerCase();
+}
+
 export const FriendsScreen = () => {
     const navigation = useNavigation<any>();
     const queryClient = useQueryClient();
+    const currentUserId = useAuthStore(state => state.user?.id);
     const [activeTab, setActiveTab] = useState('friends');
 
     const { data: friendsData, isLoading: isLoadingFriends } = useQuery({
@@ -41,13 +50,23 @@ export const FriendsScreen = () => {
         },
     });
 
-    const respondMutation = useMutation({
-        mutationFn: async ({ id, status }: { id: string, status: 'ACCEPTED' | 'DECLINED' }) => {
-            await apiClient.patch(`/friends/request/${id}`, { status });
+    const acceptMutation = useMutation({
+        mutationFn: async (friendshipId: string) => {
+            await apiClient.patch(`/friends/request/${friendshipId}`);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['friends'] });
-        }
+        },
+    });
+
+    /** Từ chối = xóa quan hệ PENDING (DELETE /friends/:senderId) */
+    const rejectMutation = useMutation({
+        mutationFn: async (senderId: string) => {
+            await apiClient.delete(`/friends/${senderId}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['friends'] });
+        },
     });
 
     const unfriendMutation = useMutation({
@@ -63,29 +82,37 @@ export const FriendsScreen = () => {
     const listData = friendsData || [];
 
     const renderItem = ({ item }: { item: Friendship }) => {
-        // Determine the "other user" depending on the context
-        // If we're looking at friends, we need to know who the other user is.
-        // However, the backend should return `sender` and `receiver` objects or `friend` object.
-        // Based on Phase 9 plan, GET /friends returns an array of User or Friendship. 
-        // Assuming GET /friends returns { ...user, friendshipId: ... } or Friendship object.
-        // Assuming backend returns `{ id, sender, receiver }`. 
-        // Let's assume it returns `sender` and `receiver` correctly.
+        /** Luôn lấy id từ khóa ngoại — tránh lệch khi object sender/receiver thiếu hoặc lỗi serialize */
+        const peerUserId =
+            activeTab === 'requests'
+                ? item.senderId
+                : sameUserId(currentUserId, item.senderId)
+                  ? item.receiverId
+                  : item.senderId;
 
-        // Try to find the user to display
-        let otherUser: User | undefined;
-        const currentUserId = queryClient.getQueryData<any>(['user'])?.id; // Rough guess, maybe authStore
-        // For simplicity, just use whichever exists (if it returns a direct user object instead of friendship, adapt)
-        // Actually, backend friend returned from GET /friends is array of users in `data.data` ?
-        // In phase 9.1: "GET /friends - Danh sách bạn bè (pagination)", usually it returns User[].
-        // Let's assume `item` is a User or has `user` property. Or we fallback.
-        const displayUser = item.sender || item.receiver || (item as unknown as User);
+        const peer =
+            activeTab === 'requests'
+                ? item.sender
+                : sameUserId(currentUserId, item.senderId)
+                  ? item.receiver
+                  : item.sender;
+
+        if (!peerUserId) {
+            return null;
+        }
+
+        const displayUser: User = peer ?? {
+            id: peerUserId,
+            username: 'Người dùng',
+            avatarUrl: null,
+        };
 
         return (
             <View style={styles.userCard}>
-                <TouchableOpacity
-                    style={styles.userInfoWrapper}
-                    onPress={() => navigation.navigate('PublicProfile', { userId: displayUser.id })}
-                    activeOpacity={0.8}
+                <Pressable
+                    style={({ pressed }) => [styles.userInfoWrapper, pressed && { opacity: 0.75 }]}
+                    onPress={() => navigation.navigate('PublicProfile', { userId: peerUserId })}
+                    android_ripple={{ color: 'rgba(255,255,255,0.12)' }}
                 >
                     <View style={styles.avatarWrapper}>
                         {displayUser.avatarUrl ? (
@@ -99,20 +126,20 @@ export const FriendsScreen = () => {
                     <View style={styles.userInfo}>
                         <Text style={styles.username} numberOfLines={1}>{displayUser.username}</Text>
                     </View>
-                </TouchableOpacity>
+                </Pressable>
 
                 <View style={styles.actions}>
                     {activeTab === 'requests' ? (
                         <>
                             <TouchableOpacity
                                 style={styles.btnAccept}
-                                onPress={() => respondMutation.mutate({ id: item.id, status: 'ACCEPTED' })}
+                                onPress={() => acceptMutation.mutate(item.id)}
                             >
                                 <UserCheck size={16} color="#fff" />
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={styles.btnDecline}
-                                onPress={() => respondMutation.mutate({ id: item.id, status: 'DECLINED' })}
+                                onPress={() => item.senderId && rejectMutation.mutate(item.senderId)}
                             >
                                 <ArrowLeft size={16} color="#EF4444" style={{ transform: [{ rotate: '45deg' }] }} />
                             </TouchableOpacity>
@@ -120,7 +147,7 @@ export const FriendsScreen = () => {
                     ) : (
                         <TouchableOpacity
                             style={styles.btnDecline}
-                            onPress={() => unfriendMutation.mutate(displayUser.id)}
+                            onPress={() => unfriendMutation.mutate(peerUserId)}
                         >
                             <UserMinus size={16} color="#EF4444" />
                         </TouchableOpacity>

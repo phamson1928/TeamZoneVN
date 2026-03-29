@@ -5,12 +5,10 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Animated,
   Platform,
   Modal,
-  Pressable
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -18,7 +16,6 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import {
   ArrowLeft,
   Users,
-  Trophy,
   Clock,
   User,
   Shield,
@@ -36,7 +33,6 @@ import { apiClient } from '../api/client';
 import { theme } from '../theme';
 import { Zone } from '../types';
 import { RootStackParamList } from '../navigation';
-import { getRankDisplay } from '../utils/rank';
 import { useAuthStore } from '../store/useAuthStore';
 
 type ZoneDetailsRouteProp = RouteProp<RootStackParamList, 'ZoneDetails'>;
@@ -112,12 +108,28 @@ export const ZoneDetailsScreen = () => {
 
   const hideModal = () => setModalConfig(prev => ({ ...prev, visible: false }));
 
-  const showAlert = (title: string, message: string, type: 'info' | 'success' | 'error' = 'info') => {
+  const showAlert = (
+    title: string,
+    message: string,
+    type: 'info' | 'success' | 'error' = 'info',
+  ) => {
     setModalConfig({ visible: true, title, message, type });
   };
 
-  const showConfirm = (title: string, message: string, onConfirm: () => void, confirmText = 'Xác nhận') => {
-    setModalConfig({ visible: true, title, message, type: 'confirm', onConfirm, confirmText });
+  const showConfirm = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    confirmText = 'Xác nhận',
+  ) => {
+    setModalConfig({
+      visible: true,
+      title,
+      message,
+      type: 'confirm',
+      onConfirm,
+      confirmText,
+    });
   };
 
   const {
@@ -134,7 +146,7 @@ export const ZoneDetailsScreen = () => {
 
   const isOwner = currentUser?.id === zone?.ownerId;
 
-  const { data: rawJoinRequests, refetch: refetchRequests } = useQuery({
+  const { data: rawJoinRequests } = useQuery({
     queryKey: ['zone-requests', zoneId],
     queryFn: async () => {
       const response = await apiClient.get(`/zones/${zoneId}/requests`);
@@ -160,65 +172,126 @@ export const ZoneDetailsScreen = () => {
   });
 
   // Luôn đảm bảo là array dù API trả về bất kỳ dạng nào
-  const joinRequests: { id: string; status: string; user: { id: string; username: string; avatarUrl?: string | null } }[] =
-    Array.isArray(rawJoinRequests) ? rawJoinRequests : [];
+  const joinRequests: {
+    id: string;
+    status: string;
+    user: { id: string; username: string; avatarUrl?: string | null };
+  }[] = Array.isArray(rawJoinRequests) ? rawJoinRequests : [];
 
   const pendingRequests = joinRequests.filter(r => r.status === 'PENDING');
 
   const hasPendingRequest = Array.isArray(myJoinRequests)
-    ? myJoinRequests.some((r: any) => r.zoneId === zoneId && r.status === 'PENDING')
+    ? myJoinRequests.some(
+        (r: any) => r.zoneId === zoneId && r.status === 'PENDING',
+      )
     : false;
 
   const reviewMutation = useMutation({
-    mutationFn: async ({ requestId, action }: { requestId: string; action: 'APPROVED' | 'REJECTED' }) => {
-      await apiClient.patch(`/zones/${zoneId}/requests/${requestId}`, { action });
+    mutationFn: async ({
+      requestId,
+      action,
+    }: {
+      requestId: string;
+      action: 'APPROVED' | 'REJECTED';
+    }) => {
+      await apiClient.patch(`/zones/${zoneId}/requests/${requestId}`, {
+        action,
+      });
     },
     onSuccess: (_, { action }) => {
       queryClient.invalidateQueries({ queryKey: ['zone-requests', zoneId] });
       queryClient.invalidateQueries({ queryKey: ['zone', zoneId] });
       hideModal();
       setTimeout(() => {
-        showAlert('Thành công', action === 'APPROVED' ? 'Đã chấp nhận yêu cầu!' : 'Đã từ chối yêu cầu.', 'success');
+        showAlert(
+          'Thành công',
+          action === 'APPROVED'
+            ? 'Đã chấp nhận yêu cầu!'
+            : 'Đã từ chối yêu cầu.',
+          'success',
+        );
       }, 300);
     },
     onError: () => {
       hideModal();
-      setTimeout(() => showAlert('Lỗi', 'Không thể xử lý yêu cầu.', 'error'), 300);
+      setTimeout(
+        () => showAlert('Lỗi', 'Không thể xử lý yêu cầu.', 'error'),
+        300,
+      );
     },
   });
 
   const handleReview = (requestId: string, action: 'APPROVED' | 'REJECTED') => {
     const label = action === 'APPROVED' ? 'chấp nhận' : 'từ chối';
-    showConfirm('Xác nhận', `Bạn muốn ${label} yêu cầu này?`, () => {
-      reviewMutation.mutate({ requestId, action });
-    }, label.charAt(0).toUpperCase() + label.slice(1));
+    showConfirm(
+      'Xác nhận',
+      `Bạn muốn ${label} yêu cầu này?`,
+      () => {
+        reviewMutation.mutate({ requestId, action });
+      },
+      label.charAt(0).toUpperCase() + label.slice(1),
+    );
   };
 
   const handleRequestJoin = () => {
     if (hasPendingRequest) {
-      showConfirm('Hủy yêu cầu', 'Bạn muốn hủy yêu cầu tham gia phòng này?', async () => {
-        try {
-          await apiClient.delete(`/zones/${zoneId}/join`);
-          hideModal();
-          queryClient.invalidateQueries({ queryKey: ['my-join-requests'] });
-          setTimeout(() => showAlert('Thành công', 'Đã hủy yêu cầu tham gia!', 'success'), 300);
-        } catch (e: any) {
-          hideModal();
-          setTimeout(() => showAlert('Lỗi', e.response?.data?.message || 'Không thể hủy yêu cầu.', 'error'), 300);
-        }
-      }, 'Hủy yêu cầu');
+      showConfirm(
+        'Hủy yêu cầu',
+        'Bạn muốn hủy yêu cầu tham gia phòng này?',
+        async () => {
+          try {
+            await apiClient.delete(`/zones/${zoneId}/join`);
+            hideModal();
+            queryClient.invalidateQueries({ queryKey: ['my-join-requests'] });
+            setTimeout(
+              () =>
+                showAlert('Thành công', 'Đã hủy yêu cầu tham gia!', 'success'),
+              300,
+            );
+          } catch (e: any) {
+            hideModal();
+            setTimeout(
+              () =>
+                showAlert(
+                  'Lỗi',
+                  e.response?.data?.message || 'Không thể hủy yêu cầu.',
+                  'error',
+                ),
+              300,
+            );
+          }
+        },
+        'Hủy yêu cầu',
+      );
     } else {
-      showConfirm('Gửi yêu cầu', 'Bạn muốn tham gia phòng này?', async () => {
-        try {
-          await apiClient.post(`/zones/${zoneId}/join`);
-          hideModal();
-          queryClient.invalidateQueries({ queryKey: ['my-join-requests'] });
-          setTimeout(() => showAlert('Thành công', 'Đã gửi yêu cầu tham gia!', 'success'), 300);
-        } catch (e: any) {
-          hideModal();
-          setTimeout(() => showAlert('Lỗi', e.response?.data?.message || 'Không thể gửi yêu cầu.', 'error'), 300);
-        }
-      }, 'Gửi yêu cầu');
+      showConfirm(
+        'Gửi yêu cầu',
+        'Bạn muốn tham gia phòng này?',
+        async () => {
+          try {
+            await apiClient.post(`/zones/${zoneId}/join`);
+            hideModal();
+            queryClient.invalidateQueries({ queryKey: ['my-join-requests'] });
+            setTimeout(
+              () =>
+                showAlert('Thành công', 'Đã gửi yêu cầu tham gia!', 'success'),
+              300,
+            );
+          } catch (e: any) {
+            hideModal();
+            setTimeout(
+              () =>
+                showAlert(
+                  'Lỗi',
+                  e.response?.data?.message || 'Không thể gửi yêu cầu.',
+                  'error',
+                ),
+              300,
+            );
+          }
+        },
+        'Gửi yêu cầu',
+      );
     }
   };
 
@@ -243,6 +316,15 @@ export const ZoneDetailsScreen = () => {
     );
   }
 
+  const alertIconBackgroundStyle = {
+    backgroundColor:
+      modalConfig.type === 'error'
+        ? 'rgba(239,68,68,0.1)'
+        : modalConfig.type === 'success'
+        ? 'rgba(34,197,94,0.1)'
+        : 'rgba(37,99,255,0.1)',
+  };
+
   return (
     <Container>
       <View style={styles.header}>
@@ -261,7 +343,7 @@ export const ZoneDetailsScreen = () => {
         <Text style={styles.headerTitle} numberOfLines={1}>
           Sảnh chờ
         </Text>
-        <View style={{ width: 40 }} />
+        <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView
@@ -298,8 +380,8 @@ export const ZoneDetailsScreen = () => {
               {zone.status === 'OPEN'
                 ? 'ĐANG TÌM NGƯỜI'
                 : zone.status === 'FULL'
-                  ? 'ĐÃ ĐẦY'
-                  : 'ĐÃ ĐÓNG'}
+                ? 'ĐÃ ĐẦY'
+                : 'ĐÃ ĐÓNG'}
             </Text>
           </View>
         </View>
@@ -315,15 +397,18 @@ export const ZoneDetailsScreen = () => {
               <Image
                 source={{ uri: zone.game.iconUrl }}
                 style={styles.gameIcon}
-                contentFit="cover" transition={500} cachePolicy="disk" />
+                contentFit="cover"
+                transition={500}
+                cachePolicy="disk"
+              />
             </View>
             <View style={styles.gameInfo}>
               <Text style={styles.gameLabel}>Game</Text>
               <Text style={styles.gameName}>{zone.game.name}</Text>
               {zone.game.platforms && zone.game.platforms.length > 0 && (
                 <View style={styles.platformBadges}>
-                  {zone.game.platforms.map((platform, idx) => (
-                    <View key={idx} style={styles.platformBadge}>
+                  {zone.game.platforms.map(platform => (
+                    <View key={platform} style={styles.platformBadge}>
                       {platform === 'PC' && (
                         <Monitor size={12} color={theme.colors.primary} />
                       )}
@@ -342,7 +427,7 @@ export const ZoneDetailsScreen = () => {
             <Gamepad2
               color={theme.colors.primary}
               size={24}
-              style={{ opacity: 0.5 }}
+              style={styles.dimmedIcon}
             />
           </View>
         )}
@@ -353,9 +438,11 @@ export const ZoneDetailsScreen = () => {
             <View style={styles.statIconBg}>
               <Users color={theme.colors.accent} size={20} />
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={styles.flexOne}>
               <Text style={styles.statValue}>{zone.requiredPlayers}</Text>
-              <Text style={styles.statLabel} numberOfLines={1}>Cần thêm</Text>
+              <Text style={styles.statLabel} numberOfLines={1}>
+                Cần thêm
+              </Text>
             </View>
           </View>
 
@@ -366,13 +453,15 @@ export const ZoneDetailsScreen = () => {
                 { backgroundColor: theme.colors.primary + '15' },
               ]}
             >
-              <Trophy color={theme.colors.primary} size={20} />
+              <Clock color={theme.colors.primary} size={20} />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.statValue} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>
-                {getRankDisplay(zone.minRankLevel)} - {getRankDisplay(zone.maxRankLevel)}
+            <View style={styles.flexOne}>
+              <Text style={styles.statValue} numberOfLines={1}>
+                {new Date(zone.createdAt).toLocaleDateString('vi-VN')}
               </Text>
-              <Text style={styles.statLabel} numberOfLines={1}>Yêu cầu Trình</Text>
+              <Text style={styles.statLabel} numberOfLines={1}>
+                Ngày tạo phòng
+              </Text>
             </View>
           </View>
         </View>
@@ -380,9 +469,13 @@ export const ZoneDetailsScreen = () => {
         {/* Participants Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Thành viên</Text>
+            <Text style={styles.sectionTitleNoMarginBottom}>Thành viên</Text>
             {isOwner && (
-              <TouchableOpacity onPress={() => (navigation as any).navigate('InviteFriends', { zoneId })}>
+              <TouchableOpacity
+                onPress={() =>
+                  (navigation as any).navigate('InviteFriends', { zoneId })
+                }
+              >
                 <Text style={styles.inviteFriendsText}>Mời bạn bè +</Text>
               </TouchableOpacity>
             )}
@@ -395,7 +488,10 @@ export const ZoneDetailsScreen = () => {
                   <Image
                     source={{ uri: zone.owner.avatarUrl }}
                     style={styles.participantAvatar}
-                    contentFit="cover" transition={500} cachePolicy="disk" />
+                    contentFit="cover"
+                    transition={500}
+                    cachePolicy="disk"
+                  />
                 ) : (
                   <View
                     style={[styles.participantAvatar, styles.placeholderAvatar]}
@@ -420,7 +516,7 @@ export const ZoneDetailsScreen = () => {
                     <User
                       color={theme.colors.textSecondary}
                       size={20}
-                      style={{ opacity: 0.5 }}
+                      style={styles.dimmedIcon}
                     />
                   </View>
                 ),
@@ -436,7 +532,7 @@ export const ZoneDetailsScreen = () => {
             </View>
             <Text style={styles.slotCountText}>
               Còn trống{' '}
-              <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+              <Text style={styles.slotCountHighlight}>
                 {zone.requiredPlayers}
               </Text>{' '}
               slot
@@ -448,7 +544,10 @@ export const ZoneDetailsScreen = () => {
         {zone.tags && zone.tags.length > 0 && (
           <View style={styles.tagsContainer}>
             {zone.tags.map(tagRelation => (
-              <View key={tagRelation.tag.id} style={styles.tag}>
+              <View
+                key={`${tagRelation.zoneId}-${tagRelation.tagId}`}
+                style={styles.tag}
+              >
                 <Text style={styles.tagText}>#{tagRelation.tag.name}</Text>
               </View>
             ))}
@@ -478,8 +577,8 @@ export const ZoneDetailsScreen = () => {
                       {contact.type === 'DISCORD'
                         ? 'Discord'
                         : contact.type === 'INGAME'
-                          ? 'In-Game'
-                          : 'Other'}
+                        ? 'In-Game'
+                        : 'Other'}
                     </Text>
                     <Text style={styles.contactValue}>{contact.value}</Text>
                   </View>
@@ -497,7 +596,10 @@ export const ZoneDetailsScreen = () => {
               <Image
                 source={{ uri: zone.owner.avatarUrl }}
                 style={styles.ownerAvatar}
-                contentFit="cover" transition={500} cachePolicy="disk" />
+                contentFit="cover"
+                transition={500}
+                cachePolicy="disk"
+              />
             ) : (
               <View style={styles.ownerAvatarPlaceholder}>
                 <User color={theme.colors.text} size={24} />
@@ -522,12 +624,19 @@ export const ZoneDetailsScreen = () => {
         {isOwner && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
-              Yêu cầu tham gia{pendingRequests.length > 0 ? ` (${pendingRequests.length})` : ''}
+              Yêu cầu tham gia
+              {pendingRequests.length > 0 ? ` (${pendingRequests.length})` : ''}
             </Text>
             {pendingRequests.length === 0 ? (
               <View style={styles.emptyRequestsBox}>
-                <Users color={theme.colors.textMuted} size={28} style={{ opacity: 0.5 }} />
-                <Text style={styles.emptyRequestsText}>Chưa có yêu cầu nào đang chờ</Text>
+                <Users
+                  color={theme.colors.textMuted}
+                  size={28}
+                  style={styles.dimmedIcon}
+                />
+                <Text style={styles.emptyRequestsText}>
+                  Chưa có yêu cầu nào đang chờ
+                </Text>
               </View>
             ) : (
               <View style={styles.requestsList}>
@@ -535,13 +644,27 @@ export const ZoneDetailsScreen = () => {
                   <View key={req.id} style={styles.requestCard}>
                     <View style={styles.requestUserRow}>
                       {req.user.avatarUrl ? (
-                        <Image source={{ uri: req.user.avatarUrl }} style={styles.requestAvatar} contentFit="cover" cachePolicy="disk" />
+                        <Image
+                          source={{ uri: req.user.avatarUrl }}
+                          style={styles.requestAvatar}
+                          contentFit="cover"
+                          cachePolicy="disk"
+                        />
                       ) : (
-                        <View style={[styles.requestAvatar, styles.requestAvatarPlaceholder]}>
-                          <Text style={styles.requestAvatarLetter}>{req.user.username?.[0]?.toUpperCase() ?? '?'}</Text>
+                        <View
+                          style={[
+                            styles.requestAvatar,
+                            styles.requestAvatarPlaceholder,
+                          ]}
+                        >
+                          <Text style={styles.requestAvatarLetter}>
+                            {req.user.username?.[0]?.toUpperCase() ?? '?'}
+                          </Text>
                         </View>
                       )}
-                      <Text style={styles.requestUsername}>{req.user.username}</Text>
+                      <Text style={styles.requestUsername}>
+                        {req.user.username}
+                      </Text>
                     </View>
                     <View style={styles.requestActions}>
                       <TouchableOpacity
@@ -566,7 +689,7 @@ export const ZoneDetailsScreen = () => {
           </View>
         )}
 
-        <View style={{ height: 100 }} />
+        <View style={styles.footerSpacer} />
       </ScrollView>
 
       {/* Glass Footer */}
@@ -574,12 +697,22 @@ export const ZoneDetailsScreen = () => {
         <View style={styles.footer}>
           <View style={styles.glassBackground} />
           <TouchableOpacity
-            style={[styles.actionButton, hasPendingRequest && styles.actionButtonPending]}
+            style={[
+              styles.actionButton,
+              hasPendingRequest && styles.actionButtonPending,
+            ]}
             onPress={handleRequestJoin}
             activeOpacity={0.9}
           >
-            <Text style={[styles.actionButtonText, hasPendingRequest && styles.actionButtonTextPending]}>
-              {hasPendingRequest ? 'Hủy yêu cầu tham gia' : 'Gửi yêu cầu tham gia'}
+            <Text
+              style={[
+                styles.actionButtonText,
+                hasPendingRequest && styles.actionButtonTextPending,
+              ]}
+            >
+              {hasPendingRequest
+                ? 'Hủy yêu cầu tham gia'
+                : 'Gửi yêu cầu tham gia'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -595,7 +728,7 @@ export const ZoneDetailsScreen = () => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.alertBox}>
-            <View style={[styles.alertIconBox, { backgroundColor: modalConfig.type === 'error' ? 'rgba(239,68,68,0.1)' : modalConfig.type === 'success' ? 'rgba(34,197,94,0.1)' : 'rgba(37,99,255,0.1)' }]}>
+            <View style={[styles.alertIconBox, alertIconBackgroundStyle]}>
               {modalConfig.type === 'error' ? (
                 <X size={24} color="#EF4444" />
               ) : modalConfig.type === 'success' ? (
@@ -609,16 +742,30 @@ export const ZoneDetailsScreen = () => {
             <View style={styles.alertActions}>
               {modalConfig.type === 'confirm' ? (
                 <>
-                  <TouchableOpacity style={[styles.alertButton, styles.alertCancelButton]} onPress={hideModal} activeOpacity={0.8}>
-                    <Text style={[styles.alertButtonText, { color: theme.colors.textSecondary }]}>Hủy bỏ</Text>
+                  <TouchableOpacity
+                    style={[styles.alertButton, styles.alertCancelButton]}
+                    onPress={hideModal}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.alertCancelButtonText}>Hủy bỏ</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.alertButton, styles.alertConfirmButton]} onPress={modalConfig.onConfirm} activeOpacity={0.8}>
-                    <Text style={[styles.alertButtonText, { color: '#FFF' }]}>{modalConfig.confirmText}</Text>
+                  <TouchableOpacity
+                    style={[styles.alertButton, styles.alertConfirmButton]}
+                    onPress={modalConfig.onConfirm}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.alertConfirmButtonText}>
+                      {modalConfig.confirmText}
+                    </Text>
                   </TouchableOpacity>
                 </>
               ) : (
-                <TouchableOpacity style={[styles.alertButton, styles.alertConfirmButton]} onPress={hideModal} activeOpacity={0.8}>
-                  <Text style={[styles.alertButtonText, { color: '#FFF' }]}>Đóng</Text>
+                <TouchableOpacity
+                  style={[styles.alertButton, styles.alertConfirmButton]}
+                  onPress={hideModal}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.alertConfirmButtonText}>Đóng</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -671,8 +818,32 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1.5,
   },
+  headerSpacer: {
+    width: 40,
+  },
   content: {
     padding: theme.spacing.lg,
+  },
+  dimmedIcon: {
+    opacity: 0.5,
+  },
+  flexOne: {
+    flex: 1,
+  },
+  sectionTitleNoMarginBottom: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: theme.colors.textSecondary,
+    marginBottom: 0,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+  },
+  slotCountHighlight: {
+    color: theme.colors.primary,
+    fontWeight: 'bold',
+  },
+  footerSpacer: {
+    height: 100,
   },
   statusContainer: {
     marginBottom: theme.spacing.md,
@@ -1220,5 +1391,15 @@ const styles = StyleSheet.create({
   alertButtonText: {
     fontSize: 15,
     fontWeight: '700',
+  },
+  alertCancelButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: theme.colors.textSecondary,
+  },
+  alertConfirmButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFF',
   },
 });

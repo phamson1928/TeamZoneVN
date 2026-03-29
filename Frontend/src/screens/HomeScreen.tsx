@@ -32,7 +32,6 @@ import {
   Monitor,
   Smartphone,
   Gamepad,
-  Trophy,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -46,7 +45,6 @@ import { RootStackParamList } from '../navigation';
 import {
   NotificationPopover,
 } from '../components/NotificationPopover';
-import { getRankDisplay } from '../utils/rank';
 import { useAuthStore } from '../store/useAuthStore';
 import { STRINGS } from '../constants/strings';
 
@@ -192,10 +190,10 @@ const ZoneCardComponent = React.memo(({ item, hasPending, onPress }: { item: Zon
             </View>
             <Text style={styles.hostName} numberOfLines={1}>{item.owner.username}</Text>
           </View>
-          <View style={styles.rankPill}>
-            <Trophy size={10} color="#F59E0B" />
-            <Text style={styles.rankPillText} numberOfLines={1}>
-              {getRankDisplay(item.minRankLevel)} — {getRankDisplay(item.maxRankLevel)}
+          <View style={styles.slotsPill}>
+            <Users size={10} color="#F59E0B" />
+            <Text style={styles.slotsPillText} numberOfLines={1}>
+              Cần thêm {item.requiredPlayers} người
             </Text>
           </View>
         </View>
@@ -1107,7 +1105,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.textSecondary,
   },
-  rankPill: {
+  slotsPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -1119,7 +1117,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(245,158,11,0.2)',
     flexShrink: 0,
   },
-  rankPillText: {
+  slotsPillText: {
     fontSize: 10,
     fontWeight: '700',
     color: '#F59E0B',

@@ -44,6 +44,12 @@ export class UserResponseDto {
 
   @ApiPropertyOptional({ type: UserProfileResponseDto })
   profile?: UserProfileResponseDto | null;
+
+  @ApiPropertyOptional({
+    example: 12,
+    description: 'Số lượt được người khác thích (tim)',
+  })
+  likesReceived?: number;
 }
 
 export class PublicUserResponseDto {

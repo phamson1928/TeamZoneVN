@@ -71,7 +71,7 @@ export class ZonesController {
   }
 
   @Get('suggested')
-  @ApiOperation({ summary: 'Gợi ý zones phù hợp với user (theo game profile, rank)' })
+  @ApiOperation({ summary: 'Gợi ý zones phù hợp với user (theo game đã thêm vào hồ sơ)' })
   findSuggested(
     @CurrentUser('sub') userId: string,
     @Query('limit') limit?: number,

@@ -15,7 +15,6 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { GroupsService } from './groups.service';
 import { ChangeMemberRoleDto } from './dto/change-member-role.dto';
@@ -32,7 +31,7 @@ import {
 @Controller('groups')
 @UseGuards(JwtAuthGuard)
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) { }
+  constructor(private readonly groupsService: GroupsService) {}
 
   @Get()
   @ApiOperation({ summary: 'Danh sách groups của user' })

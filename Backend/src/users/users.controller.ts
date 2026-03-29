@@ -111,6 +111,7 @@ export class UsersController {
     type: PublicUserResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Chưa xác thực' })
+  @ApiResponse({ status: 403, description: 'Tài khoản đích đã bị khóa' })
   @ApiResponse({ status: 404, description: 'Người dùng không tồn tại' })
   async getPublicProfile(
     @Param('id', ParseUUIDPipe) id: string,
