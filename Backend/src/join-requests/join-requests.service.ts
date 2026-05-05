@@ -15,7 +15,7 @@ export class JoinRequestsService {
     private prisma: PrismaService,
     private groupsService: GroupsService,
     private notificationsService: NotificationsService,
-  ) { }
+  ) {}
 
   async sendJoinRequest(userId: string, zoneId: string) {
     const checkZone = await this.prisma.zone.findUnique({
@@ -43,7 +43,9 @@ export class JoinRequestsService {
       },
     });
     if (block) {
-      throw new BadRequestException('Không thể gửi yêu cầu tham gia do bị chặn');
+      throw new BadRequestException(
+        'Không thể gửi yêu cầu tham gia do bị chặn',
+      );
     }
 
     const existingRequest = await this.prisma.zoneJoinRequest.findFirst({
@@ -150,7 +152,9 @@ export class JoinRequestsService {
 
     let groupId: string | undefined;
     if (action === 'APPROVED') {
-      const group = await this.groupsService.createGroupFromZone(request.zoneId);
+      const group = await this.groupsService.createGroupFromZone(
+        request.zoneId,
+      );
       groupId = group?.id;
     }
 
@@ -159,7 +163,10 @@ export class JoinRequestsService {
         action === 'APPROVED'
           ? NotificationType.REQUEST_APPROVED
           : NotificationType.REQUEST_REJECTED,
-      title: action === 'APPROVED' ? 'Request đã được chấp nhận' : 'Request đã bị từ chối',
+      title:
+        action === 'APPROVED'
+          ? 'Request đã được chấp nhận'
+          : 'Request đã bị từ chối',
       data: { zoneId: request.zoneId, requestId, groupId, status: action },
     });
 

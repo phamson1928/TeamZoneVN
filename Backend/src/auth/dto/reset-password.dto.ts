@@ -7,7 +7,7 @@ export class ResetPasswordDto {
         description: 'Token đặt lại mật khẩu nhận từ email',
     })
     @IsString()
-    token!: string;
+  token!: string;
 
     @ApiProperty({
         example: 'NewPassword123',
@@ -16,5 +16,5 @@ export class ResetPasswordDto {
     @IsString()
     @MinLength(6, { message: 'Password must be at least 6 characters' })
     @MaxLength(100, { message: 'Password must not exceed 100 characters' })
-    newPassword!: string;
+  newPassword!: string;
 }

@@ -9,14 +9,14 @@ export class CreateReportDto {
         example: ReportTargetType.USER,
     })
     @IsEnum(ReportTargetType)
-    targetType: ReportTargetType;
+    targetType!: ReportTargetType;
 
     @ApiProperty({
         description: 'ID của đối tượng bị báo cáo (UUID)',
         example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     })
     @IsUUID()
-    targetId: string;
+    targetId!: string;
 
     @ApiProperty({
         description: 'Lý do báo cáo (10-500 ký tự)',
@@ -27,7 +27,7 @@ export class CreateReportDto {
     @IsString()
     @MinLength(10, { message: 'Lý do báo cáo phải có ít nhất 10 ký tự' })
     @MaxLength(500, { message: 'Lý do báo cáo không được vượt quá 500 ký tự' })
-    reason: string;
+    reason!: string;
 
     @ApiProperty({
         description: 'Mức độ nghiêm trọng của vi phạm',

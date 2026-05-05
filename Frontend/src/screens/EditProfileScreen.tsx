@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft, Save, UserX, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, UserX, Trash2 } from 'lucide-react-native';
 import { useMutation } from '@tanstack/react-query';
 
 import { Container } from '../components/Container';
@@ -18,7 +18,6 @@ import { Button } from '../components/Button';
 import { useAuthStore } from '../store/useAuthStore';
 import { apiClient } from '../api/client';
 import { theme } from '../theme';
-import { STRINGS } from '../constants/strings';
 
 const PLAY_STYLES = ['Vui vẻ', 'Cạnh tranh', 'Chill', 'Hardcore'];
 
@@ -27,20 +26,26 @@ export const EditProfileScreen = () => {
   const { user, updateUser, logout } = useAuthStore();
 
   const [bio, setBio] = useState(user?.profile?.bio || '');
-  const [playStyle, setPlayStyle] = useState(user?.profile?.playStyle || PLAY_STYLES[0]);
+  const [playStyle, setPlayStyle] = useState(
+    user?.profile?.playStyle || PLAY_STYLES[0],
+  );
   const [timezone, setTimezone] = useState(user?.profile?.timezone || '');
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: { bio: string; playStyle: string; timezone: string }) => {
+    mutationFn: async (data: {
+      bio: string;
+      playStyle: string;
+      timezone: string;
+    }) => {
       const response = await apiClient.patch('/users/me', data);
       return response.data;
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       updateUser(data.data);
       Alert.alert('Thành công', 'Cập nhật hồ sơ thành công');
       navigation.goBack();
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Update profile error:', error);
       Alert.alert('Lỗi', 'Không thể cập nhật hồ sơ. Vui lòng thử lại.');
     },
@@ -73,15 +78,22 @@ export const EditProfileScreen = () => {
       'Hành động này không thể hoàn tác. Toàn bộ dữ liệu hồ sơ, game, zone, và tin nhắn của bạn sẽ bị xóa sạch.',
       [
         { text: 'Hủy', style: 'cancel' },
-        { text: 'Xóa vĩnh viễn', style: 'destructive', onPress: () => deleteAccountMutation.mutate() },
-      ]
+        {
+          text: 'Xóa vĩnh viễn',
+          style: 'destructive',
+          onPress: () => deleteAccountMutation.mutate(),
+        },
+      ],
     );
   };
 
   return (
     <Container>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
           <ArrowLeft color={theme.colors.text} size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chỉnh sửa hồ sơ</Text>
@@ -92,7 +104,7 @@ export const EditProfileScreen = () => {
         <View style={styles.formGroup}>
           <Text style={styles.label}>Phong cách chơi</Text>
           <View style={styles.playStyleContainer}>
-            {PLAY_STYLES.map((style) => (
+            {PLAY_STYLES.map(style => (
               <TouchableOpacity
                 key={style}
                 style={[
@@ -146,10 +158,16 @@ export const EditProfileScreen = () => {
             style={styles.dangerActionBlock}
             onPress={() => navigation.navigate('BlockedUsers' as never)}
           >
-            <View style={styles.dangerIconBg}><UserX size={20} color={theme.colors.text} /></View>
+            <View style={styles.dangerIconBg}>
+              <UserX size={20} color={theme.colors.text} />
+            </View>
             <View style={styles.dangerActionContent}>
-              <Text style={styles.dangerActionTitle}>Quản lý người dùng bị chặn</Text>
-              <Text style={styles.dangerActionSubtitle}>Xem danh sách và bỏ chặn người dùng</Text>
+              <Text style={styles.dangerActionTitle}>
+                Quản lý người dùng bị chặn
+              </Text>
+              <Text style={styles.dangerActionSubtitle}>
+                Xem danh sách và bỏ chặn người dùng
+              </Text>
             </View>
           </TouchableOpacity>
 
@@ -163,7 +181,9 @@ export const EditProfileScreen = () => {
             ) : (
               <>
                 <Trash2 size={20} color={theme.colors.error} />
-                <Text style={styles.deleteAccountText}>Xóa tài khoản vĩnh viễn</Text>
+                <Text style={styles.deleteAccountText}>
+                  Xóa tài khoản vĩnh viễn
+                </Text>
               </>
             )}
           </TouchableOpacity>

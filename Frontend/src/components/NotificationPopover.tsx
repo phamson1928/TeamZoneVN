@@ -6,9 +6,20 @@ import {
   Modal,
   TouchableOpacity,
   FlatList,
-  Dimensions
+  Dimensions,
 } from 'react-native';
-import { Users, Settings, Info, X, BellOff, CheckCircle2, XCircle, LogOut, UserPlus, Send, Zap } from 'lucide-react-native';
+import {
+  Users,
+  Info,
+  X,
+  BellOff,
+  CheckCircle2,
+  XCircle,
+  LogOut,
+  UserPlus,
+  Send,
+  Zap,
+} from 'lucide-react-native';
 import { COLORS } from '../theme/colors';
 import { NotificationItem } from '../types';
 
@@ -42,9 +53,8 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
   onClose,
   notifications,
   onPressItem,
-  onMarkAllRead
+  onMarkAllRead,
 }) => {
-
   const renderItem = ({ item }: { item: NotificationItem }) => {
     let IconComponent = Info;
     let iconColor = COLORS.primary;
@@ -92,23 +102,27 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
 
     return (
       <TouchableOpacity
-        style={[
-          styles.notificationItem,
-          !item.isRead && styles.unreadItem
-        ]}
+        style={[styles.notificationItem, !item.isRead && styles.unreadItem]}
         onPress={() => onPressItem && onPressItem(item)}
       >
-        <View style={[
-          styles.iconContainer,
-          { backgroundColor: item.isRead ? 'rgba(255,255,255,0.06)' : bgColor }
-        ]}>
+        <View
+          style={[
+            styles.iconContainer,
+            {
+              backgroundColor: item.isRead ? 'rgba(255,255,255,0.06)' : bgColor,
+            },
+          ]}
+        >
           <IconComponent
             size={20}
             color={item.isRead ? COLORS.textMuted : iconColor}
           />
         </View>
         <View style={styles.textContainer}>
-          <Text style={[styles.title, !item.isRead && styles.unreadText]} numberOfLines={1}>
+          <Text
+            style={[styles.title, !item.isRead && styles.unreadText]}
+            numberOfLines={1}
+          >
             {item.title}
           </Text>
           {item.data?.message && (
@@ -141,7 +155,10 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
 
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Thông báo</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <X size={20} color={COLORS.textSecondary} />
             </TouchableOpacity>
           </View>
@@ -162,7 +179,10 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
             </View>
           )}
 
-          <TouchableOpacity style={styles.footer} onPress={onMarkAllRead || onClose}>
+          <TouchableOpacity
+            style={styles.footer}
+            onPress={onMarkAllRead || onClose}
+          >
             <Text style={styles.footerText}>Đánh dấu tất cả đã đọc</Text>
           </TouchableOpacity>
         </View>
@@ -308,5 +328,5 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-  }
+  },
 });

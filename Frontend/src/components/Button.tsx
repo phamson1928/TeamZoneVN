@@ -6,7 +6,6 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
-  Platform,
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -53,9 +52,12 @@ export const Button: React.FC<ButtonProps> = ({
     if (isPill) return size === 'sm' ? 36 : 40;
 
     switch (size) {
-      case 'sm': return 36;
-      case 'lg': return 52; // Reduced from 56 for cleaner look
-      default: return 48; // Reduced from 50
+      case 'sm':
+        return 36;
+      case 'lg':
+        return 52; // Reduced from 56 for cleaner look
+      default:
+        return 48; // Reduced from 50
     }
   };
 
@@ -63,9 +65,12 @@ export const Button: React.FC<ButtonProps> = ({
     if (isPill) return size === 'sm' ? 12 : 14;
 
     switch (size) {
-      case 'sm': return 12;
-      case 'lg': return 16; // Reduced from 18
-      default: return 14; // Reduced from 16
+      case 'sm':
+        return 12;
+      case 'lg':
+        return 16; // Reduced from 18
+      default:
+        return 14; // Reduced from 16
     }
   };
 
@@ -75,13 +80,16 @@ export const Button: React.FC<ButtonProps> = ({
     return theme.borderRadius.md;
   };
 
-  const shadowStyle = ((variant === 'primary' || isSolid) && !disabled) ? {
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 3,
-  } : {};
+  const shadowStyle =
+    (variant === 'primary' || isSolid) && !disabled
+      ? {
+          shadowColor: theme.colors.primary,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
+          elevation: 3,
+        }
+      : {};
 
   const getPillStyle = () => {
     if (!isPill) return {};
@@ -110,12 +118,15 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const renderContent = () => {
-    const textColor =
-      isOutline ? theme.colors.primary :
-        isGhost ? theme.colors.success :
-          isPill ? (getPillTextStyle().color ?? '#FFFFFF') :
-            disabled ? '#64748B' :
-              '#FFFFFF';
+    const textColor = isOutline
+      ? theme.colors.primary
+      : isGhost
+      ? theme.colors.success
+      : isPill
+      ? getPillTextStyle().color ?? '#FFFFFF'
+      : disabled
+      ? '#64748B'
+      : '#FFFFFF';
 
     return loading ? (
       <ActivityIndicator color={textColor} size="small" />
@@ -220,17 +231,14 @@ export const Button: React.FC<ButtonProps> = ({
           backgroundColor: disabled ? '#1E293B' : theme.colors.primary, // Fallback bg color
         },
         shadowStyle,
-        style
+        style,
       ]}
     >
       <LinearGradient
         colors={getGradientColors()}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        style={[
-          styles.gradient,
-          { borderRadius: getBorderRadius() }
-        ]}
+        style={[styles.gradient, { borderRadius: getBorderRadius() }]}
       >
         {renderContent()}
       </LinearGradient>
@@ -260,4 +268,3 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5, // Reduced letter spacing
   },
 });
-

@@ -6,5 +6,5 @@ export class HandleFriendRequestDto {
     @ApiProperty({ enum: FriendStatus, description: "ACCEPTED or REJECTED" })
     @IsEnum(FriendStatus)
     @IsNotEmpty()
-    status: FriendStatus;
+    status!: FriendStatus;
 }

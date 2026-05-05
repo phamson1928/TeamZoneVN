@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,12 +11,11 @@ import {
   Pressable,
   TextInput,
   InteractionManager,
-  Animated,
-  Dimensions
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Bell,
@@ -25,7 +24,6 @@ import {
   Search,
   Filter,
   Mic,
-  Globe,
   Clock,
   X,
   Check,
@@ -40,11 +38,7 @@ import { apiClient } from '../api/client';
 import { theme, getBorderColorById } from '../theme';
 import { Zone, Game, Platform, NotificationItem } from '../types';
 import { Button } from '../components/Button';
-import { Input, InputRef } from '../components/Input';
-import { RootStackParamList } from '../navigation';
-import {
-  NotificationPopover,
-} from '../components/NotificationPopover';
+import { NotificationPopover } from '../components/NotificationPopover';
 import { useAuthStore } from '../store/useAuthStore';
 import { STRINGS } from '../constants/strings';
 
@@ -82,160 +76,240 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'players_desc', label: 'Nhiều người nhất' },
 ];
 
-const GameCardComponent = React.memo(({ game, onPress }: { game: Game, onPress: () => void }) => {
-  const accentColor = getBorderColorById(game.id);
+const GameCardComponent = React.memo(
+  ({ game, onPress }: { game: Game; onPress: () => void }) => {
+    const accentColor = getBorderColorById(game.id);
 
-  const getPlatformIcon = (platform: string) => {
-    switch (platform) {
-      case 'PC': return <Monitor size={10} color="#FFFFFF" />;
-      case 'CONSOLE': return <Gamepad size={10} color="#FFFFFF" />;
-      case 'MOBILE': return <Smartphone size={10} color="#FFFFFF" />;
-      default: return null;
-    }
-  };
+    const getPlatformIcon = (platform: string) => {
+      switch (platform) {
+        case 'PC':
+          return <Monitor size={10} color="#FFFFFF" />;
+        case 'CONSOLE':
+          return <Gamepad size={10} color="#FFFFFF" />;
+        case 'MOBILE':
+          return <Smartphone size={10} color="#FFFFFF" />;
+        default:
+          return null;
+      }
+    };
 
-  return (
-    <TouchableOpacity
-      style={styles.gameCardContainer}
-      onPress={onPress}
-      activeOpacity={0.8}
-    >
-      <View style={styles.gameCardImageContainer}>
-        <Image source={{ uri: game.bannerUrl }} style={styles.gameCardImage} contentFit="cover" transition={500} cachePolicy="disk" />
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.85)']}
-          style={styles.gameCardOverlay}
-        />
-        <View style={styles.gameCardBadge}>
-          {game.platforms && game.platforms.length > 0 ? (
-            <View style={styles.platformBadges}>
-              {game.platforms.slice(0, 2).map((platform, idx) => (
-                <View key={idx} style={styles.platformIcon}>
-                  {getPlatformIcon(platform)}
-                </View>
-              ))}
-              {game.platforms.length > 2 && (
-                <Text style={styles.gameCardBadgeText}>+{game.platforms.length - 2}</Text>
-              )}
-            </View>
-          ) : (
-            <Text style={styles.gameCardBadgeText}>GAME</Text>
-          )}
+    return (
+      <TouchableOpacity
+        style={styles.gameCardContainer}
+        onPress={onPress}
+        activeOpacity={0.8}
+      >
+        <View style={styles.gameCardImageContainer}>
+          <Image
+            source={{ uri: game.bannerUrl }}
+            style={styles.gameCardImage}
+            contentFit="cover"
+            transition={500}
+            cachePolicy="disk"
+          />
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.85)']}
+            style={styles.gameCardOverlay}
+          />
+          <View style={styles.gameCardBadge}>
+            {game.platforms && game.platforms.length > 0 ? (
+              <View style={styles.platformBadges}>
+                {game.platforms.slice(0, 2).map((platform, idx) => (
+                  <View key={idx} style={styles.platformIcon}>
+                    {getPlatformIcon(platform)}
+                  </View>
+                ))}
+                {game.platforms.length > 2 && (
+                  <Text style={styles.gameCardBadgeText}>
+                    +{game.platforms.length - 2}
+                  </Text>
+                )}
+              </View>
+            ) : (
+              <Text style={styles.gameCardBadgeText}>GAME</Text>
+            )}
+          </View>
         </View>
-      </View>
 
-      <View style={styles.gameCardInfo}>
-        <Text style={styles.gameCardName} numberOfLines={1}>
-          {game.name}
-        </Text>
-        <Text style={[styles.gameCardCount, { color: accentColor }]}>
-          {game._count?.zones || 0} zones
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-});
+        <View style={styles.gameCardInfo}>
+          <Text style={styles.gameCardName} numberOfLines={1}>
+            {game.name}
+          </Text>
+          <Text style={[styles.gameCardCount, { color: accentColor }]}>
+            {game._count?.zones || 0} zones
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  },
+);
 
 const getStatusConfig = (status: string) => {
   switch (status) {
-    case 'OPEN': return { color: '#22C55E', label: 'OPEN', bg: 'rgba(34,197,94,0.15)' };
-    case 'FULL': return { color: '#EF4444', label: 'FULL', bg: 'rgba(239,68,68,0.15)' };
-    case 'STARTING': return { color: '#F59E0B', label: 'STARTING', bg: 'rgba(245,158,11,0.15)' };
-    default: return { color: '#64748B', label: 'CLOSED', bg: 'rgba(100,116,139,0.15)' };
+    case 'OPEN':
+      return { color: '#22C55E', label: 'OPEN', bg: 'rgba(34,197,94,0.15)' };
+    case 'FULL':
+      return { color: '#EF4444', label: 'FULL', bg: 'rgba(239,68,68,0.15)' };
+    case 'STARTING':
+      return {
+        color: '#F59E0B',
+        label: 'STARTING',
+        bg: 'rgba(245,158,11,0.15)',
+      };
+    default:
+      return {
+        color: '#64748B',
+        label: 'CLOSED',
+        bg: 'rgba(100,116,139,0.15)',
+      };
   }
 };
 
-const ZoneCardComponent = React.memo(({ item, hasPending, onPress }: { item: Zone, hasPending: boolean, onPress: () => void }) => {
-  const hasMic = item.tags?.some(t => t.tag?.name?.toLowerCase().includes('mic')) ?? false;
-  const statusCfg = getStatusConfig(item.status);
-  const approvedCount = item._count?.joinRequests ?? 0;
-  const currentPlayers = approvedCount + 1;
-  const maxPlayers = item.requiredPlayers + 1;
-  const progress = Math.min(currentPlayers / (maxPlayers || 1), 1);
-  const otherTags = item.tags?.filter(t => !t.tag?.name?.toLowerCase().includes('mic')).slice(0, 2) || [];
-  const gameColor = getBorderColorById(item.game?.id || 'default');
+const ZoneCardComponent = React.memo(
+  ({
+    item,
+    hasPending,
+    onPress,
+  }: {
+    item: Zone;
+    hasPending: boolean;
+    onPress: () => void;
+  }) => {
+    const hasMic =
+      item.tags?.some(t => t.tag?.name?.toLowerCase().includes('mic')) ?? false;
+    const statusCfg = getStatusConfig(item.status);
+    const approvedCount = item._count?.joinRequests ?? 0;
+    const currentPlayers = approvedCount + 1;
+    const maxPlayers = item.requiredPlayers + 1;
+    const progress = Math.min(currentPlayers / (maxPlayers || 1), 1);
+    const otherTags =
+      item.tags
+        ?.filter(t => !t.tag?.name?.toLowerCase().includes('mic'))
+        .slice(0, 2) || [];
+    const gameColor = getBorderColorById(item.game?.id || 'default');
 
-  return (
-    <TouchableOpacity
-      style={styles.zoneCard}
-      onPress={onPress}
-      activeOpacity={0.85}
-    >
-      <View style={styles.zoneContent}>
-        <View style={styles.zoneTopRow}>
-          <Text style={[styles.zoneGameTag, { color: gameColor }]} numberOfLines={1}>{item.game?.name || 'GAME'}</Text>
-          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-            {hasPending && (
-              <View style={styles.pendingBadge}>
-                <Text style={styles.pendingBadgeText}>Đã gửi YC</Text>
-              </View>
-            )}
-            <View style={[styles.statusBadge, { backgroundColor: statusCfg.bg }]}>
-              <View style={[styles.statusDot, { backgroundColor: statusCfg.color }]} />
-              <Text style={[styles.statusBadgeText, { color: statusCfg.color }]}>{statusCfg.label}</Text>
-            </View>
-          </View>
-        </View>
-
-        <Text style={styles.zoneTitle} numberOfLines={1}>{item.title}</Text>
-
-        <View style={styles.zoneMeta}>
-          <View style={styles.zoneHostRow}>
-            <View style={styles.hostAvatar}>
-              {item.owner.avatarUrl ? (
-                <Image source={{ uri: item.owner.avatarUrl }} style={styles.hostAvatarImg} contentFit="cover" cachePolicy="disk" />
-              ) : (
-                <Text style={styles.hostAvatarText}>{item.owner.username.charAt(0).toUpperCase()}</Text>
+    return (
+      <TouchableOpacity
+        style={styles.zoneCard}
+        onPress={onPress}
+        activeOpacity={0.85}
+      >
+        <View style={styles.zoneContent}>
+          <View style={styles.zoneTopRow}>
+            <Text
+              style={[styles.zoneGameTag, { color: gameColor }]}
+              numberOfLines={1}
+            >
+              {item.game?.name || 'GAME'}
+            </Text>
+            <View
+              style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}
+            >
+              {hasPending && (
+                <View style={styles.pendingBadge}>
+                  <Text style={styles.pendingBadgeText}>Đã gửi YC</Text>
+                </View>
               )}
+              <View
+                style={[styles.statusBadge, { backgroundColor: statusCfg.bg }]}
+              >
+                <View
+                  style={[
+                    styles.statusDot,
+                    { backgroundColor: statusCfg.color },
+                  ]}
+                />
+                <Text
+                  style={[styles.statusBadgeText, { color: statusCfg.color }]}
+                >
+                  {statusCfg.label}
+                </Text>
+              </View>
             </View>
-            <Text style={styles.hostName} numberOfLines={1}>{item.owner.username}</Text>
           </View>
-          <View style={styles.slotsPill}>
-            <Users size={10} color="#F59E0B" />
-            <Text style={styles.slotsPillText} numberOfLines={1}>
-              Cần thêm {item.requiredPlayers} người
-            </Text>
+
+          <Text style={styles.zoneTitle} numberOfLines={1}>
+            {item.title}
+          </Text>
+
+          <View style={styles.zoneMeta}>
+            <View style={styles.zoneHostRow}>
+              <View style={styles.hostAvatar}>
+                {item.owner.avatarUrl ? (
+                  <Image
+                    source={{ uri: item.owner.avatarUrl }}
+                    style={styles.hostAvatarImg}
+                    contentFit="cover"
+                    cachePolicy="disk"
+                  />
+                ) : (
+                  <Text style={styles.hostAvatarText}>
+                    {item.owner.username.charAt(0).toUpperCase()}
+                  </Text>
+                )}
+              </View>
+              <Text style={styles.hostName} numberOfLines={1}>
+                {item.owner.username}
+              </Text>
+            </View>
+            <View style={styles.slotsPill}>
+              <Users size={10} color="#F59E0B" />
+              <Text style={styles.slotsPillText} numberOfLines={1}>
+                Cần thêm {item.requiredPlayers} người
+              </Text>
+            </View>
+          </View>
+
+          {(hasMic || otherTags.length > 0) && (
+            <View style={styles.tagsRow}>
+              {hasMic && (
+                <View style={[styles.tagPill, styles.tagPillMic]}>
+                  <Mic size={9} color="#2563FF" />
+                  <Text style={[styles.tagPillText, { color: '#2563FF' }]}>
+                    VOICE
+                  </Text>
+                </View>
+              )}
+              {otherTags.map(t => (
+                <View key={t.tag.id} style={styles.tagPill}>
+                  <Text style={styles.tagPillText}>#{t.tag.name}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          <View style={styles.progressSection}>
+            <View style={styles.progressTrack}>
+              <LinearGradient
+                colors={
+                  progress >= 1
+                    ? ['#EF4444', '#EF4444']
+                    : ['#2563FF', '#7C3AED']
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[styles.progressFill, { width: `${progress * 100}%` }]}
+              />
+            </View>
+            <View style={styles.progressInfo}>
+              <Users size={10} color={theme.colors.textMuted} />
+              <Text style={styles.progressText}>
+                <Text style={styles.progressCurrent}>{currentPlayers}</Text>
+                <Text style={styles.progressMuted}>
+                  /{maxPlayers} thành viên
+                </Text>
+              </Text>
+              <Clock size={10} color={theme.colors.textMuted} />
+              <Text style={styles.zoneTime}>
+                {formatTimeAgo(item.createdAt)}
+              </Text>
+            </View>
           </View>
         </View>
-
-        {(hasMic || otherTags.length > 0) && (
-          <View style={styles.tagsRow}>
-            {hasMic && (
-              <View style={[styles.tagPill, styles.tagPillMic]}>
-                <Mic size={9} color="#2563FF" />
-                <Text style={[styles.tagPillText, { color: '#2563FF' }]}>VOICE</Text>
-              </View>
-            )}
-            {otherTags.map(t => (
-              <View key={t.tag.id} style={styles.tagPill}>
-                <Text style={styles.tagPillText}>#{t.tag.name}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        <View style={styles.progressSection}>
-          <View style={styles.progressTrack}>
-            <LinearGradient
-              colors={progress >= 1 ? ['#EF4444', '#EF4444'] : ['#2563FF', '#7C3AED']}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={[styles.progressFill, { width: `${progress * 100}%` }]}
-            />
-          </View>
-          <View style={styles.progressInfo}>
-            <Users size={10} color={theme.colors.textMuted} />
-            <Text style={styles.progressText}>
-              <Text style={styles.progressCurrent}>{currentPlayers}</Text>
-              <Text style={styles.progressMuted}>/{maxPlayers} thành viên</Text>
-            </Text>
-            <Clock size={10} color={theme.colors.textMuted} />
-            <Text style={styles.zoneTime}>{formatTimeAgo(item.createdAt)}</Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-});
+      </TouchableOpacity>
+    );
+  },
+);
 
 export const HomeScreen = () => {
   const navigation = useNavigation<HomeNavigationProp>();
@@ -248,7 +322,6 @@ export const HomeScreen = () => {
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [submittedSearch, setSubmittedSearch] = useState('');
   const [searchText, setSearchText] = useState('');
-  const searchInputRef = useRef<InputRef>(null);
 
   const handleSearchSubmit = useCallback(() => {
     setSubmittedSearch(searchText);
@@ -271,7 +344,7 @@ export const HomeScreen = () => {
     if (!games) return [];
     if (selectedCategory === 'ALL') return games;
     return games.filter(game =>
-      game.platforms?.includes(selectedCategory as Platform)
+      game.platforms?.includes(selectedCategory as Platform),
     );
   }, [games, selectedCategory]);
 
@@ -326,7 +399,7 @@ export const HomeScreen = () => {
       if (user) {
         refetchNotifications();
       }
-    }, [user, refetchNotifications])
+    }, [user, refetchNotifications]),
   );
 
   const markReadMutation = useMutation({
@@ -335,7 +408,7 @@ export const HomeScreen = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    }
+    },
   });
 
   const markAllReadMutation = useMutation({
@@ -344,7 +417,7 @@ export const HomeScreen = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    }
+    },
   });
 
   const handleNotificationPress = (item: NotificationItem) => {
@@ -416,23 +489,28 @@ export const HomeScreen = () => {
 
   const keyExtractorZone = useCallback((item: Zone) => item.id, []);
 
-  const renderZoneItem = useCallback(({ item }: { item: Zone }) => {
-    const hasPending = Array.isArray(myJoinRequests)
-      ? myJoinRequests.some((r: any) => r.zoneId === item.id && r.status === 'PENDING')
-      : false;
+  const renderZoneItem = useCallback(
+    ({ item }: { item: Zone }) => {
+      const hasPending = Array.isArray(myJoinRequests)
+        ? myJoinRequests.some(
+            (r: any) => r.zoneId === item.id && r.status === 'PENDING',
+          )
+        : false;
 
-    return (
-      <ZoneCardComponent
-        item={item}
-        hasPending={hasPending}
-        onPress={() => {
-          InteractionManager.runAfterInteractions(() => {
-            navigation.navigate('ZoneDetails', { zoneId: item.id });
-          });
-        }}
-      />
-    );
-  }, [navigation, myJoinRequests]);
+      return (
+        <ZoneCardComponent
+          item={item}
+          hasPending={hasPending}
+          onPress={() => {
+            InteractionManager.runAfterInteractions(() => {
+              navigation.navigate('ZoneDetails', { zoneId: item.id });
+            });
+          }}
+        />
+      );
+    },
+    [navigation, myJoinRequests],
+  );
 
   const renderHeader = useCallback(
     () => (
@@ -463,7 +541,9 @@ export const HomeScreen = () => {
         <View style={styles.gamesSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>TRÒ CHƠI PHỔ BIẾN</Text>
-            <TouchableOpacity onPress={() => tabNavigation.navigate('Discover')}>
+            <TouchableOpacity
+              onPress={() => tabNavigation.navigate('Discover')}
+            >
               <Text style={styles.seeAllButton}>Xem tất cả →</Text>
             </TouchableOpacity>
           </View>
@@ -503,13 +583,20 @@ export const HomeScreen = () => {
         {/* Zones Section Title */}
         <View style={styles.zonesSectionHeader}>
           <View style={styles.sectionTitleRow}>
-            <Text style={styles.sectionTitle}>{submittedSearch.trim() ? 'KẾT QUẢ TÌM KIẾM' : 'KHU VỰC GỢI Ý'}</Text>
+            <Text style={styles.sectionTitle}>
+              {submittedSearch.trim() ? 'KẾT QUẢ TÌM KIẾM' : 'KHU VỰC GỢI Ý'}
+            </Text>
           </View>
           <TouchableOpacity
             style={styles.quickMatchBtn}
             onPress={() => navigation.navigate('QuickMatch' as never)}
           >
-            <LinearGradient colors={['#2563FF', '#7C3AED']} style={styles.quickMatchGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+            <LinearGradient
+              colors={['#2563FF', '#7C3AED']}
+              style={styles.quickMatchGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
               <Zap color="#fff" size={12} fill="#fff" />
               <Text style={styles.quickMatchText}>Ghép Nhanh</Text>
             </LinearGradient>
@@ -517,7 +604,14 @@ export const HomeScreen = () => {
         </View>
       </View>
     ),
-    [selectedCategory, filteredGames, gamesLoading, navigation, tabNavigation],
+    [
+      selectedCategory,
+      filteredGames,
+      gamesLoading,
+      navigation,
+      tabNavigation,
+      submittedSearch,
+    ],
   );
 
   return (
@@ -531,7 +625,13 @@ export const HomeScreen = () => {
           <View style={styles.userInfo}>
             <View style={styles.userAvatarContainer}>
               {user?.avatarUrl ? (
-                <Image source={{ uri: user.avatarUrl }} style={styles.userAvatar} contentFit="cover" transition={500} cachePolicy="disk" />
+                <Image
+                  source={{ uri: user.avatarUrl }}
+                  style={styles.userAvatar}
+                  contentFit="cover"
+                  transition={500}
+                  cachePolicy="disk"
+                />
               ) : (
                 <LinearGradient
                   colors={['#2563FF', '#7C3AED']}
@@ -580,10 +680,20 @@ export const HomeScreen = () => {
             />
           </View>
           <TouchableOpacity
-            style={[styles.filterButton, sortBy !== 'newest' && styles.filterButtonActive]}
+            style={[
+              styles.filterButton,
+              sortBy !== 'newest' && styles.filterButtonActive,
+            ]}
             onPress={handleFilterPress}
           >
-            <Filter size={18} color={sortBy !== 'newest' ? theme.colors.primary : theme.colors.textSecondary} />
+            <Filter
+              size={18}
+              color={
+                sortBy !== 'newest'
+                  ? theme.colors.primary
+                  : theme.colors.textSecondary
+              }
+            />
             {sortBy !== 'newest' && <View style={styles.filterActiveDot} />}
           </TouchableOpacity>
         </View>
@@ -611,7 +721,11 @@ export const HomeScreen = () => {
         ListEmptyComponent={
           !zonesLoading ? (
             <View style={styles.emptyContainer}>
-              <Zap size={48} color={theme.colors.primary} style={{ opacity: 0.4 }} />
+              <Zap
+                size={48}
+                color={theme.colors.primary}
+                style={{ opacity: 0.4 }}
+              />
               <Text style={styles.emptyText}>{STRINGS.NO_ZONES}</Text>
               <Button
                 title={STRINGS.CREATE_FIRST_ZONE}

@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ApiResponseDto<T> {
   @ApiProperty({ description: 'Response status', example: true })
-  success: boolean;
+  success!: boolean;
 
   @ApiPropertyOptional({ description: 'Response data' })
   data?: T;

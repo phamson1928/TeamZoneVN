@@ -16,28 +16,28 @@ export class UserProfileResponseDto {
 
 export class UserResponseDto {
   @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440000' })
-  id: string;
+  id!: string;
 
   @ApiProperty({ example: 'user@example.com' })
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: 'gamer123' })
-  username: string;
+  username!: string;
 
   @ApiPropertyOptional({ example: 'https://example.com/avatar.jpg' })
   avatarUrl?: string | null;
 
   @ApiProperty({ example: 'USER', enum: ['USER', 'ADMIN'] })
-  role: string;
+  role!: string;
 
   @ApiProperty({ example: 'ACTIVE', enum: ['ACTIVE', 'BANNED'] })
-  status: string;
+  status!: string;
 
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty({ example: 0 })
-  warnCount: number;
+  warnCount!: number;
 
   @ApiPropertyOptional({ example: '2024-02-01T00:00:00.000Z' })
   tempBannedUntil?: Date | null;
@@ -54,10 +54,10 @@ export class UserResponseDto {
 
 export class PublicUserResponseDto {
   @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440000' })
-  id: string;
+  id!: string;
 
   @ApiProperty({ example: 'gamer123' })
-  username: string;
+  username!: string;
 
   @ApiPropertyOptional({ example: 'https://example.com/avatar.jpg' })
   avatarUrl?: string | null;

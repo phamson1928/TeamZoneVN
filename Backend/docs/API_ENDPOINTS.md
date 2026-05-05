@@ -196,6 +196,7 @@ curl -s -X POST http://localhost:3000/auth/google \
 ```
 
 **Behavior:**
+
 - Nếu user đã có tài khoản với Google ID → đăng nhập bình thường
 - Nếu user đã có email nhưng chưa liên kết Google → tự động liên kết Google ID
 - Nếu user mới hoàn toàn → tạo tài khoản mới (username tự sinh từ email/display name)
@@ -224,6 +225,7 @@ Google OAuth2 callback — nhận authorization code từ Google, exchange lấy
 **Auth Required:** No (called by Google OAuth2)
 
 **Flow:**
+
 1. Google gọi endpoint này với `?code=...`
 2. Backend exchange code → lấy Google profile
 3. Tìm/tạo user (logic giống `POST /auth/google`)
@@ -355,6 +357,7 @@ Invoke-RestMethod -Method POST -Uri "http://localhost:3000/auth/forgot-password"
 ```
 
 **Flow chi tiết:**
+
 1. User nhập email → `POST /auth/forgot-password`
 2. Backend tìm user theo email (không tìm thấy → trả về generic message)
 3. Invalidate tất cả token reset cũ chưa dùng của user
@@ -454,6 +457,7 @@ Invoke-RestMethod -Method POST -Uri "http://localhost:3000/auth/reset-password" 
 ```
 
 **Security behaviors:**
+
 - Token chỉ được sử dụng **1 lần** (đánh dấu `used = true` ngay sau khi dùng)
 - DB chỉ lưu **SHA-256 hash** của token, không lưu raw token
 - Sau khi reset thành công: **tất cả refresh tokens bị revoke** (đăng xuất tất cả thiết bị)
@@ -462,7 +466,6 @@ Invoke-RestMethod -Method POST -Uri "http://localhost:3000/auth/reset-password" 
 ---
 
 ## 3. Users
-
 
 ### GET `/users/me`
 
@@ -609,6 +612,7 @@ curl -s -X DELETE http://localhost:3000/users/me \
 ```
 
 **Behavior:**
+
 - Xóa bản ghi `User` và tất cả dữ liệu liên quan (Cascade delete): Profile, Games, Zones, Messages, Friendships, v.v.
 - Link Google (nếu có) cũng bị gỡ bỏ.
 
@@ -830,6 +834,7 @@ curl -s -X PATCH http://localhost:3000/users/user-uuid/unban \
   "timestamp": "2026-03-23T15:52:00.000Z"
 }
 ```
+
     "avatarUrl": "https://example.com/avatar.jpg",
     "profile": {
       "bio": "Former user",
@@ -837,9 +842,11 @@ curl -s -X PATCH http://localhost:3000/users/user-uuid/unban \
       "timezone": "Asia/Ho_Chi_Minh",
       "lastActiveAt": "2026-02-03T08:00:00.000Z"
     }
-  }
+
 }
-```
+}
+
+````
 
 **Error Responses:**
 
@@ -852,7 +859,7 @@ curl -s -X PATCH http://localhost:3000/users/user-uuid/unban \
   "errorCode": "BAD_REQUEST",
   "statusCode": 400
 }
-```
+````
 
 **400 - Already Banned:**
 
@@ -2436,31 +2443,42 @@ Token JWT được gửi qua trường `auth.token` trong handshake.
 ### Client Send Events
 
 #### `joinRoom`
+
 Tham gia vào phòng của group.
+
 - **Payload:** `{ "groupId": "string" }`
 - **Ack:** `{ "success": boolean, "message": "string" }`
 
 #### `leaveRoom`
+
 Rời khỏi phòng của group.
+
 - **Payload:** `{ "groupId": "string" }`
 - **Ack:** `{ "success": boolean }`
 
 #### `sendMessage`
+
 Gửi tin nhắn mới tới group.
+
 - **Payload:** `{ "groupId": "string", "content": "string" }`
 - **Constraint:** `content` tối đa **2000 ký tự**
 - **Ack:** `{ "success": boolean }`
 - **Error (vượt giới hạn):** WsException `"Tin nhắn không được vượt quá 2000 ký tự"`
 
 #### `typing`
+
 Thông báo trạng thái đang nhập tin nhắn.
+
 - **Payload:** `{ "groupId": "string", "isTyping": boolean }`
 
 ### Server Emitted Events
 
 #### `newMessage`
+
 Gửi tới các thành viên trong room khi có tin nhắn mới.
-- **Payload:** 
+
+- **Payload:**
+
 ```json
 {
   "id": "uuid",
@@ -2471,11 +2489,15 @@ Gửi tới các thành viên trong room khi có tin nhắn mới.
 ```
 
 #### `userTyping`
+
 Broadcast trạng thái đang nhập của một thành viên cho những người khác.
+
 - **Payload:** `{ "userId": "uuid", "username": "string", "isTyping": boolean }`
 
 #### `notification:new` (Phase 7)
+
 Gửi tới user khi có thông báo mới. User phải đã join ít nhất 1 room (`joinRoom`) để nhận — server tự join `user:${userId}`.
+
 - **Payload:** `{ "notification": { id, type, title, data?, isRead, createdAt }, "unreadCount": number }`
 - **Notification types:** `JOIN_REQUEST`, `REQUEST_APPROVED`, `REQUEST_REJECTED`, `GROUP_FORMED`, `MEMBER_LEFT`
 
@@ -2614,14 +2636,14 @@ Xóa 1 thông báo. Chỉ được xóa thông báo của chính mình.
 
 ### Khi nào tạo Notification (Business Logic)
 
-| Sự kiện | Type | Người nhận | Data |
-|---------|------|------------|------|
-| User gửi join request | `JOIN_REQUEST` | Chủ zone (ownerId) | `{ zoneId, requestId }` |
-| Owner approve request | `REQUEST_APPROVED` | Người gửi request | `{ zoneId, requestId, groupId?, status }` |
-| Owner reject request | `REQUEST_REJECTED` | Người gửi request | `{ zoneId, requestId, status }` |
-| Zone đủ người → tạo group | `GROUP_FORMED` | Tất cả members | `{ groupId, zoneId }` |
-| Member rời group | `MEMBER_LEFT` | Leader | `{ groupId }` |
-| Member bị kick | `MEMBER_LEFT` | Leader | `{ groupId }` |
+| Sự kiện                   | Type               | Người nhận         | Data                                      |
+| ------------------------- | ------------------ | ------------------ | ----------------------------------------- |
+| User gửi join request     | `JOIN_REQUEST`     | Chủ zone (ownerId) | `{ zoneId, requestId }`                   |
+| Owner approve request     | `REQUEST_APPROVED` | Người gửi request  | `{ zoneId, requestId, groupId?, status }` |
+| Owner reject request      | `REQUEST_REJECTED` | Người gửi request  | `{ zoneId, requestId, status }`           |
+| Zone đủ người → tạo group | `GROUP_FORMED`     | Tất cả members     | `{ groupId, zoneId }`                     |
+| Member rời group          | `MEMBER_LEFT`      | Leader             | `{ groupId }`                             |
+| Member bị kick            | `MEMBER_LEFT`      | Leader             | `{ groupId }`                             |
 
 ---
 
@@ -2744,7 +2766,8 @@ curl -s -X POST http://localhost:3000/reports \
   -d '{
     "targetType": "USER",
     "targetId": "uuid-cua-user-bi-report",
-    "reason": "Hành vi toxic trong game"
+    "reason": "Hành vi toxic trong game",
+    "severity": "MEDIUM"
   }'
 ```
 
@@ -2754,8 +2777,10 @@ curl -s -X POST http://localhost:3000/reports \
 | targetType | enum | Yes | USER, ZONE, GROUP |
 | targetId | string (UUID) | Yes | ID của đối tượng bị báo cáo |
 | reason | string | Yes | Lý do báo cáo (min 10, max 500 ký tự) |
+| severity | enum | No | LOW, MEDIUM, HIGH (default: MEDIUM) |
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
@@ -2765,14 +2790,21 @@ curl -s -X POST http://localhost:3000/reports \
     "targetType": "USER",
     "targetId": "uuid-cua-user-bi-report",
     "reason": "Hành vi toxic trong game",
+    "severity": "MEDIUM",
     "status": "OPEN",
-    "createdAt": "2026-03-02T16:45:00.000Z"
+    "createdAt": "2026-03-02T16:45:00.000Z",
+    "reporter": {
+      "id": "user-uuid",
+      "username": "reporter_user",
+      "avatarUrl": "https://..."
+    }
   },
   "timestamp": "2026-03-02T16:45:00.000Z"
 }
 ```
 
 **Rules:**
+
 - Không thể tự báo cáo chính mình (nếu `targetType` là `USER`).
 - `targetId` phải tồn tại trong database theo đúng `targetType`.
 
@@ -2798,6 +2830,7 @@ curl -s "http://localhost:3000/reports?status=OPEN&page=1&limit=20" \
 ```
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -2806,17 +2839,41 @@ curl -s "http://localhost:3000/reports?status=OPEN&page=1&limit=20" \
       "reporterId": "user-uuid",
       "targetType": "USER",
       "targetId": "uuid-target",
-      ...
+      "reason": "Hành vi toxic",
+      "severity": "MEDIUM",
+      "status": "OPEN",
+      "createdAt": "2026-03-02T16:45:00.000Z",
+      "reporter": {
+        "id": "user-uuid",
+        "username": "reporter",
+        "avatarUrl": "https://..."
+      },
+      "targetUser": {
+        "id": "uuid-target",
+        "username": "toxic_user",
+        "avatarUrl": "https://...",
+        "warnCount": 2
+      },
+      "resolvedBy": null,
+      "resolutionNote": null,
+      "resolvedAt": null
     }
   ],
   "meta": {
     "page": 1,
     "limit": 20,
     "total": 50,
-    "totalPages": 3
+    "totalPages": 3,
+    "hasNextPage": true,
+    "hasPreviousPage": false
   }
 }
 ```
+
+**Note:**
+
+- `targetUser` object includes `warnCount` (số lần cảnh cáo hiện tại) để admin có thể thấy lịch sử vi phạm của user.
+- Khi nào `targetType` là ZONE hoặc GROUP, `targetUser` sẽ trỏ tới chủ sở hữu (owner/leader) của zone/group đó.
 
 ---
 
@@ -2831,11 +2888,45 @@ curl -s http://localhost:3000/reports/report-uuid \
   -H "Authorization: Bearer <admin_token>"
 ```
 
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "report-uuid",
+    "reporterId": "user-uuid",
+    "targetType": "USER",
+    "targetId": "uuid-target",
+    "reason": "Hành vi toxic và spam",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "createdAt": "2026-03-02T16:45:00.000Z",
+    "reporter": {
+      "id": "user-uuid",
+      "username": "honest_reporter",
+      "avatarUrl": "https://..."
+    },
+    "targetUser": {
+      "id": "uuid-target",
+      "username": "toxic_user",
+      "avatarUrl": "https://...",
+      "warnCount": 2
+    },
+    "resolvedBy": null,
+    "resolutionNote": null,
+    "resolvedAt": null,
+    "action": null
+  },
+  "timestamp": "2026-03-02T16:50:00.000Z"
+}
+```
+
 ---
 
 ### PATCH `/reports/:id`
 
-Admin xử lý (resolve) report.
+Admin xử lý (resolve) report với các hành động moderation tự động leo thang.
 
 **Auth Required:** Yes (Admin)
 
@@ -2844,36 +2935,210 @@ curl -s -X PATCH http://localhost:3000/reports/report-uuid \
   -H "Authorization: Bearer <admin_token>" \
   -H "Content-Type: application/json" \
   -d '{
-    "status": "RESOLVED",
-    "resolutionNote": "User đã bị cảnh cáo và ban 3 ngày"
+    "action": "WARNED",
+    "resolutionNote": "First warning for toxic behavior"
   }'
 ```
 
 **Request Body:**
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| action | enum | No | DISMISSED, WARNED, TEMP_BANNED, BANNED (default: DISMISSED) |
 | resolutionNote | string | No | Ghi chú xử lý (max 500 ký tự) |
 
-**Behavior:**
-- Khi một report được chuyển sang trạng thái `RESOLVED`, hệ thống sẽ tự động gửi một thông báo (Notification) real-time tới người gửi báo cáo (Reporter) để thông báo kết quả xử lý.
+**ModerationAction Values:**
+| Action | Description |
+|--------|-------------|
+| DISMISSED | Bỏ qua báo cáo (không có hành động gì) |
+| WARNED | Cảnh cáo người dùng (tăng warnCount) |
+| TEMP_BANNED | Ban tạm thời (không dùng trực tiếp - hệ thống tự apply khi warnCount đủ) |
+| BANNED | Ban vĩnh viễn (không dùng trực tiếp - hệ thống tự apply sau 5+ cảnh cáo) |
 
-**Response:**
+**Auto-Escalation Logic (khi chọn WARNED):**
+
+Hệ thống tự động áp dụng leo thang xử phạt dựa trên lịch sử vi phạm:
+
+| Warn Count | Hành động tự động                                                     |
+| ---------- | --------------------------------------------------------------------- |
+| 1          | Thông báo cảnh cáo (warnCount = 1)                                    |
+| 2          | Ban tạm thời 1 ngày (warnCount = 2, tempBannedUntil = now + 24h)      |
+| 3          | Ban tạm thời 7 ngày (warnCount = 3, tempBannedUntil = now + 7 days)   |
+| 4          | Ban tạm thời 30 ngày (warnCount = 4, tempBannedUntil = now + 30 days) |
+| 5+         | Ban vĩnh viễn (status = BANNED, permanent)                            |
+
+**Hệ thống sẽ:**
+
+1. Tăng `warnCount` của user
+2. Nếu theo logic leo thang cần ban, tự động set `tempBannedUntil` hoặc `status = BANNED`
+3. Tạo ModerationLog để ghi lại:
+   - Initial action (WARNED)
+   - Auto action (TEMP_BANNED hoặc BANNED nếu có)
+4. Gửi Notification tới user về kết quả xử lý
+
+**Response (Success):**
+
 ```json
 {
   "success": true,
   "data": {
     "id": "report-uuid",
+    "reporterId": "user-uuid",
+    "targetType": "USER",
+    "targetId": "uuid-target",
+    "reason": "Hành vi toxic",
+    "severity": "HIGH",
     "status": "RESOLVED",
-    "resolutionNote": "User đã bị cảnh cáo và ban 3 ngày",
+    "action": "WARNED",
+    "resolutionNote": "First warning for toxic behavior",
+    "createdAt": "2026-03-02T16:45:00.000Z",
+    "resolvedAt": "2026-03-02T17:00:00.000Z",
     "resolvedById": "admin-uuid",
-    "resolvedAt": "2026-03-02T17:00:00.000Z"
-  }
+    "reporter": {
+      "id": "user-uuid",
+      "username": "reporter",
+      "avatarUrl": "https://..."
+    },
+    "resolvedBy": {
+      "id": "admin-uuid",
+      "username": "admin_user"
+    },
+    "targetUser": {
+      "id": "uuid-target",
+      "username": "toxic_user",
+      "avatarUrl": "https://...",
+      "warnCount": 2
+    }
+  },
+  "timestamp": "2026-03-02T17:00:00.000Z"
 }
 ```
 
+**ModerationLog được tạo (ví dụ khi warnCount đạt 2):**
+
+```
+ModerationLog #1:
+- adminId: admin-uuid
+- targetUserId: uuid-target
+- reportId: report-uuid
+- action: WARNED
+- reason: "[Custom resolution note]"
+- createdAt: 2026-03-02T17:00:00.000Z
+
+ModerationLog #2 (auto-escalation):
+- adminId: admin-uuid
+- targetUserId: uuid-target
+- action: TEMP_BANNED
+- reason: "Hệ thống tự động xử lý do đạt 2 lần cảnh cáo."
+- tempBanDays: 1
+- expiresAt: 2026-03-03T17:00:00.000Z
+- createdAt: 2026-03-02T17:00:00.000Z
+```
+
+**Notifications được gửi:**
+
+- **ACCOUNT_WARNED** - khi cảnh cáo lần 1
+- **ACCOUNT_BANNED** - khi system auto-ban (temp hoặc permanent)
+
+**Behavior:**
+
+- Report status → RESOLVED
+- Hệ thống gửi thông báo real-time tới:
+  - **Reporter:** Thông báo kết quả xử lý báo cáo
+  - **Target User:** Thông báo về hành động disciprinary (cảnh cáo/ban)
+- Toàn bộ quá trình được ghi lại trong ModerationLog để tạo audit trail
+
 ---
 
-## 19. Dashboard (Admin Statistics - Phase 8.3)
+## 19. User Moderation & Ban System
+
+Hệ thống quản lý cảnh cáo, ban tạm thời, và ban vĩnh viễn cho người dùng. Được tích hợp với Reports system.
+
+### User Fields (lưu trữ moderation state):
+
+**User Model bao gồm:**
+| Field | Type | Description |
+|-------|------|-------------|
+| warnCount | int | Số lần bị cảnh cáo (default: 0) |
+| status | enum | ACTIVE, BANNED (được set khi ban vĩnh viễn hoặc tạm thời quá 24h) |
+| tempBannedUntil | datetime | Thời điểm kết thúc ban tạm thời (null = không bị ban tạm) |
+| role | enum | USER, ADMIN |
+
+### Ban Logic:
+
+**Tạm thời Ban (Temporary Ban):**
+
+- Khi `tempBannedUntil` > now: User không thể đăng nhập, tạo zone, hoặc gửi messages
+- User có thể xem profile, bạn bè, nhưng không thể gửi yêu cầu kết bạn
+- Ban hết hạn tự động (frontend check expiry khi login, backend check trong API)
+
+**Vĩnh viễn Ban (Permanent Ban):**
+
+- Khi `status = BANNED` (từ automatic escalation sau 5+ warns)
+- User không được phép đăng nhập, truy cập tài khoản
+- Email/username bị scramble để tránh tái sử dụng
+
+**Auto-Escalation Flow (từ Reports -> resolve):**
+
+```
+Warn 1 → Notification alert
+   ↓
+Warn 2 → Temp Ban 1 day
+   ↓
+Warn 3 → Temp Ban 7 days
+   ↓
+Warn 4 → Temp Ban 30 days
+   ↓
+Warn 5+ → Permanent Ban (status = BANNED)
+```
+
+### ModerationLog (Audit Trail):
+
+Mỗi moderation action được ghi lại trong ModerationLog:
+
+```json
+{
+  "id": "log-uuid",
+  "adminId": "admin-uuid",
+  "targetUserId": "user-uuid",
+  "reportId": "report-uuid (nullable)",
+  "action": "WARNED | TEMP_BANNED | BANNED | DISMISSED",
+  "reason": "Lý do hành động (custom note từ admin hoặc auto msg)",
+  "createdAt": "2026-03-02T17:00:00.000Z",
+  "tempBanDays": 1,
+  "expiresAt": "2026-03-03T17:00:00.000Z"
+}
+```
+
+### GET `/users/me` (thay đổi khi user bị ban tạm):
+
+Nếu user hiện tại bị ban tạm thời:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "user-uuid",
+    "username": "user",
+    "email": "user@example.com",
+    "status": "ACTIVE",
+    "warnCount": 3,
+    "tempBannedUntil": "2026-03-10T17:00:00.000Z",
+    "createdAt": "2026-01-31T17:13:34.708Z",
+    "profile": { ... }
+  },
+  "timestamp": "2026-03-02T17:00:00.000Z"
+}
+```
+
+**Frontend behavior:**
+
+- Kiểm tra `tempBannedUntil > now()` → hiển thị alert "Tài khoản đang bị khóa tạm thời đến ngày XX"
+- Disable buttons: Create Zone, Send Join Request, Send Messages, Add Friend
+- Allow: View profile, View other users, View zones, Receive messages (read-only)
+
+---
+
+## 20. Dashboard (Admin Statistics - Phase 8.3)
 
 Cung cấp các số liệu thống kê và dữ liệu biểu đồ cho trang quản trị (Admin Dashboard).
 
@@ -2889,6 +3154,7 @@ curl -s http://localhost:3000/dashboard/stats \
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -2927,6 +3193,7 @@ curl -s "http://localhost:3000/dashboard/charts/users?period=30d" \
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -2956,6 +3223,7 @@ curl -s http://localhost:3000/dashboard/charts/zones \
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -2988,6 +3256,7 @@ curl -s "http://localhost:3000/dashboard/charts/activity?period=7d" \
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -3072,6 +3341,7 @@ Khi resource không tồn tại.
 ---
 
 ## 21. Enums Reference
+
 ---
 
 ## 20. Friends (Phase 9.1)
@@ -3323,6 +3593,7 @@ Bổ sung các chỉ số social.
 **Auth Required:** Yes (Admin)
 
 **Response Extensions:**
+
 ```json
 {
   "social": {
@@ -3472,7 +3743,7 @@ DECLINED
 
 ### NotificationType
 
-```
+````
 JOIN_REQUEST      // Ai đó gửi request join zone
 REQUEST_APPROVED  // Request được chấp nhận
 REQUEST_REJECTED  // Request bị từ chối
@@ -3505,9 +3776,10 @@ Chặn một người dùng khác.
 ```bash
 curl -s -X POST http://localhost:3000/blocks/user-uuid \
   -H "Authorization: Bearer <access_token>"
-```
+````
 
 **Behavior:**
+
 - Khi chặn: Tự động xóa quan hệ bạn bè (Friendship) nếu có.
 - Người bị chặn không thể: gửi lời mời kết bạn, gửi request join zone, hoặc mời inviter vào zone.
 

@@ -35,7 +35,7 @@ import { Roles } from '../common/index.js';
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
   @ApiOperation({ summary: 'Lấy thông tin profile cá nhân' })
@@ -83,7 +83,9 @@ export class UsersController {
   @Get('search')
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
-  @ApiOperation({ summary: 'Tìm kiếm người dùng bằng email/username [ADMIN ONLY]' })
+  @ApiOperation({
+    summary: 'Tìm kiếm người dùng bằng email/username [ADMIN ONLY]',
+  })
   @ApiResponse({
     status: 200,
     description: 'Kết quả tìm kiếm',
@@ -91,9 +93,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 401, description: 'Chưa xác thực' })
   @ApiResponse({ status: 403, description: 'Không có quyền (Cần Admin)' })
-  async searchUsers(
-    @Query() searchDto: SearchUsersDto,
-  ): Promise<any> {
+  async searchUsers(@Query() searchDto: SearchUsersDto): Promise<any> {
     const { page = 1, limit = 20 } = searchDto;
     return this.usersService.searchUsers(
       searchDto,
@@ -199,7 +199,9 @@ export class UsersController {
   }
 
   @Delete('me')
-  @ApiOperation({ summary: 'Xóa vĩnh viễn tài khoản cá nhân [APPLE REQUIREMENT]' })
+  @ApiOperation({
+    summary: 'Xóa vĩnh viễn tài khoản cá nhân [APPLE REQUIREMENT]',
+  })
   @ApiResponse({
     status: 200,
     description: 'Xóa tài khoản thành công',

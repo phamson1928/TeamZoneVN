@@ -2,13 +2,13 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class UserActivityDto {
   @ApiProperty({ description: 'Activity type' })
-  type: string;
+  type!: string;
 
   @ApiProperty({ description: 'Activity description' })
-  description: string;
+  description!: string;
 
   @ApiProperty({ description: 'Activity timestamp' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty({ description: 'Related entity ID', required: false })
   relatedId?: string;

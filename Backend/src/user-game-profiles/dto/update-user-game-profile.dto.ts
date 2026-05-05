@@ -7,5 +7,5 @@ export class UpdateUserGameProfileDto {
   @ApiProperty({ example: 'game-uuid-here' })
   @IsUUID()
   @IsNotEmpty()
-  gameId: string;
+  gameId!: string;
 }

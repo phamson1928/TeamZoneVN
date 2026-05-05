@@ -11,7 +11,6 @@ import { ConfigService } from '@nestjs/config';
 describe('ChatGateway', () => {
     let gateway: ChatGateway;
     let messagesService: MessagesService;
-    let prisma: PrismaService;
 
     const mockMessagesService = {
         createMessage: jest.fn(),
@@ -53,7 +52,6 @@ describe('ChatGateway', () => {
 
         gateway = module.get<ChatGateway>(ChatGateway);
         messagesService = module.get<MessagesService>(MessagesService);
-        prisma = module.get<PrismaService>(PrismaService);
 
         // Mock server
         gateway.server = {

@@ -5,12 +5,11 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   TextInput,
   StatusBar,
   Platform,
-  Modal
+  Modal,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -25,7 +24,7 @@ import {
   Users,
   Gamepad2,
   Tag,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { Game, Tag as TagType } from '../types';
@@ -33,7 +32,8 @@ import { RootStackParamList } from '../navigation';
 
 type CreateZoneRouteProp = RouteProp<RootStackParamList, 'CreateZone'>;
 
-const STATUSBAR_HEIGHT = Platform.OS === 'android' ? StatusBar.currentHeight ?? 24 : 44;
+const STATUSBAR_HEIGHT =
+  Platform.OS === 'android' ? StatusBar.currentHeight ?? 24 : 44;
 
 export const CreateZoneScreen = () => {
   const navigation = useNavigation();
@@ -41,7 +41,9 @@ export const CreateZoneScreen = () => {
   const queryClient = useQueryClient();
   const initialGameId = route.params?.gameId ?? null;
 
-  const [selectedGameId, setSelectedGameId] = useState<string | null>(initialGameId);
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(
+    initialGameId,
+  );
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [requiredPlayers, setRequiredPlayers] = useState(2);
@@ -61,7 +63,12 @@ export const CreateZoneScreen = () => {
     type: 'info',
   });
 
-  const showAlert = (title: string, message: string, type: 'error' | 'success' | 'info' = 'error', onConfirm?: () => void) => {
+  const showAlert = (
+    title: string,
+    message: string,
+    type: 'error' | 'success' | 'info' = 'error',
+    onConfirm?: () => void,
+  ) => {
     setAlertConfig({ visible: true, title, message, type, onConfirm });
   };
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
@@ -112,7 +119,7 @@ export const CreateZoneScreen = () => {
       const response = await apiClient.post('/zones', data);
       return response.data;
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: ['zones'] });
       queryClient.invalidateQueries({ queryKey: ['myZones'] });
       showAlert('Thành công', 'Đã tạo phòng thành công!', 'success', () => {
@@ -161,7 +168,11 @@ export const CreateZoneScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
 
       {/* Floating back button — no heavy header bar */}
       <TouchableOpacity
@@ -184,7 +195,10 @@ export const CreateZoneScreen = () => {
         </View>
 
         {/* ── Game Selection ── */}
-        <SectionLabel icon={<Gamepad2 color="#2563FF" size={15} strokeWidth={2.5} />} title="Chọn game" />
+        <SectionLabel
+          icon={<Gamepad2 color="#2563FF" size={15} strokeWidth={2.5} />}
+          title="Chọn game"
+        />
 
         {gamesLoading ? (
           <View style={styles.loadingBox}>
@@ -200,12 +214,21 @@ export const CreateZoneScreen = () => {
             {games?.map(game => (
               <TouchableOpacity
                 key={game.id}
-                style={[styles.gameCard, selectedGameId === game.id && styles.gameCardSelected]}
+                style={[
+                  styles.gameCard,
+                  selectedGameId === game.id && styles.gameCardSelected,
+                ]}
                 onPress={() => setSelectedGameId(game.id)}
                 activeOpacity={0.75}
               >
                 <View style={styles.gameImageWrap}>
-                  <Image source={{ uri: game.iconUrl }} style={styles.gameIcon} contentFit="cover" transition={500} cachePolicy="disk" />
+                  <Image
+                    source={{ uri: game.iconUrl }}
+                    style={styles.gameIcon}
+                    contentFit="cover"
+                    transition={500}
+                    cachePolicy="disk"
+                  />
                   {selectedGameId === game.id && (
                     <View style={styles.checkOverlay}>
                       <Check color="#FFF" size={12} strokeWidth={3} />
@@ -247,7 +270,9 @@ export const CreateZoneScreen = () => {
             numberOfLines={4}
             maxLength={500}
           />
-          <Text style={[styles.charCount, styles.charCountArea]}>{description.length}/500</Text>
+          <Text style={[styles.charCount, styles.charCountArea]}>
+            {description.length}/500
+          </Text>
         </View>
 
         {/* ── Tags ── */}
@@ -269,8 +294,12 @@ export const CreateZoneScreen = () => {
                   onPress={() => toggleTag(tag.id)}
                   activeOpacity={0.75}
                 >
-                  {selected && <Check color="#2563FF" size={12} strokeWidth={3} />}
-                  <Text style={[styles.tagText, selected && styles.tagTextSelected]}>
+                  {selected && (
+                    <Check color="#2563FF" size={12} strokeWidth={3} />
+                  )}
+                  <Text
+                    style={[styles.tagText, selected && styles.tagTextSelected]}
+                  >
                     {tag.name}
                   </Text>
                 </TouchableOpacity>
@@ -280,33 +309,53 @@ export const CreateZoneScreen = () => {
         </View>
 
         {/* ── Players ── */}
-        <SectionLabel icon={<Users color="#2563FF" size={15} strokeWidth={2.5} />} title="Số người cần tìm" />
+        <SectionLabel
+          icon={<Users color="#2563FF" size={15} strokeWidth={2.5} />}
+          title="Số người cần tìm"
+        />
         <View style={styles.playerRow}>
           <TouchableOpacity
-            style={[styles.playerBtn, requiredPlayers <= 1 && styles.playerBtnDisabled]}
+            style={[
+              styles.playerBtn,
+              requiredPlayers <= 1 && styles.playerBtnDisabled,
+            ]}
             onPress={decrementPlayers}
             disabled={requiredPlayers <= 1}
             activeOpacity={0.7}
           >
-            <Minus size={20} color={requiredPlayers <= 1 ? '#334155' : '#2563FF'} strokeWidth={2.5} />
+            <Minus
+              size={20}
+              color={requiredPlayers <= 1 ? '#334155' : '#2563FF'}
+              strokeWidth={2.5}
+            />
           </TouchableOpacity>
           <View style={styles.playerValueWrap}>
             <Text style={styles.playerValue}>{requiredPlayers}</Text>
             <Text style={styles.playerUnit}>người chơi</Text>
           </View>
           <TouchableOpacity
-            style={[styles.playerBtn, requiredPlayers >= 10 && styles.playerBtnDisabled]}
+            style={[
+              styles.playerBtn,
+              requiredPlayers >= 10 && styles.playerBtnDisabled,
+            ]}
             onPress={incrementPlayers}
             disabled={requiredPlayers >= 10}
             activeOpacity={0.7}
           >
-            <Plus size={20} color={requiredPlayers >= 10 ? '#334155' : '#2563FF'} strokeWidth={2.5} />
+            <Plus
+              size={20}
+              color={requiredPlayers >= 10 ? '#334155' : '#2563FF'}
+              strokeWidth={2.5}
+            />
           </TouchableOpacity>
         </View>
 
         {/* ── Submit ── */}
         <TouchableOpacity
-          style={[styles.submitBtn, createZoneMutation.isPending && styles.submitBtnDisabled]}
+          style={[
+            styles.submitBtn,
+            createZoneMutation.isPending && styles.submitBtnDisabled,
+          ]}
           onPress={handleSubmit}
           disabled={createZoneMutation.isPending}
           activeOpacity={0.85}
@@ -325,21 +374,44 @@ export const CreateZoneScreen = () => {
       </ScrollView>
 
       {/* Modal Custom Alert */}
-      <Modal visible={alertConfig.visible} transparent animationType="fade" onRequestClose={hideAlert}>
+      <Modal
+        visible={alertConfig.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={hideAlert}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.alertBox}>
-            <View style={[styles.alertIconBox, {
-              backgroundColor: alertConfig.type === 'error' ? 'rgba(239,68,68,0.1)' :
-                alertConfig.type === 'success' ? 'rgba(34,197,94,0.1)' : 'rgba(37,99,255,0.1)'
-            }]}>
-              {alertConfig.type === 'error' ? <X size={24} color="#EF4444" /> :
-                alertConfig.type === 'success' ? <Check size={24} color="#22C55E" /> :
-                  <AlertCircle size={24} color="#2563FF" />}
+            <View
+              style={[
+                styles.alertIconBox,
+                {
+                  backgroundColor:
+                    alertConfig.type === 'error'
+                      ? 'rgba(239,68,68,0.1)'
+                      : alertConfig.type === 'success'
+                      ? 'rgba(34,197,94,0.1)'
+                      : 'rgba(37,99,255,0.1)',
+                },
+              ]}
+            >
+              {alertConfig.type === 'error' ? (
+                <X size={24} color="#EF4444" />
+              ) : alertConfig.type === 'success' ? (
+                <Check size={24} color="#22C55E" />
+              ) : (
+                <AlertCircle size={24} color="#2563FF" />
+              )}
             </View>
             <Text style={styles.alertTitle}>{alertConfig.title}</Text>
             <Text style={styles.alertMessage}>{alertConfig.message}</Text>
             <TouchableOpacity
-              style={[styles.alertBtn, alertConfig.type === 'error' ? styles.alertBtnError : styles.alertBtnSuccess]}
+              style={[
+                styles.alertBtn,
+                alertConfig.type === 'error'
+                  ? styles.alertBtnError
+                  : styles.alertBtnSuccess,
+              ]}
               onPress={() => {
                 hideAlert();
                 if (alertConfig.onConfirm) alertConfig.onConfirm();

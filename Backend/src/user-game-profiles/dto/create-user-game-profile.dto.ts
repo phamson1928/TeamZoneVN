@@ -5,5 +5,5 @@ export class CreateUserGameProfileDto {
   @ApiProperty({ example: 'game-uuid-here' })
   @IsUUID()
   @IsNotEmpty()
-  gameId: string;
+  gameId!: string;
 }

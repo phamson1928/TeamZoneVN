@@ -5,13 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuthStore } from '../store/useAuthStore';
 import { theme } from '../theme';
-import {
-  Home,
-  Compass,
-  Users,
-  User,
-  Plus,
-} from 'lucide-react-native';
+import { Home, Compass, Users, User, Plus } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { LoginScreen } from '../screens/LoginScreen';
@@ -147,7 +141,7 @@ const TabNavigator = () => (
       name="AddZone"
       component={DummyScreen}
       listeners={({ navigation }) => ({
-        tabPress: (e) => {
+        tabPress: e => {
           e.preventDefault();
           navigation.getParent()?.navigate('CreateZone', {});
         },
@@ -156,9 +150,11 @@ const TabNavigator = () => (
         tabBarLabel: () => null,
         tabBarIcon: () => null,
         tabBarButton: () => (
-          <AddZoneButton onPress={() => {
-            navigation.getParent()?.navigate('CreateZone', {});
-          }} />
+          <AddZoneButton
+            onPress={() => {
+              navigation.getParent()?.navigate('CreateZone', {});
+            }}
+          />
         ),
       })}
     />
@@ -230,7 +226,7 @@ const MainNavigator = () => (
 export const AppNavigator = () => {
   const isAuthenticated = useAuthStore(state => state.isAuthenticated);
   const [showOnboarding, setShowOnboarding] = React.useState<boolean>(false);
-  const [isReady, setIsReady] = React.useState(true); // Force ready to true immediately
+  const [isReady] = React.useState(true); // Force ready to true immediately
 
   React.useEffect(() => {
     const checkOnboarding = async () => {
@@ -248,12 +244,16 @@ export const AppNavigator = () => {
     checkOnboarding();
   }, []);
 
-
-
-
   if (!isReady) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: '#0F172A',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
         <Text style={{ color: '#FFFFFF' }}>Loading...</Text>
       </View>
     );
@@ -265,12 +265,14 @@ export const AppNavigator = () => {
         {showOnboarding ? (
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         ) : null}
-        <Stack.Screen name="App" component={isAuthenticated ? MainNavigator : AuthNavigator} />
+        <Stack.Screen
+          name="App"
+          component={isAuthenticated ? MainNavigator : AuthNavigator}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
-
 
 const styles = StyleSheet.create({
   fabContainer: {

@@ -15,7 +15,6 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { ZonesService } from './zones.service.js';
 import { CreateZoneDto } from './dto/create-zone.dto.js';

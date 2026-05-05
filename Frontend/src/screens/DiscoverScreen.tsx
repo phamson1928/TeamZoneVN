@@ -6,9 +6,8 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Platform as RNPlatform,
   Dimensions,
-  ScrollView
+  ScrollView,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
@@ -35,10 +34,15 @@ const FILTER_OPTIONS = [
 ];
 
 export const DiscoverScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [selectedPlatform, setSelectedPlatform] = useState('ALL');
 
-  const { data: games, isLoading, refetch } = useQuery({
+  const {
+    data: games,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['games'],
     queryFn: async () => {
       const response = await apiClient.get('/games/mobile');
@@ -52,7 +56,7 @@ export const DiscoverScreen = () => {
     if (selectedPlatform === 'ALL') return games;
 
     return games.filter(game =>
-      game.platforms?.includes(selectedPlatform as Platform)
+      game.platforms?.includes(selectedPlatform as Platform),
     );
   }, [games, selectedPlatform]);
 
@@ -82,7 +86,13 @@ export const DiscoverScreen = () => {
         activeOpacity={0.9}
       >
         <View style={styles.posterCard}>
-          <Image source={{ uri: item.bannerUrl }} style={styles.posterImage} contentFit="cover" transition={500} cachePolicy="disk" />
+          <Image
+            source={{ uri: item.bannerUrl }}
+            style={styles.posterImage}
+            contentFit="cover"
+            transition={500}
+            cachePolicy="disk"
+          />
           <LinearGradient
             colors={['transparent', 'transparent', 'rgba(0,0,0,0.8)']}
             style={styles.gradientOverlay}
@@ -105,7 +115,9 @@ export const DiscoverScreen = () => {
         </View>
 
         <View style={styles.cardInfo}>
-          <Text style={styles.gameName} numberOfLines={1}>{item.name}</Text>
+          <Text style={styles.gameName} numberOfLines={1}>
+            {item.name}
+          </Text>
           <Text style={styles.zoneCount}>
             {item._count?.zones || 0} {STRINGS.ACTIVE_ZONES_COUNT}
           </Text>
@@ -143,7 +155,7 @@ export const DiscoverScreen = () => {
                 contentContainerStyle={styles.filterScroll}
                 keyboardShouldPersistTaps="handled"
               >
-                {FILTER_OPTIONS.map((option) => {
+                {FILTER_OPTIONS.map(option => {
                   const Icon = option.icon;
                   const isActive = selectedPlatform === option.value;
 
@@ -159,12 +171,16 @@ export const DiscoverScreen = () => {
                     >
                       <Icon
                         size={16}
-                        color={isActive ? '#FFFFFF' : theme.colors.textSecondary}
+                        color={
+                          isActive ? '#FFFFFF' : theme.colors.textSecondary
+                        }
                       />
-                      <Text style={[
-                        styles.filterChipText,
-                        isActive && styles.filterChipTextActive,
-                      ]}>
+                      <Text
+                        style={[
+                          styles.filterChipText,
+                          isActive && styles.filterChipTextActive,
+                        ]}
+                      >
                         {option.label}
                       </Text>
                     </TouchableOpacity>
@@ -175,7 +191,8 @@ export const DiscoverScreen = () => {
               {/* Results count */}
               <View style={styles.resultsInfo}>
                 <Text style={styles.resultsText}>
-                  {filteredGames.length} {filteredGames.length === 1 ? 'game' : 'games'}
+                  {filteredGames.length}{' '}
+                  {filteredGames.length === 1 ? 'game' : 'games'}
                 </Text>
               </View>
             </View>
@@ -353,4 +370,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-

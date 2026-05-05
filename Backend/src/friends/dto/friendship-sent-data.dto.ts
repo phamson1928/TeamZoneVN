@@ -6,5 +6,5 @@ export class FriendshipSentDataDto {
     @ApiProperty({ description: "ID of the user to send friend request to" })
     @IsString()
     @IsNotEmpty()
-    receiverId: string;
+    receiverId!: string;
 }

@@ -6,7 +6,6 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('ReportsService', () => {
     let service: ReportsService;
-    let prisma: PrismaService;
 
     const mockPrismaService = {
         report: {
@@ -30,7 +29,6 @@ describe('ReportsService', () => {
         }).compile();
 
         service = module.get<ReportsService>(ReportsService);
-        prisma = module.get<PrismaService>(PrismaService);
     });
 
     it('should be defined', () => {

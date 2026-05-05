@@ -1,11 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DashboardService } from './dashboard.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { DashboardPeriod } from './dto/dashboard-query.dto.js';
 
 describe('DashboardService', () => {
     let service: DashboardService;
-    let prisma: PrismaService;
 
     const mockPrismaService = {
         user: { count: jest.fn() },
@@ -28,7 +26,6 @@ describe('DashboardService', () => {
         }).compile();
 
         service = module.get<DashboardService>(DashboardService);
-        prisma = module.get<PrismaService>(PrismaService);
     });
 
     it('should be defined', () => {

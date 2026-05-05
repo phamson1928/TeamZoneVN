@@ -9,34 +9,29 @@ import {
   RefreshControl,
   Alert,
   StatusBar,
-  Animated
+  Animated,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   ArrowLeft,
   Plus,
-  Trash2,
-  Edit2,
   Users,
   Trophy,
   Clock,
   Gamepad2,
-  Settings,
   ChevronRight,
   MoreVertical,
   Eye,
   Calendar,
-  Star,
   Zap,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { apiClient } from '../api/client';
-import { theme, getBorderColorById } from '../theme';
+import { theme } from '../theme';
 import { Zone } from '../types';
 import { RootStackParamList } from '../navigation';
 
@@ -94,7 +89,7 @@ const AnimatedStatusDot = ({ status }: { status: string }) => {
         ]),
       ).start();
     }
-  }, [status]);
+  }, [status, pulseAnim]);
 
   return (
     <View style={styles.statusDotContainer}>
@@ -168,7 +163,7 @@ export const MyZonesScreen = () => {
     ]);
   };
 
-  const handleEdit = (zoneId: string) => {
+  const handleEdit = () => {
     Alert.alert('Sắp ra mắt', 'Tính năng chỉnh sửa đang được phát triển');
   };
 
@@ -184,7 +179,7 @@ export const MyZonesScreen = () => {
         },
         {
           text: 'Chỉnh sửa',
-          onPress: () => handleEdit(zone.id),
+          onPress: () => handleEdit(),
         },
         {
           text: 'Xóa phòng',
@@ -245,7 +240,10 @@ export const MyZonesScreen = () => {
                   <Image
                     source={{ uri: item.game.iconUrl }}
                     style={styles.gameIcon}
-                    contentFit="cover" transition={500} cachePolicy="disk" />
+                    contentFit="cover"
+                    transition={500}
+                    cachePolicy="disk"
+                  />
                 </View>
               ) : (
                 <View

@@ -11,17 +11,15 @@ import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Edit2,
   Trash2,
   Gamepad2,
-  Users,
   Heart,
   Trophy,
   MapPin,
   Settings,
   LogOut,
   Zap,
-  UserPlus,
+  Users,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 

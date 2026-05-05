@@ -5,11 +5,11 @@ export class JoinQuickMatchDto {
     @ApiProperty({ description: 'ID của game muốn ghép' })
     @IsString()
     @IsNotEmpty()
-    gameId: string;
+    gameId!: string;
 
     @ApiProperty({ description: 'Số người chơi cần thiết (2-10)', minimum: 2, maximum: 10 })
     @IsInt()
     @Min(2)
     @Max(10)
-    requiredPlayers: number;
+    requiredPlayers!: number;
 }

@@ -38,22 +38,22 @@ export class PaginationDto {
 
 export class PaginationMetaDto {
   @ApiPropertyOptional({ description: 'Current page number' })
-  page: number;
+  page!: number;
 
   @ApiPropertyOptional({ description: 'Number of items per page' })
-  limit: number;
+  limit!: number;
 
   @ApiPropertyOptional({ description: 'Total number of items' })
-  total: number;
+  total!: number;
 
   @ApiPropertyOptional({ description: 'Total number of pages' })
-  totalPages: number;
+  totalPages!: number;
 
   @ApiPropertyOptional({ description: 'Whether there is a next page' })
-  hasNextPage: boolean;
+  hasNextPage!: boolean;
 
   @ApiPropertyOptional({ description: 'Whether there is a previous page' })
-  hasPreviousPage: boolean;
+  hasPreviousPage!: boolean;
 
   constructor(page: number, limit: number, total: number) {
     this.page = page;
@@ -66,8 +66,8 @@ export class PaginationMetaDto {
 }
 
 export class PaginatedResponseDto<T> {
-  data: T[];
-  meta: PaginationMetaDto;
+  data!: T[];
+  meta!: PaginationMetaDto;
 
   constructor(data: T[], page: number, limit: number, total: number) {
     this.data = data;

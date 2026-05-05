@@ -9,11 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FriendsService } from './friends.service.js';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
@@ -23,7 +19,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 @UseGuards(JwtAuthGuard)
 @Controller('friends')
 export class FriendsController {
-  constructor(private readonly friendsService: FriendsService) { }
+  constructor(private readonly friendsService: FriendsService) {}
 
   @Post('request/:userId')
   @ApiOperation({ summary: 'Gửi lời mời kết bạn' })
@@ -50,7 +46,11 @@ export class FriendsController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
-    return this.friendsService.getFriends(userId, Number(page) || 1, Number(limit) || 20);
+    return this.friendsService.getFriends(
+      userId,
+      Number(page) || 1,
+      Number(limit) || 20,
+    );
   }
 
   @Get('requests')

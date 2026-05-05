@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,7 +10,10 @@ import {
   Alert,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import {
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 import { Gamepad2 } from 'lucide-react-native';
 import { Svg, Path, G } from 'react-native-svg';
 import { Container } from '../components/Container';
@@ -24,7 +27,8 @@ import { RootStackParamList } from '../navigation';
 
 // Configure Google Sign-In
 GoogleSignin.configure({
-  webClientId: '946383947788-mc938c7idvv3opb987p0fr1cbug97qs1.apps.googleusercontent.com',
+  webClientId:
+    '946383947788-mc938c7idvv3opb987p0fr1cbug97qs1.apps.googleusercontent.com',
   offlineAccess: true,
 });
 
@@ -88,14 +92,19 @@ export const LoginScreen = ({ navigation }: Props) => {
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
         Alert.alert('Lỗi', 'Google Play Services không khả dụng');
       } else {
-        const message = error.response?.data?.message || error.message || STRINGS.LOGIN_FAILED;
-        Alert.alert(STRINGS.LOGIN_FAILED, Array.isArray(message) ? message[0] : message);
+        const message =
+          error.response?.data?.message ||
+          error.message ||
+          STRINGS.LOGIN_FAILED;
+        Alert.alert(
+          STRINGS.LOGIN_FAILED,
+          Array.isArray(message) ? message[0] : message,
+        );
       }
     } finally {
       setLoading(false);
     }
   };
-
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -105,7 +114,10 @@ export const LoginScreen = ({ navigation }: Props) => {
 
     setLoading(true);
     try {
-      const loginResponse = await apiClient.post('/auth/login', { email, password });
+      const loginResponse = await apiClient.post('/auth/login', {
+        email,
+        password,
+      });
       const { data } = loginResponse.data;
       const { tokens } = data;
 
@@ -120,7 +132,10 @@ export const LoginScreen = ({ navigation }: Props) => {
       if (error.code === 'ECONNABORTED' || error.message === 'Network Error') {
         message = STRINGS.API_UNREACHABLE_HINT;
       }
-      Alert.alert(STRINGS.LOGIN_FAILED, Array.isArray(message) ? message[0] : message);
+      Alert.alert(
+        STRINGS.LOGIN_FAILED,
+        Array.isArray(message) ? message[0] : message,
+      );
     } finally {
       setLoading(false);
     }
@@ -132,7 +147,10 @@ export const LoginScreen = ({ navigation }: Props) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Hero Section */}
           <View style={styles.hero}>
             <View style={styles.logoContainer}>
@@ -171,7 +189,9 @@ export const LoginScreen = ({ navigation }: Props) => {
             />
 
             <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>{STRINGS.FORGOT_PASSWORD}</Text>
+              <Text style={styles.forgotPasswordText}>
+                {STRINGS.FORGOT_PASSWORD}
+              </Text>
             </TouchableOpacity>
 
             <Button
@@ -322,4 +342,3 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
-

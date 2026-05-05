@@ -1,6 +1,7 @@
 #!/bin/bash
 # Test Phase 7 Notifications API với seed data
-# Chạy: bash test-notifications-curl.sh (hoặc ./test-notifications-curl.sh)
+# Chạy từ Backend: bash scripts/test-notifications-curl.sh
+# Chạy từ repo root: bash Backend/scripts/test-notifications-curl.sh
 # Yêu cầu: Backend đang chạy tại http://localhost:3000
 
 BASE_URL="${BASE_URL:-http://localhost:3000}"

@@ -117,7 +117,7 @@ export const ChatRoomScreen = () => {
         100,
       );
     }
-  }, [isLoadingHistory]);
+  }, [isLoadingHistory, historyMessages.length]);
 
   // Lấy thông tin group (số thành viên)
   const { data: groupDetail } = useQuery({
@@ -280,7 +280,7 @@ export const ChatRoomScreen = () => {
       newSocket.emit('leaveRoom', { groupId });
       newSocket.disconnect();
     };
-  }, [groupId, accessToken]);
+  }, [groupId, accessToken, currentUser?.id]);
 
   // Typing indicator
   useEffect(() => {

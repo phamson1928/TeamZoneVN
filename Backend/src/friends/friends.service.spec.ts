@@ -6,7 +6,6 @@ import { BadRequestException, NotFoundException, ConflictException } from '@nest
 
 describe('FriendsService', () => {
     let service: FriendsService;
-    let prisma: PrismaService;
 
     const mockPrismaService = {
         user: { findUnique: jest.fn() },
@@ -31,7 +30,6 @@ describe('FriendsService', () => {
         }).compile();
 
         service = module.get<FriendsService>(FriendsService);
-        prisma = module.get<PrismaService>(PrismaService);
     });
 
     it('should be defined', () => {

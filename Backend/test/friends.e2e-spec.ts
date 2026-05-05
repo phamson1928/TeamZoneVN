@@ -8,7 +8,6 @@ describe('Friends (e2e)', () => {
     let app: INestApplication<App>;
     let user1Token: string;
     let user1Id: string;
-    let user2Id: string;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -37,7 +36,6 @@ describe('Friends (e2e)', () => {
                 password: 'User123456'
             });
 
-        user2Id = loginRes2.body.userId;
     });
 
     afterAll(async () => {

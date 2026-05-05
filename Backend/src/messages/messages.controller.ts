@@ -13,7 +13,6 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { MessagesService } from './messages.service';
 import { MessageQueryDto } from './dto/message-query.dto';

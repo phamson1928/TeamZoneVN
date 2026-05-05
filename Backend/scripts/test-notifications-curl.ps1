@@ -1,5 +1,6 @@
 # Test Phase 7 Notifications API với seed data
-# Chạy: .\test-notifications-curl.ps1
+# Chạy từ Backend: .\scripts\test-notifications-curl.ps1
+# Chạy từ repo root: .\Backend\scripts\test-notifications-curl.ps1
 # Yêu cầu: Backend đang chạy tại http://localhost:3000
 
 $BaseUrl = if ($env:BASE_URL) { $env:BASE_URL } else { "http://localhost:3000" }

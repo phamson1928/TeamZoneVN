@@ -55,8 +55,6 @@ export class LeaderboardService {
             dateFilter.setUTCMonth(dateFilter.getUTCMonth() - 1);
         }
 
-        const whereCreatedAt = dateFilter ? { gte: dateFilter } : undefined;
-
         const whereClause = dateFilter
             ? Prisma.sql`WHERE ul."createdAt" >= ${dateFilter}`
             : Prisma.empty;
