@@ -14,8 +14,7 @@ import {
   Eye,
   AlertTriangle,
   Loader2,
-  CheckCircle2,
-  Plus
+  CheckCircle2
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, BarChart, Bar } from 'recharts';
 import { toast } from 'sonner';

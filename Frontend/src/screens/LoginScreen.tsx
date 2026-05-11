@@ -8,13 +8,13 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   GoogleSignin,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import { Gamepad2 } from 'lucide-react-native';
 import { Svg, Path, G } from 'react-native-svg';
 import { Container } from '../components/Container';
 import { Input } from '../components/Input';
@@ -57,6 +57,8 @@ const GoogleIcon = () => (
 );
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
+
+const TEAMZONE_LOGO = require('../../assets/logo-has-background.png');
 
 export const LoginScreen = ({ navigation }: Props) => {
   const [email, setEmail] = useState('');
@@ -155,7 +157,7 @@ export const LoginScreen = ({ navigation }: Props) => {
           <View style={styles.hero}>
             <View style={styles.logoContainer}>
               <View style={styles.logoIconBg}>
-                <Gamepad2 size={32} color={theme.colors.primary} />
+                <Image source={TEAMZONE_LOGO} style={styles.logoImage} resizeMode="contain" />
               </View>
             </View>
             <Text style={styles.logoText}>TeamZoneVN</Text>
@@ -253,6 +255,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(37, 99, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  logoImage: {
+    width: 44,
+    height: 44,
   },
   logoText: {
     fontSize: 28,

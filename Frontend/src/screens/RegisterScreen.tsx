@@ -8,9 +8,9 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 
-import { Gamepad2 } from 'lucide-react-native';
 import { Container } from '../components/Container';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
@@ -19,6 +19,8 @@ import { apiClient } from '../api/client';
 import { useAuthStore } from '../store/useAuthStore';
 
 import { STRINGS } from '../constants/strings';
+
+const TEAMZONE_LOGO = require('../../assets/logo-has-background.png');
 
 export const RegisterScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
@@ -101,7 +103,7 @@ export const RegisterScreen = ({ navigation }: any) => {
           <View style={styles.header}>
             <View style={styles.logoContainer}>
               <View style={styles.logoIconBg}>
-                <Gamepad2 size={28} color={theme.colors.primary} />
+                <Image source={TEAMZONE_LOGO} style={styles.logoImage} resizeMode="contain" />
               </View>
             </View>
             <Text style={styles.logoText}>TeamZoneVN</Text>
@@ -198,6 +200,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  logoImage: {
+    width: 40,
+    height: 40,
+  },
   logoText: {
     fontSize: 24,
     fontWeight: '800',
@@ -251,4 +257,3 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
-

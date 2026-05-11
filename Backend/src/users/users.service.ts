@@ -17,6 +17,29 @@ import { FriendStatus, Prisma } from '@prisma/client';
 export class UsersService {
   constructor(private prisma: PrismaService) { }
 
+  async getUserDetailsForAdmin(userId: string): Promise<UserResponseDto & { likeCount: number }> {
+    const uid = userId.trim().toLowerCase();
+    const user = await this.prisma.user.findUnique({
+      where: { id: uid },
+      include: {
+        profile: true,
+        _count: { select: { likesReceived: true } },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const dto = this.toUserResponse(user);
+
+    return {
+      ...dto,
+      // Dashboard currently uses `likeCount`; keep a compatible alias.
+      likeCount: dto.likesReceived ?? 0,
+    };
+  }
+
   async getMe(userId: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

@@ -2,15 +2,24 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const SUPABASE_URL = 'https://jgdnolcmyvpcsaphxtwm.supabase.co';
-const STORAGE_BASE = `${SUPABASE_URL}/storage/v1/object/public/game-assets`;
+const OLD_PROJECT_ID = 'hrvxrxnkbcqrftagzuso';
+const NEW_PROJECT_ID = 'jgdnolcmyvpcsaphxtwm';
 
-function fixUrl(url: string | null, folder: 'icons' | 'banners'): string | null {
+function fixUrl(url: string | null): string | null {
   if (!url) return null;
-  // Already a full URL → skip
-  if (url.startsWith('http')) return url;
-  // Just a filename → build full Supabase URL
-  return `${STORAGE_BASE}/${folder}/${url}`;
+  
+  // Replace old project ID with new one if it exists in the URL
+  if (url.includes(OLD_PROJECT_ID)) {
+    return url.replace(OLD_PROJECT_ID, NEW_PROJECT_ID);
+  }
+  
+  // If it's just a filename (not starting with http), build the full URL
+  if (!url.startsWith('http')) {
+    const folder = url.includes('banner') ? 'banners' : 'icons';
+    return `https://${NEW_PROJECT_ID}.supabase.co/storage/v1/object/public/game-assets/${folder}/${url}`;
+  }
+  
+  return url;
 }
 
 async function main() {
@@ -21,8 +30,8 @@ async function main() {
   console.log(`Found ${games.length} games. Checking URLs...`);
 
   for (const game of games) {
-    const newIconUrl  = fixUrl(game.iconUrl,  'icons');
-    const newBannerUrl = fixUrl(game.bannerUrl, 'banners');
+    const newIconUrl = fixUrl(game.iconUrl);
+    const newBannerUrl = fixUrl(game.bannerUrl);
 
     const needsUpdate =
       newIconUrl !== game.iconUrl || newBannerUrl !== game.bannerUrl;
@@ -31,8 +40,8 @@ async function main() {
       await prisma.game.update({
         where: { id: game.id },
         data: {
-          ...(newIconUrl   !== game.iconUrl   && { iconUrl:   newIconUrl }),
-          ...(newBannerUrl !== game.bannerUrl && { bannerUrl: newBannerUrl }),
+          iconUrl: newIconUrl,
+          bannerUrl: newBannerUrl,
         },
       });
       console.log(`  ✅ Fixed [${game.name}]`);

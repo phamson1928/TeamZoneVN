@@ -106,22 +106,25 @@ export const Overview = () => {
                 </div>
             </div>
 
-            {/* Luxury Premium Minimalist Cards */}
+            {/* Hero Stat Cards */}
             <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                
-                {/* Users Card */}
-                <AnimatedCard className="relative p-7 bg-white/40 backdrop-blur-2xl rounded-[32px] border border-white/60 shadow-[0_4px_24px_rgba(0,0,0,0.02)] overflow-hidden transition-colors duration-400 hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] hover:bg-white/50 group">
-                    <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-80 mix-blend-overlay"></div>
-                    
+                 
+                 {/* Users Card */}
+                <AnimatedCard className="group relative isolate overflow-hidden rounded-[32px] border border-white/70 bg-white/45 p-7 shadow-[0_10px_40px_rgba(15,23,42,0.06)] backdrop-blur-2xl saturate-150 transition-all duration-300 hover:-translate-y-1 hover:saturate-200 hover:shadow-[0_20px_70px_rgba(15,23,42,0.10)]">
+                    <div className="pointer-events-none absolute -z-20 -inset-10 rounded-[48px] bg-lime-400/30 blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                    <div className="pointer-events-none absolute -z-10 inset-0 rounded-[32px] bg-[radial-gradient(1000px_circle_at_14%_-10%,rgba(34,197,94,0.34),transparent_56%),radial-gradient(900px_circle_at_110%_85%,rgba(6,182,212,0.30),transparent_52%)]" />
+                    <div className="pointer-events-none absolute -z-10 inset-0 rounded-[32px] bg-[linear-gradient(180deg,rgba(255,255,255,0.84),rgba(255,255,255,0.36))]" />
+                    <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-90" />
+                     
                     <div className="flex items-center justify-between mb-8">
                         <h3 className="text-[12px] font-extrabold text-gray-400 uppercase tracking-[0.15em] leading-none">Người dùng</h3>
-                        <div className="p-2.5 bg-gray-50/50 rounded-2xl border border-gray-100/50 text-gray-400 group-hover:text-gray-900 group-hover:bg-white transition-all duration-300 shadow-sm">
+                        <div className="p-2.5 rounded-2xl border border-white/60 bg-gradient-to-br from-lime-500/22 via-white/35 to-cyan-500/18 text-emerald-800 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:border-white/70">
                             <Users strokeWidth={1.5} className="w-[22px] h-[22px]" />
                         </div>
                     </div>
-                    
+                     
                     <div>
-                        <p className="text-[44px] font-bold text-gray-900 tracking-[-0.04em] leading-none mb-4">
+                        <p className="text-[44px] font-black tracking-[-0.05em] leading-none mb-4 bg-gradient-to-br from-gray-950 via-gray-900 to-emerald-700 bg-clip-text text-transparent">
                             {users.total.toLocaleString()}
                         </p>
                         <div className="flex items-center gap-3.5">
@@ -138,19 +141,22 @@ export const Overview = () => {
                     </div>
                 </AnimatedCard>
 
-                {/* Zones Card */}
-                <AnimatedCard className="relative p-7 bg-white/40 backdrop-blur-2xl rounded-[32px] border border-white/60 shadow-[0_4px_24px_rgba(0,0,0,0.02)] overflow-hidden transition-colors duration-400 hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] hover:bg-white/50 group">
-                    <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-80 mix-blend-overlay"></div>
-                    
+                 {/* Zones Card */}
+                <AnimatedCard className="group relative isolate overflow-hidden rounded-[32px] border border-white/70 bg-white/45 p-7 shadow-[0_10px_40px_rgba(15,23,42,0.06)] backdrop-blur-2xl saturate-150 transition-all duration-300 hover:-translate-y-1 hover:saturate-200 hover:shadow-[0_20px_70px_rgba(15,23,42,0.10)]">
+                    <div className="pointer-events-none absolute -z-20 -inset-10 rounded-[48px] bg-cyan-400/30 blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                    <div className="pointer-events-none absolute -z-10 inset-0 rounded-[32px] bg-[radial-gradient(1000px_circle_at_18%_-10%,rgba(6,182,212,0.36),transparent_58%),radial-gradient(900px_circle_at_110%_78%,rgba(59,130,246,0.28),transparent_52%)]" />
+                    <div className="pointer-events-none absolute -z-10 inset-0 rounded-[32px] bg-[linear-gradient(180deg,rgba(255,255,255,0.84),rgba(255,255,255,0.36))]" />
+                    <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-90" />
+                     
                     <div className="flex items-center justify-between mb-8">
                         <h3 className="text-[12px] font-extrabold text-gray-400 uppercase tracking-[0.15em] leading-none">Tổng Zone</h3>
-                        <div className="p-2.5 bg-gray-50/50 rounded-2xl border border-gray-100/50 text-gray-400 group-hover:text-gray-900 group-hover:bg-white transition-all duration-300 shadow-sm">
+                        <div className="p-2.5 rounded-2xl border border-white/60 bg-gradient-to-br from-cyan-500/22 via-white/35 to-blue-500/18 text-cyan-800 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:border-white/70">
                             <MapPin strokeWidth={1.5} className="w-[22px] h-[22px]" />
                         </div>
                     </div>
-                    
+                     
                     <div>
-                        <p className="text-[44px] font-bold text-gray-900 tracking-[-0.04em] leading-none mb-4">
+                        <p className="text-[44px] font-black tracking-[-0.05em] leading-none mb-4 bg-gradient-to-br from-gray-950 via-gray-900 to-cyan-700 bg-clip-text text-transparent">
                             {zones.total.toLocaleString()}
                         </p>
                         <div className="flex items-center gap-3.5">
@@ -167,19 +173,22 @@ export const Overview = () => {
                     </div>
                 </AnimatedCard>
 
-                {/* Groups Card */}
-                <AnimatedCard className="relative p-7 bg-white/40 backdrop-blur-2xl rounded-[32px] border border-white/60 shadow-[0_4px_24px_rgba(0,0,0,0.02)] overflow-hidden transition-colors duration-400 hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] hover:bg-white/50 group">
-                    <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-80 mix-blend-overlay"></div>
-                    
+                 {/* Groups Card */}
+                <AnimatedCard className="group relative isolate overflow-hidden rounded-[32px] border border-white/70 bg-white/45 p-7 shadow-[0_10px_40px_rgba(15,23,42,0.06)] backdrop-blur-2xl saturate-150 transition-all duration-300 hover:-translate-y-1 hover:saturate-200 hover:shadow-[0_20px_70px_rgba(15,23,42,0.10)]">
+                    <div className="pointer-events-none absolute -z-20 -inset-10 rounded-[48px] bg-fuchsia-400/26 blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                    <div className="pointer-events-none absolute -z-10 inset-0 rounded-[32px] bg-[radial-gradient(1000px_circle_at_18%_-10%,rgba(168,85,247,0.34),transparent_58%),radial-gradient(900px_circle_at_115%_85%,rgba(236,72,153,0.26),transparent_52%)]" />
+                    <div className="pointer-events-none absolute -z-10 inset-0 rounded-[32px] bg-[linear-gradient(180deg,rgba(255,255,255,0.84),rgba(255,255,255,0.36))]" />
+                    <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-90" />
+                     
                     <div className="flex items-center justify-between mb-8">
                         <h3 className="text-[12px] font-extrabold text-gray-400 uppercase tracking-[0.15em] leading-none">Nhóm</h3>
-                        <div className="p-2.5 bg-gray-50/50 rounded-2xl border border-gray-100/50 text-gray-400 group-hover:text-gray-900 group-hover:bg-white transition-all duration-300 shadow-sm">
+                        <div className="p-2.5 rounded-2xl border border-white/60 bg-gradient-to-br from-violet-500/20 via-white/35 to-fuchsia-500/18 text-violet-800 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:border-white/70">
                             <UsersRound strokeWidth={1.5} className="w-[22px] h-[22px]" />
                         </div>
                     </div>
-                    
+                     
                     <div>
-                        <p className="text-[44px] font-bold text-gray-900 tracking-[-0.04em] leading-none mb-4">
+                        <p className="text-[44px] font-black tracking-[-0.05em] leading-none mb-4 bg-gradient-to-br from-gray-950 via-gray-900 to-violet-700 bg-clip-text text-transparent">
                             {groups.active.toLocaleString()}
                         </p>
                         <div className="flex items-center gap-3.5">
@@ -191,19 +200,22 @@ export const Overview = () => {
                     </div>
                 </AnimatedCard>
 
-                {/* Reports Card */}
-                <AnimatedCard className="relative p-7 bg-white/40 backdrop-blur-2xl rounded-[32px] border border-white/60 shadow-[0_4px_24px_rgba(0,0,0,0.02)] overflow-hidden transition-colors duration-400 hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] hover:bg-white/50 group">
-                    <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-80 mix-blend-overlay"></div>
-                    
+                 {/* Reports Card */}
+                <AnimatedCard className="group relative isolate overflow-hidden rounded-[32px] border border-white/70 bg-white/45 p-7 shadow-[0_10px_40px_rgba(15,23,42,0.06)] backdrop-blur-2xl saturate-150 transition-all duration-300 hover:-translate-y-1 hover:saturate-200 hover:shadow-[0_20px_70px_rgba(15,23,42,0.10)]">
+                    <div className="pointer-events-none absolute -z-20 -inset-10 rounded-[48px] bg-amber-400/30 blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                    <div className="pointer-events-none absolute -z-10 inset-0 rounded-[32px] bg-[radial-gradient(1000px_circle_at_20%_-10%,rgba(245,158,11,0.36),transparent_58%),radial-gradient(900px_circle_at_110%_80%,rgba(244,63,94,0.24),transparent_52%)]" />
+                    <div className="pointer-events-none absolute -z-10 inset-0 rounded-[32px] bg-[linear-gradient(180deg,rgba(255,255,255,0.84),rgba(255,255,255,0.36))]" />
+                    <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-90" />
+                     
                     <div className="flex items-center justify-between mb-8">
                         <h3 className="text-[12px] font-extrabold text-gray-400 uppercase tracking-[0.15em] leading-none">Báo cáo</h3>
-                        <div className="p-2.5 bg-gray-50/50 rounded-2xl border border-gray-100/50 text-gray-400 group-hover:text-gray-900 group-hover:bg-white transition-all duration-300 shadow-sm">
+                        <div className="p-2.5 rounded-2xl border border-white/60 bg-gradient-to-br from-amber-500/22 via-white/35 to-rose-500/18 text-amber-800 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:border-white/70">
                             <AlertTriangle strokeWidth={1.5} className="w-[22px] h-[22px]" />
                         </div>
                     </div>
-                    
+                     
                     <div>
-                        <p className="text-[44px] font-bold text-gray-900 tracking-[-0.04em] leading-none mb-4">
+                        <p className="text-[44px] font-black tracking-[-0.05em] leading-none mb-4 bg-gradient-to-br from-gray-950 via-gray-900 to-amber-700 bg-clip-text text-transparent">
                             {reports.open}
                         </p>
                         <div className="flex items-center gap-3.5">

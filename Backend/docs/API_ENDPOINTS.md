@@ -673,6 +673,50 @@ curl -s http://localhost:3000/users/9e0a44d5-65a0-4ee4-810f-ed6a77db6e53 \
 
 ## 4. User Management (Admin)
 
+### GET `/users/admin/:id`
+
+Lấy thông tin chi tiết 1 user cho Admin Dashboard (bao gồm `warnCount`, `tempBannedUntil`, `profile.lastActiveAt`, và số lượt được tim).
+
+**Auth Required:** Yes (Admin)
+
+**Path Parameters:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string (UUID) | Yes | User ID cần xem |
+
+```bash
+curl -s http://localhost:3000/users/admin/9e0a44d5-65a0-4ee4-810f-ed6a77db6e53 \
+  -H "Authorization: Bearer <admin_token>"
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "9e0a44d5-65a0-4ee4-810f-ed6a77db6e53",
+    "email": "test@example.com",
+    "username": "testuser",
+    "avatarUrl": null,
+    "role": "USER",
+    "status": "ACTIVE",
+    "createdAt": "2026-01-31T17:13:34.708Z",
+    "warnCount": 2,
+    "tempBannedUntil": null,
+    "likesReceived": 12,
+    "likeCount": 12,
+    "profile": {
+      "bio": "Pro gamer since 2020",
+      "playStyle": "Aggressive",
+      "timezone": "Asia/Ho_Chi_Minh",
+      "lastActiveAt": "2026-02-03T08:30:00.000Z"
+    }
+  },
+  "timestamp": "2026-01-31T17:13:41.921Z"
+}
+```
+
 ### GET `/users`
 
 Lấy danh sách tất cả users (Admin only).

@@ -19,10 +19,11 @@ import {
 import { GamesService } from './games.service';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
-import { Public, Roles, RolesGuard } from '../common/index.js';
+import { Public, Roles, RolesGuard, JwtAuthGuard } from '../common/index.js';
 
 @ApiTags('Games')
 @Controller('games')
+@UseGuards(JwtAuthGuard)
 export class GamesController {
   constructor(private readonly gamesService: GamesService) { }
 

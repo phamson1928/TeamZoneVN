@@ -3,19 +3,21 @@ import {
   Post,
   UseInterceptors,
   UploadedFile,
+  UseGuards
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FilesService } from './files.service';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { Public } from '../common/decorators/public.decorator';
+import { Public, JwtAuthGuard, RolesGuard, Roles } from '../common/index.js';
 
 @ApiTags('Files')
 @Controller('files')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class FilesController {
-  constructor(private readonly filesService: FilesService) {}
+  constructor(private readonly filesService: FilesService) { }
 
   @Post('upload/game-icon')
-  @Public() // For testing, you might want to add Auth guard later
+  @Roles('ADMIN')
   @ApiOperation({ summary: 'Upload game icon' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -35,7 +37,7 @@ export class FilesController {
   }
 
   @Post('upload/game-banner')
-  @Public()
+  @Roles('ADMIN')
   @ApiOperation({ summary: 'Upload game banner' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -55,8 +57,8 @@ export class FilesController {
   }
 
   @Post('upload/avatar')
-  @Public()
   @ApiOperation({ summary: 'Upload user avatar' })
+  @Roles('USER')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -71,7 +73,6 @@ export class FilesController {
   })
   @UseInterceptors(FileInterceptor('file'))
   async uploadAvatar(@UploadedFile() file: Express.Multer.File) {
-    // Note: In real app, we should use the userId as part of the path
     return this.filesService.uploadFile(file, 'game-assets', 'avatars');
   }
 }

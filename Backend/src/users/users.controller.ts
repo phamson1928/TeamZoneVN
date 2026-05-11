@@ -35,7 +35,7 @@ import { Roles } from '../common/index.js';
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Get('me')
   @ApiOperation({ summary: 'Lấy thông tin profile cá nhân' })
@@ -93,13 +93,28 @@ export class UsersController {
   })
   @ApiResponse({ status: 401, description: 'Chưa xác thực' })
   @ApiResponse({ status: 403, description: 'Không có quyền (Cần Admin)' })
-  async searchUsers(@Query() searchDto: SearchUsersDto): Promise<any> {
+  async searchUsers(
+    @Query() searchDto: SearchUsersDto,
+  ): Promise<any> {
     const { page = 1, limit = 20 } = searchDto;
     return this.usersService.searchUsers(
       searchDto,
       Number(page),
       Number(limit),
     );
+  }
+
+  @Get('admin/:id')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Xem chi tiet nguoi dung (bao gom warnCount) [ADMIN ONLY]' })
+  @ApiParam({ name: 'id', description: 'User ID (UUID)' })
+  @ApiResponse({ status: 200, description: 'Thong tin chi tiet nguoi dung (admin)' })
+  @ApiResponse({ status: 401, description: 'Chua xac thuc' })
+  @ApiResponse({ status: 403, description: 'Khong co quyen (Can Admin)' })
+  @ApiResponse({ status: 404, description: 'Nguoi dung khong ton tai' })
+  async getUserDetailsForAdmin(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersService.getUserDetailsForAdmin(id);
   }
 
   @Get(':id')

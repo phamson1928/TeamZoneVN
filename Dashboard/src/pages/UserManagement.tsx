@@ -102,7 +102,7 @@ export default function UserManagement() {
     queryKey: ['user-details', selectedUser?.id],
     queryFn: async () => {
        if (!selectedUser?.id) return null;
-       return await userApi.get(`/users/${selectedUser.id}`);
+       return await userApi.get(`/users/admin/${selectedUser.id}`);
     },
     enabled: !!selectedUser?.id
   });

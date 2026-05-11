@@ -2,21 +2,47 @@ import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GamesService {
-  constructor(private prisma: PrismaService) { }
+  private readonly storageBaseUrl: string;
+
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    this.storageBaseUrl = `${supabaseUrl}/storage/v1/object/public/game-assets`;
+  }
+
+  private transformGameUrls(game: any) {
+    if (!game) return game;
+
+    const transform = (path: string | null) => {
+      if (!path) return path;
+      if (path.startsWith('http')) return path;
+      return `${this.storageBaseUrl}/${path}`;
+    };
+
+    return {
+      ...game,
+      iconUrl: transform(game.iconUrl),
+      bannerUrl: transform(game.bannerUrl),
+    };
+  }
 
   async create(dto: CreateGameDto) {
-    return this.prisma.game.create({
+    const game = await this.prisma.game.create({
       data: dto,
     });
+    return this.transformGameUrls(game);
   }
 
   async findAllForAdmin(page?: number, limit?: number) {
     const pageLimit = limit || 10;
     const skip: number = ((page || 1) - 1) * pageLimit;
-    return this.prisma.game.findMany({
+    const games = await this.prisma.game.findMany({
       select: {
         id: true,
         name: true,
@@ -35,10 +61,11 @@ export class GamesService {
       skip,
       take: pageLimit,
     });
+    return games.map((g) => this.transformGameUrls(g));
   }
 
   async findAllForUser() {
-    return this.prisma.game.findMany({
+    const games = await this.prisma.game.findMany({
       where: { isActive: true },
       select: {
         id: true,
@@ -54,6 +81,7 @@ export class GamesService {
         name: 'asc',
       },
     });
+    return games.map((g) => this.transformGameUrls(g));
   }
 
   async findOne(id: string) {
@@ -73,15 +101,16 @@ export class GamesService {
     if (!game) {
       throw new NotFoundException(`Game with ID ${id} không tồn tại`);
     }
-    return game;
+    return this.transformGameUrls(game);
   }
 
   async update(id: string, dto: UpdateGameDto) {
     await this.findOne(id);
-    return this.prisma.game.update({
+    const updated = await this.prisma.game.update({
       where: { id },
       data: dto,
     });
+    return this.transformGameUrls(updated);
   }
 
   async remove(id: string) {

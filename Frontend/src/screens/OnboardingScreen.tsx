@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Animated,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,6 +22,8 @@ import {
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Button } from '../components/Button';
+
+const TEAMZONE_LOGO = require('../../assets/non-background-teamzonevn-logo.png');
 
 const ONBOARDING_DATA = [
   {
@@ -138,7 +141,8 @@ export const OnboardingScreen = ({ navigation }: any) => {
 
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.headerRow}>
-          <View style={styles.logoPlaceholder}>
+          <View style={styles.logoPill}>
+            <Image source={TEAMZONE_LOGO} style={styles.logoImage} resizeMode="contain" />
             <Text style={styles.logoText}>TeamZoneVN</Text>
           </View>
           <TouchableOpacity
@@ -229,13 +233,20 @@ const styles = StyleSheet.create({
     marginTop: Platform.OS === 'ios' ? 10 : 20,
     zIndex: 10,
   },
-  logoPlaceholder: {
+  logoPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
+  },
+  logoImage: {
+    width: 18,
+    height: 18,
   },
   logoText: {
     color: '#E2E8F0',

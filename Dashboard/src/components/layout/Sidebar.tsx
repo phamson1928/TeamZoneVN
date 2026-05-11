@@ -6,10 +6,10 @@ import {
     UsersRound,
     ShieldAlert,
     LogOut,
-    ShieldCheck,
     Gamepad2,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import teamzoneLogo from '../../assets/non-background-teamzonevn-logo.png';
 
 const navigationMenuItems = [
     { name: 'Tổng quan', to: '/', icon: LayoutDashboard },
@@ -39,11 +39,16 @@ export const Sidebar = () => {
 
                 {/* Brand */}
                 <div className="flex items-center gap-3.5 px-6 pt-7 pb-6">
-                    <div className="h-10 w-10 rounded-2xl bg-gray-900 flex items-center justify-center shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                        <ShieldCheck className="h-6 w-6 text-white" strokeWidth={1.5} />
+                    <div className="h-10 w-10 rounded-2xl bg-gray-900/90 flex items-center justify-center shadow-lg flex-shrink-0 overflow-hidden">
+                        <img
+                            src={teamzoneLogo}
+                            alt="TeamZoneVN"
+                            className="h-7 w-7 object-contain"
+                            draggable={false}
+                        />
                     </div>
                     <div>
-                        <span className="text-[16px] font-extrabold tracking-tight text-gray-900 block leading-tight">GameZone</span>
+                        <span className="text-[16px] font-extrabold tracking-tight text-gray-900 block leading-tight">TeamZoneVN</span>
                         <span className="text-[11px] font-bold text-gray-400 block mt-0.5 tracking-wide uppercase">Control Center</span>
                     </div>
                 </div>
@@ -76,8 +81,8 @@ export const Sidebar = () => {
                 <div className="px-3 pb-4 pt-3 border-t border-gray-100/80">
                     {/* Promo card */}
                     <div className="mb-2 p-4 rounded-[18px] bg-gradient-to-br from-gray-50 to-gray-100/60 border border-gray-200/60 relative overflow-hidden">
-                        <div className="absolute -right-3 -top-3 opacity-[0.07]">
-                            <ShieldCheck className="h-20 w-20 text-gray-900" />
+                        <div className="absolute -right-3 -top-3 opacity-[0.10]">
+                            <img src={teamzoneLogo} alt="" className="h-20 w-20 object-contain" draggable={false} />
                         </div>
                         <span className="inline-block px-2 py-0.5 rounded-full bg-gray-900 text-white text-[10px] font-bold mb-2">Pro</span>
                         <p className="text-[13px] font-bold text-gray-900 leading-snug">Cần hỗ trợ?</p>

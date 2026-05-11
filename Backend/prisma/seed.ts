@@ -203,7 +203,7 @@ async function main() {
   // 2. Create Games
   console.log('🎮 Creating games...');
   const STORAGE_BASE_URL =
-    'https://hrvxrxnkbcqrftagzuso.supabase.co/storage/v1/object/public/game-assets';
+    'https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets';
 
   const gameData: SeedGame[] = [
     { name: 'Valorant', slug: 'valorant', platforms: [Platform.PC] },
@@ -237,9 +237,9 @@ async function main() {
         name: g.name,
         isActive: true,
         platforms: g.platforms,
-        // Sử dụng slug để khớp với tên file bạn đã upload
-        iconUrl: `${STORAGE_BASE_URL}/icons/${g.slug}.png`,
-        bannerUrl: `${STORAGE_BASE_URL}/banners/${g.slug}-banner.jpg`,
+        // Lưu đường dẫn tương đối để linh hoạt (không kèm domain)
+        iconUrl: `icons/${g.slug}.png`,
+        bannerUrl: `banners/${g.slug}-banner.jpg`,
       },
     });
   }

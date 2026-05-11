@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ShieldCheck, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { apiClient } from '../lib/axios';
 import { toast } from 'sonner';
+import teamzoneLogo from '../assets/non-background-teamzonevn-logo.png';
 
 const loginSchema = z.object({
     email: z.string().email({ message: 'Email không hợp lệ' }),
@@ -73,10 +74,10 @@ export const Login = () => {
             <div className="bg-white p-8 md:p-10 rounded-[24px] shadow-sm border border-gray-100/50 w-full max-w-md">
 
                 <div className="flex flex-col items-center justify-center mb-8">
-                    <div className="h-14 w-14 rounded-2xl bg-indigo-600 flex items-center justify-center mb-4 shadow-xl shadow-indigo-600/30">
-                        <ShieldCheck className="h-8 w-8 text-white" />
+                    <div className="h-14 w-14 rounded-2xl bg-gray-900 flex items-center justify-center mb-4 shadow-xl shadow-black/20 overflow-hidden">
+                        <img src={teamzoneLogo} alt="TeamZoneVN" className="h-10 w-10 object-contain" draggable={false} />
                     </div>
-                    <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">GameZone Admin</h2>
+                    <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">TeamZoneVN Admin</h2>
                     <p className="text-sm font-medium text-gray-500 mt-1">Hệ thống quản trị và kiểm duyệt</p>
                 </div>
 
