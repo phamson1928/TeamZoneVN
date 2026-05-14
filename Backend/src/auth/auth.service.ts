@@ -66,7 +66,7 @@ export class AuthService {
       where: { email },
     });
     if (existingEmail) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException('Email đã được đăng ký');
     }
 
     // Check if username already exists
@@ -74,7 +74,7 @@ export class AuthService {
       where: { username },
     });
     if (existingUsername) {
-      throw new ConflictException('Username already taken');
+      throw new ConflictException('Tên đăng nhập đã tồn tại');
     }
 
     // Hash password
@@ -118,32 +118,32 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
     }
 
     // Check if user is banned
     if (user.status === 'BANNED') {
-      throw new UnauthorizedException('Your account has been banned');
+      throw new UnauthorizedException('Tài khoản của bạn đã bị khóa');
     }
 
     // Check temporary ban
     if (user.tempBannedUntil && user.tempBannedUntil > new Date()) {
       throw new UnauthorizedException(
-        `Your account is temporarily suspended until ${user.tempBannedUntil.toISOString()}`,
+        `Tài khoản của bạn tạm thời bị khóa đến ${user.tempBannedUntil.toLocaleString('vi-VN')}`,
       );
     }
 
     // Google-only users cannot login with password
     if (!user.passwordHash) {
       throw new UnauthorizedException(
-        'This account uses Google login. Please sign in with Google.',
+        'Tài khoản này sử dụng Google đăng nhập. Vui lòng đăng nhập bằng Google.',
       );
     }
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
     }
 
     // Generate tokens
@@ -173,7 +173,7 @@ export class AuthService {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
     } catch {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã hết hạn');
     }
 
     // Find the refresh token in database
@@ -188,12 +188,12 @@ export class AuthService {
     });
 
     if (!storedToken) {
-      throw new UnauthorizedException('Refresh token not found or expired');
+      throw new UnauthorizedException('Refresh token không tồn tại hoặc đã hết hạn');
     }
 
     // Check if user is still active
     if (storedToken.user.status === 'BANNED') {
-      throw new UnauthorizedException('Your account has been banned');
+      throw new UnauthorizedException('Tài khoản của bạn đã bị khóa');
     }
 
     // Revoke old refresh token
@@ -220,7 +220,7 @@ export class AuthService {
    */
   async logout(refreshToken: string): Promise<void> {
     if (!refreshToken) {
-      throw new BadRequestException('Refresh token is required');
+      throw new BadRequestException('Refresh token không được để trống');
     }
 
     // Revoke the refresh token
@@ -246,7 +246,7 @@ export class AuthService {
       // Return generic message for security (don't reveal if email exists or is Google-only)
       return {
         message:
-          'If an account with this email exists, a password reset link has been sent.',
+          'Nếu email tồn tại, link đặt lại mật khẩu đã được gửi.',
       };
     }
 
@@ -297,7 +297,7 @@ export class AuthService {
 
     return {
       message:
-        'If an account with this email exists, a password reset link has been sent.',
+        'Nếu email tồn tại, link đặt lại mật khẩu đã được gửi.',
     };
   }
 
@@ -319,19 +319,19 @@ export class AuthService {
     });
 
     if (!resetRecord) {
-      throw new NotFoundException('Invalid or expired reset token');
+      throw new NotFoundException('Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn');
     }
 
     if (resetRecord.used) {
-      throw new BadRequestException('This reset token has already been used');
+      throw new BadRequestException('Link đặt lại mật khẩu này đã được sử dụng');
     }
 
     if (resetRecord.expiresAt < new Date()) {
-      throw new BadRequestException('Reset token has expired. Please request a new one.');
+      throw new BadRequestException('Link đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu link mới.');
     }
 
     if (resetRecord.user.status === 'BANNED') {
-      throw new UnauthorizedException('Your account has been banned');
+      throw new UnauthorizedException('Tài khoản của bạn đã bị khóa');
     }
 
     // Hash new password
@@ -354,7 +354,7 @@ export class AuthService {
       }),
     ]);
 
-    return { message: 'Password has been reset successfully. Please log in with your new password.' };
+    return { message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.' };
   }
 
   /**
@@ -420,11 +420,11 @@ export class AuthService {
       });
       payload = ticket.getPayload();
     } catch {
-      throw new UnauthorizedException('Invalid Google token');
+      throw new UnauthorizedException('Token Google không hợp lệ');
     }
 
     if (!payload || !payload.email) {
-      throw new UnauthorizedException('Invalid Google token payload');
+      throw new UnauthorizedException('Thông tin token Google không hợp lệ');
     }
 
     const googleId: string | undefined = payload.sub;
@@ -433,7 +433,7 @@ export class AuthService {
     const picture: string | undefined = payload.picture;
 
     if (!googleId) {
-      throw new UnauthorizedException('Invalid Google token: missing sub');
+      throw new UnauthorizedException('Token Google không hợp lệ: thiếu sub');
     }
 
     const user = await this.findOrCreateGoogleUser(
@@ -460,7 +460,7 @@ export class AuthService {
 
     if (!email) {
       throw new BadRequestException(
-        'Google account must have an email address',
+        'Tài khoản Google phải có địa chỉ email',
       );
     }
 
@@ -493,7 +493,7 @@ export class AuthService {
 
     if (user) {
       if (user.status === 'BANNED') {
-        throw new UnauthorizedException('Your account has been banned');
+        throw new UnauthorizedException('Tài khoản của bạn đã bị khóa');
       }
       return user;
     }
@@ -505,7 +505,7 @@ export class AuthService {
 
     if (user) {
       if (user.status === 'BANNED') {
-        throw new UnauthorizedException('Your account has been banned');
+        throw new UnauthorizedException('Tài khoản của bạn đã bị khóa');
       }
 
       // Link Google to existing account

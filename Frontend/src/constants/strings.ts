@@ -69,6 +69,28 @@ export const STRINGS = {
   PLAYSTYLE_CASUAL: 'VUI VẺ',
   PLAYSTYLE_COMPETITIVE: 'NGHIÊM TÚC',
 
+  // Forgot / Reset Password
+  FORGOT_PASSWORD_TITLE: 'Quên Mật Khẩu',
+  FORGOT_PASSWORD_SUBTITLE: 'Nhập email đã đăng ký để nhận link đặt lại mật khẩu',
+  FORGOT_PASSWORD_HINT: 'Chúng tôi sẽ gửi link đặt lại mật khẩu đến email của bạn',
+  SEND_RESET_LINK: 'Gửi Link Đặt Lại',
+  RESEND_RESET_LINK: 'Gửi Lại',
+  RESET_LINK_SENT: 'Đã gửi!',
+  RESET_LINK_SENT_MESSAGE: 'Nếu email tồn tại, link đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư.',
+  CHECK_EMAIL: 'Kiểm tra Email',
+  BACK_TO_LOGIN: 'Quay lại Đăng nhập',
+
+  RESET_PASSWORD_TITLE: 'Đặt Lại Mật Khẩu',
+  RESET_PASSWORD_SUBTITLE: 'Nhập mật khẩu mới cho tài khoản của bạn',
+  NEW_PASSWORD_LABEL: 'Mật khẩu mới',
+  NEW_PASSWORD_PLACEHOLDER: 'Nhập mật khẩu mới',
+  CONFIRM_NEW_PASSWORD_LABEL: 'Xác nhận mật khẩu mới',
+  CONFIRM_NEW_PASSWORD_PLACEHOLDER: 'Nhập lại mật khẩu mới',
+  RESET_PASSWORD_BUTTON: 'Đặt Lại Mật Khẩu',
+  RESET_PASSWORD_SUCCESS: 'Đặt lại mật khẩu thành công!',
+  RESET_PASSWORD_SUCCESS_MESSAGE: 'Mật khẩu của bạn đã được cập nhật. Vui lòng đăng nhập bằng mật khẩu mới.',
+  INVALID_RESET_TOKEN: 'Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn',
+
   // Common
   LOADING: 'Đang tải...',
   SUCCESS: 'Thành công',

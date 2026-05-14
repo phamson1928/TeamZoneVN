@@ -6,7 +6,7 @@ export class LoginDto {
     example: 'user@example.com',
     description: 'User email address',
   })
-  @IsEmail({}, { message: 'Invalid email format' })
+  @IsEmail({}, { message: 'Email không hợp lệ' })
   email!: string;
 
   @ApiProperty({
@@ -14,6 +14,6 @@ export class LoginDto {
     description: 'User password',
   })
   @IsString()
-  @MinLength(1, { message: 'Password is required' })
+  @MinLength(1, { message: 'Mật khẩu không được để trống' })
   password!: string;
 }

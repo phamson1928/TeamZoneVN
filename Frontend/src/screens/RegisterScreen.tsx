@@ -7,13 +7,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   Image,
 } from 'react-native';
 
 import { Container } from '../components/Container';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
+import { useAlert } from '../components/AlertProvider';
 import { theme } from '../theme';
 import { apiClient } from '../api/client';
 import { useAuthStore } from '../store/useAuthStore';
@@ -30,6 +30,7 @@ export const RegisterScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const setAuth = useAuthStore(state => state.setAuth);
+  const { showAlert } = useAlert();
 
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
@@ -83,10 +84,10 @@ export const RegisterScreen = ({ navigation }: any) => {
         if (Object.keys(backendErrors).length > 0) {
           setErrors(backendErrors);
         } else {
-          Alert.alert(STRINGS.REGISTRATION_FAILED, message[0]);
+          await showAlert({ title: STRINGS.REGISTRATION_FAILED, message: message[0], variant: 'error' });
         }
       } else {
-        Alert.alert(STRINGS.REGISTRATION_FAILED, message || STRINGS.ERROR_TITLE);
+        await showAlert({ title: STRINGS.REGISTRATION_FAILED, message: message || STRINGS.ERROR_TITLE, variant: 'error' });
       }
     } finally {
       setLoading(false);
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 32,
   },
   logoContainer: {
     marginBottom: 8,
@@ -236,11 +237,9 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginBottom: 20,
   },
-  input: {
-    marginBottom: 4, // Input component already has marginVertical
-  },
+  input: {},
   registerButton: {
-    marginTop: 12,
+    marginTop: 16,
   },
   footer: {
     flexDirection: 'row',

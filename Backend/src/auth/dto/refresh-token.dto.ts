@@ -7,6 +7,6 @@ export class RefreshTokenDto {
     description: 'Refresh token',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Refresh token is required' })
+  @IsNotEmpty({ message: 'Refresh token không được để trống' })
   refreshToken!: string;
 }

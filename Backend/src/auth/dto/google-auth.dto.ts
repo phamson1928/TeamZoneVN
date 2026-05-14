@@ -7,6 +7,6 @@ export class GoogleAuthDto {
     description: 'Google ID token from client-side Google Sign-In',
   })
   @IsString()
-  @IsNotEmpty({ message: 'idToken is required' })
+  @IsNotEmpty({ message: 'idToken không được để trống' })
   idToken!: string;
 }

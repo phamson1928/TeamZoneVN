@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppNavigator } from './src/navigation';
 import { theme } from './src/theme';
+import { AlertProvider } from './src/components/AlertProvider';
 
 const queryClient = new QueryClient();
 
@@ -11,11 +12,13 @@ function App() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={theme.colors.background}
-        />
-        <AppNavigator />
+        <AlertProvider>
+          <StatusBar
+            barStyle="light-content"
+            backgroundColor={theme.colors.background}
+          />
+          <AppNavigator />
+        </AlertProvider>
       </QueryClientProvider>
     </SafeAreaProvider>
   );

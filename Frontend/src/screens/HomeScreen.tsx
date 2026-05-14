@@ -729,9 +729,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.05)',
   },
-  headerContainer: {
-    paddingBottom: theme.spacing.sm,
-  },
+  headerContainer: {},
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -956,7 +954,7 @@ const styles = StyleSheet.create({
   // Categories
   categoriesSection: {
     marginBottom: theme.spacing.lg,
-    marginTop: theme.spacing.sm,
+    marginTop: theme.spacing.lg,
   },
   categoriesContent: {
     paddingHorizontal: theme.spacing.lg,
@@ -968,7 +966,7 @@ const styles = StyleSheet.create({
 
   // Games Section
   gamesSection: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -1080,7 +1078,7 @@ const styles = StyleSheet.create({
   // Zones Section
   zonesSectionHeader: {
     paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

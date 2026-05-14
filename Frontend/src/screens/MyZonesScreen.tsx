@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Alert,
   StatusBar,
   Animated,
   Modal,
@@ -20,6 +19,7 @@ import { Image } from 'expo-image';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   ArrowLeft,
   Plus,
@@ -34,9 +34,11 @@ import {
   Zap,
   Trash2,
   X,
+  UserPlus,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useAlert } from '../components/AlertProvider';
 import { apiClient } from '../api/client';
 import { theme } from '../theme';
 import { Zone } from '../types';
@@ -119,11 +121,52 @@ const AnimatedStatusDot = ({ status }: { status: string }) => {
   );
 };
 
+/** Animated pulsing dot used in the recruiting banner */
+const RecruitingPulsar = () => {
+  const anim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, {
+          toValue: 1.8,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, [anim]);
+
+  return (
+    <View style={styles.recruitDotWrap}>
+      <Animated.View
+        style={[
+          styles.recruitDotPulse,
+          {
+            transform: [{ scale: anim }],
+            opacity: anim.interpolate({
+              inputRange: [1, 1.8],
+              outputRange: [0.6, 0],
+            }),
+          },
+        ]}
+      />
+      <View style={styles.recruitDotCore} />
+    </View>
+  );
+};
+
 export const MyZonesScreen = ({ embedded = false }: { embedded?: boolean }) => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
+  const { showAlert } = useAlert();
   const [actionSheetZone, setActionSheetZone] = useState<Zone | null>(null);
   const [deleteZoneId, setDeleteZoneId] = useState<string | null>(null);
 
@@ -158,10 +201,10 @@ export const MyZonesScreen = ({ embedded = false }: { embedded?: boolean }) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-zones'] });
-      Alert.alert('Thành công', 'Đã xóa phòng');
+      showAlert({ title: 'Thành công', message: 'Đã xóa phòng', variant: 'success' });
     },
     onError: () => {
-      Alert.alert('Lỗi', 'Không thể xóa phòng');
+      showAlert({ title: 'Lỗi', message: 'Không thể xóa phòng', variant: 'error' });
     },
   });
 
@@ -191,86 +234,121 @@ export const MyZonesScreen = ({ embedded = false }: { embedded?: boolean }) => {
     const tagCount = item.tags?.length ?? 0;
 
     if (embedded) {
+      const neededPlayers = Math.max(0, (item.requiredPlayers + 1) - currentPlayers);
+      const progressPercent = Math.min((currentPlayers / (item.requiredPlayers + 1)) * 100, 100);
+
       return (
         <ScaleInView>
           <View style={styles.embeddedCard}>
-          {/* Row 1: Game icon + title + 3-dot */}
-          <View style={styles.embeddedCardHeader}>
-            <TouchableOpacity
-              style={styles.embeddedCardHeaderLeft}
-              onPress={() =>
-                navigation.navigate('ZoneDetails', { zoneId: item.id })
-              }
-              activeOpacity={0.7}
+            {/* Recruiting Banner */}
+            <LinearGradient
+              colors={['#2563FF', '#7C3AED']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.recruitBanner}
             >
-              {item.game?.iconUrl ? (
-                <View style={[styles.embeddedGameIcon, styles.gameIconPlaceholderEmbed]}>
-                  <Gamepad2 size={18} color="#2563EB" />
-                  <Image
-                    source={{ uri: item.game.iconUrl }}
-                    style={StyleSheet.absoluteFill}
-                    contentFit="cover"
-                    transition={300}
-                    cachePolicy="disk"
-                  />
+              <View style={styles.recruitBannerLeft}>
+                <RecruitingPulsar />
+                <Text style={styles.recruitBannerText}>ĐANG MỞ TUYỂN</Text>
+              </View>
+              <View style={styles.recruitBannerBadge}>
+                <Text style={styles.recruitBannerBadgeText}>+{neededPlayers}</Text>
+              </View>
+            </LinearGradient>
+
+            {/* Row 1: Game icon + title + menu */}
+            <View style={styles.embeddedCardHeader}>
+              <TouchableOpacity
+                style={styles.embeddedCardHeaderLeft}
+                onPress={() =>
+                  navigation.navigate('ZoneDetails', { zoneId: item.id })
+                }
+                activeOpacity={0.7}
+              >
+                {item.game?.iconUrl ? (
+                  <View style={[styles.embeddedGameIcon, styles.gameIconPlaceholderEmbed]}>
+                    <Gamepad2 size={18} color="#2563EB" />
+                    <Image
+                      source={{ uri: item.game.iconUrl }}
+                      style={StyleSheet.absoluteFill}
+                      contentFit="cover"
+                      transition={300}
+                      cachePolicy="disk"
+                    />
+                  </View>
+                ) : (
+                  <View style={[styles.embeddedGameIcon, styles.gameIconPlaceholderEmbed]}>
+                    <Gamepad2 size={18} color="#2563EB" />
+                  </View>
+                )}
+                <View style={styles.embeddedTitleArea}>
+                  <Text style={styles.embeddedTitle} numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.embeddedGameName} numberOfLines={1}>
+                    {item.game?.name || 'Unknown'}
+                  </Text>
                 </View>
-              ) : (
-                <View style={[styles.embeddedGameIcon, styles.gameIconPlaceholderEmbed]}>
-                  <Gamepad2 size={18} color="#2563EB" />
-                </View>
-              )}
-              <View style={styles.embeddedTitleArea}>
-                <Text style={styles.embeddedTitle} numberOfLines={1}>
-                  {item.title}
-                </Text>
-                <Text style={styles.embeddedGameName} numberOfLines={1}>
-                  {item.game?.name || 'Unknown'}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.embeddedOptionsBtn}
+                onPress={() => handleOptions(item)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <MoreVertical size={18} color="#94A3B8" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Status Badge */}
+            <View style={styles.embeddedCardMeta}>
+              <View style={[styles.embeddedBadge, { backgroundColor: statusConfig.bg }]}>
+                <View style={[styles.embeddedBadgeDot, { backgroundColor: statusConfig.color }]} />
+                <Text style={[styles.embeddedBadgeLabel, { color: statusConfig.color }]}>
+                  {statusConfig.label}
                 </Text>
               </View>
-            </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity
-              style={styles.embeddedOptionsBtn}
-              onPress={() => handleOptions(item)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <MoreVertical size={18} color="#94A3B8" />
-            </TouchableOpacity>
-          </View>
+            {/* Progress Bar */}
+            <View style={styles.progressSection}>
+              <View style={styles.progressBarBg}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    { width: `${progressPercent}%` },
+                  ]}
+                />
+              </View>
+              <View style={styles.progressInfo}>
+                <Users size={13} color="#94A3B8" />
+                <Text style={styles.progressText}>
+                  {currentPlayers}/{item.requiredPlayers + 1}
+                </Text>
+                <Text style={styles.progressLabel}>người chơi</Text>
+              </View>
+            </View>
 
-          {/* Row 2: Badge + meta + status */}
-          <View style={styles.embeddedCardMeta}>
-            <View style={[styles.embeddedBadge, { backgroundColor: statusConfig.bg }]}>
-              <View style={[styles.embeddedBadgeDot, { backgroundColor: statusConfig.color }]} />
-              <Text style={[styles.embeddedBadgeLabel, { color: statusConfig.color }]}>
-                {statusConfig.label}
+            {/* Recruiting CTA */}
+            <View style={styles.recruitCTAContainer}>
+              <UserPlus size={16} color="#22C55E" />
+              <Text style={styles.recruitCTAText}>
+                {neededPlayers > 0
+                  ? `Cần thêm ${neededPlayers} thành viên`
+                  : 'Đã đủ thành viên, chuẩn bị khởi động!'
+                }
               </Text>
             </View>
 
-            <View style={styles.embeddedMetaItem}>
-              <Users size={14} color="#64748B" />
-              <Text style={styles.embeddedMetaText}>
-                {currentPlayers}/{item.requiredPlayers + 1}
-              </Text>
-            </View>
-
-            <View style={styles.embeddedMetaItem}>
-              <Clock size={14} color="#64748B" />
-              <Text style={styles.embeddedMetaText}>
-                {new Date(item.createdAt).toLocaleDateString('vi-VN')}
-              </Text>
-            </View>
-          </View>
-
-          {/* Row 3: Pending alert (if any) */}
-          {pendingCount > 0 && (
-            <View style={styles.embeddedPendingRow}>
-              <Zap size={14} color="#F59E0B" />
-              <Text style={styles.embeddedPendingText}>
-                {pendingCount} yêu cầu đang chờ
-              </Text>
-            </View>
-          )}
+            {/* Pending alert */}
+            {pendingCount > 0 && (
+              <View style={styles.embeddedPendingRow}>
+                <Zap size={14} color="#F59E0B" />
+                <Text style={styles.embeddedPendingText}>
+                  {pendingCount} yêu cầu đang chờ
+                </Text>
+              </View>
+            )}
           </View>
         </ScaleInView>
       );
@@ -853,6 +931,113 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#F59E0B',
     fontWeight: '600',
+  },
+
+  // ─── Recruiting Banner ──────────────────────
+  recruitBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: -14,
+    marginTop: -14,
+    marginBottom: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  recruitBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  recruitBannerText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFF',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  recruitBannerBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 999,
+  },
+  recruitBannerBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFF',
+  },
+
+  // ─── Recruit Pulse Dot ──────────────────────
+  recruitDotWrap: {
+    width: 10,
+    height: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  recruitDotPulse: {
+    position: 'absolute',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#22C55E',
+  },
+  recruitDotCore: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#22C55E',
+  },
+
+  // ─── Progress Bar ───────────────────────────
+  progressSection: {
+    marginTop: 10,
+  },
+  progressBarBg: {
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#2563FF',
+    borderRadius: 3,
+  },
+  progressInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 6,
+  },
+  progressText: {
+    fontSize: 12,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  progressLabel: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+
+  // ─── Recruit CTA ────────────────────────────
+  recruitCTAContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
+  },
+  recruitCTAText: {
+    fontSize: 13,
+    color: '#CBD5E1',
+    fontWeight: '500',
+    flex: 1,
   },
 
   // Content Card

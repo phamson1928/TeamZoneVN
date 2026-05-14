@@ -12,9 +12,8 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Gamepad2, Heart, ChevronLeft, UserX, MessageCircle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Alert } from 'react-native';
-
 import { Container } from '../components/Container';
+import { useAlert } from '../components/AlertProvider';
 import { theme } from '../theme';
 import { apiClient } from '../api/client';
 import { UserPublicProfile } from '../types';
@@ -32,6 +31,7 @@ export const PublicProfileScreen = () => {
   const userId = typeof paramId === 'string' ? paramId.trim() : '';
   const userIdValid = UUID_RE.test(userId);
   const currentUserId = useAuthStore(state => state.user?.id);
+  const { showAlert } = useAlert();
 
   const {
     data: profile,
@@ -178,30 +178,28 @@ export const PublicProfileScreen = () => {
       await apiClient.post(`/blocks/${userId}`);
     },
     onSuccess: () => {
-      Alert.alert('Thành công', 'Đã chặn người dùng này');
-      // Go back because we likely don't want to see their profile anymore
-      navigation.goBack();
+      showAlert({ title: 'Thành công', message: 'Đã chặn người dùng này', variant: 'success' })
+        .then(() => navigation.goBack());
     },
     onError: (err: any) => {
       const message =
         err.response?.data?.message || 'Không thể chặn người dùng';
-      Alert.alert('Lỗi', Array.isArray(message) ? message[0] : message);
+      showAlert({ title: 'Lỗi', message: Array.isArray(message) ? message[0] : message, variant: 'error' });
     },
   });
 
-  const handleBlock = () => {
-    Alert.alert(
-      'Chặn người dùng',
-      'Bạn có chắc chắn muốn chặn người này? \n• Sẽ xóa bạn bè (nếu có)\n• Sẽ không thể mời nhau vào zone\n• Không thể gửi tin nhắn',
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Chặn',
-          style: 'destructive',
-          onPress: () => blockUserMutation.mutate(),
-        },
-      ],
-    );
+  const handleBlock = async () => {
+    const result = await showAlert({
+      title: 'Chặn người dùng',
+      message: 'Bạn có chắc chắn muốn chặn người này? \n• Sẽ xóa bạn bè (nếu có)\n• Sẽ không thể mời nhau vào zone\n• Không thể gửi tin nhắn',
+      variant: 'error',
+      primaryLabel: 'Chặn',
+      secondaryLabel: 'Hủy',
+      primaryDestructive: true,
+    });
+    if (result === 'primary') {
+      blockUserMutation.mutate();
+    }
   };
 
   const isMe = currentUserId === userId;

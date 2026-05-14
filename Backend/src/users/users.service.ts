@@ -28,7 +28,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tồn tại');
     }
 
     const dto = this.toUserResponse(user);
@@ -50,7 +50,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tồn tại');
     }
 
     await this.updateLastActive(userId);
@@ -67,7 +67,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tồn tại');
     }
 
     await this.prisma.userProfile.upsert({
@@ -103,7 +103,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tồn tại');
     }
 
     if (user.status === 'BANNED') {
@@ -278,15 +278,15 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tồn tại');
     }
 
     if (adminId && userId === adminId) {
-      throw new BadRequestException('You cannot ban yourself');
+      throw new BadRequestException('Bạn không thể cấm chính mình');
     }
 
     if (user.status === 'BANNED') {
-      throw new BadRequestException('User is already banned');
+      throw new BadRequestException('Người dùng đã bị cấm');
     }
 
     const updatedUser = await this.prisma.user.update({
@@ -297,7 +297,7 @@ export class UsersService {
 
     return {
       success: true,
-      message: 'User has been banned successfully',
+      message: 'Người dùng đã bị cấm',
       data: this.toPublicUserResponse(updatedUser),
     };
   }
@@ -309,11 +309,11 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tồn tại');
     }
 
     if (user.status !== 'BANNED') {
-      throw new BadRequestException('User is not banned');
+      throw new BadRequestException('Người dùng không bị cấm');
     }
 
     const updatedUser = await this.prisma.user.update({
@@ -324,7 +324,7 @@ export class UsersService {
 
     return {
       success: true,
-      message: 'User has been unbanned successfully',
+      message: 'Đã bỏ cấm người dùng',
       data: this.toPublicUserResponse(updatedUser),
     };
   }
@@ -335,11 +335,11 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tồn tại');
     }
 
     if (adminId && userId === adminId) {
-      throw new BadRequestException('You cannot delete yourself');
+      throw new BadRequestException('Bạn không thể xóa chính mình');
     }
 
     await this.prisma.user.delete({
@@ -348,7 +348,7 @@ export class UsersService {
 
     return {
       success: true,
-      message: 'User has been deleted successfully',
+      message: 'Đã xóa người dùng',
       data: { id: userId },
     };
   }
@@ -359,7 +359,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tồn tại');
     }
 
     await this.prisma.user.delete({

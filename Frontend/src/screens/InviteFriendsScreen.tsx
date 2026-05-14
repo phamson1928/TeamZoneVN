@@ -6,7 +6,6 @@ import {
     FlatList,
     TouchableOpacity,
     ActivityIndicator,
-    Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -15,6 +14,7 @@ import { ArrowLeft, Send } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Container } from '../components/Container';
+import { useAlert } from '../components/AlertProvider';
 import { theme } from '../theme';
 import { apiClient } from '../api/client';
 import { Friendship, User } from '../types';
@@ -32,6 +32,7 @@ export const InviteFriendsScreen = () => {
     const currentUserId = useAuthStore(state => state.user?.id);
 
     const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
+    const { showAlert } = useAlert();
 
     const { data: friendsData, isLoading } = useQuery({
         queryKey: ['friends', 'accepted'],
@@ -53,7 +54,7 @@ export const InviteFriendsScreen = () => {
             });
         },
         onError: (err: any) => {
-            Alert.alert('Lỗi', err.response?.data?.message || 'Không thể mời');
+            showAlert({ title: 'Lỗi', message: err.response?.data?.message || 'Không thể mời', variant: 'error' });
         }
     });
 

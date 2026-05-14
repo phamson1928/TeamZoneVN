@@ -7,7 +7,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   Image,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -16,6 +15,7 @@ import { Container } from '../components/Container';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { FadeInView } from '../components/AnimatedTransition';
+import { useAlert } from '../components/AlertProvider';
 import { theme } from '../theme';
 import { apiClient } from '../api/client';
 import { useAuthStore } from '../store/useAuthStore';
@@ -58,6 +58,7 @@ export const LoginScreen = ({ navigation }: Props) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore(state => state.setAuth);
+  const { showAlert } = useAlert();
 
   const handleGoogleLogin = async () => {
     try {
@@ -72,10 +73,11 @@ export const LoginScreen = ({ navigation }: Props) => {
           '@react-native-google-signin/google-signin'
         ));
       } catch {
-        Alert.alert(
-          'Không hỗ trợ trên Expo Go',
-          'Đăng nhập Google cần Development Build (expo run:android/ios) hoặc chuyển sang expo-auth-session.',
-        );
+        await showAlert({
+          title: 'Không hỗ trợ trên Expo Go',
+          message: 'Đăng nhập Google cần Development Build (expo run:android/ios) hoặc chuyển sang expo-auth-session.',
+          variant: 'info',
+        });
         return;
       }
 
@@ -85,10 +87,11 @@ export const LoginScreen = ({ navigation }: Props) => {
           offlineAccess: true,
         });
       } catch {
-        Alert.alert(
-          'Không hỗ trợ trên Expo Go',
-          'Đăng nhập Google cần Development Build (expo run:android/ios) hoặc chuyển sang expo-auth-session.',
-        );
+        await showAlert({
+          title: 'Không hỗ trợ trên Expo Go',
+          message: 'Đăng nhập Google cần Development Build (expo run:android/ios) hoặc chuyển sang expo-auth-session.',
+          variant: 'info',
+        });
         return;
       }
 
@@ -116,16 +119,17 @@ export const LoginScreen = ({ navigation }: Props) => {
       } else if (code === 'IN_PROGRESS') {
         // operation (e.g. sign in) is in progress already
       } else if (code === 'PLAY_SERVICES_NOT_AVAILABLE') {
-        Alert.alert('Lỗi', 'Google Play Services không khả dụng');
+        await showAlert({ title: 'Lỗi', message: 'Google Play Services không khả dụng', variant: 'error' });
       } else {
         const message =
           error.response?.data?.message ||
           error.message ||
           STRINGS.LOGIN_FAILED;
-        Alert.alert(
-          STRINGS.LOGIN_FAILED,
-          Array.isArray(message) ? message[0] : message,
-        );
+        await showAlert({
+          title: STRINGS.LOGIN_FAILED,
+          message: Array.isArray(message) ? message[0] : message,
+          variant: 'error',
+        });
       }
     } finally {
       setLoading(false);
@@ -134,7 +138,7 @@ export const LoginScreen = ({ navigation }: Props) => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert(STRINGS.ERROR_TITLE, STRINGS.REQUIRED_FIELD);
+      await showAlert({ title: STRINGS.ERROR_TITLE, message: STRINGS.REQUIRED_FIELD, variant: 'error' });
       return;
     }
 
@@ -158,10 +162,11 @@ export const LoginScreen = ({ navigation }: Props) => {
       if (error.code === 'ECONNABORTED' || error.message === 'Network Error') {
         message = STRINGS.API_UNREACHABLE_HINT;
       }
-      Alert.alert(
-        STRINGS.LOGIN_FAILED,
-        Array.isArray(message) ? message[0] : message,
-      );
+      await showAlert({
+        title: STRINGS.LOGIN_FAILED,
+        message: Array.isArray(message) ? message[0] : message,
+        variant: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -216,7 +221,10 @@ export const LoginScreen = ({ navigation }: Props) => {
               style={styles.input}
             />
 
-            <TouchableOpacity style={styles.forgotPassword}>
+            <TouchableOpacity
+              style={styles.forgotPassword}
+              onPress={() => navigation.navigate('ForgotPassword')}
+            >
               <Text style={styles.forgotPasswordText}>
                 {STRINGS.FORGOT_PASSWORD}
               </Text>
@@ -321,24 +329,19 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: theme.colors.textMuted,
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  input: {
-    marginBottom: 16,
-  },
+  input: {},
   forgotPassword: {
     alignSelf: 'flex-end',
-    marginBottom: 20,
-    marginTop: -8,
+    marginBottom: 24,
   },
   forgotPasswordText: {
     color: theme.colors.primary,
     fontSize: 13,
     fontWeight: '500',
   },
-  loginButton: {
-    marginTop: 4,
-  },
+  loginButton: {},
   divider: {
     flexDirection: 'row',
     alignItems: 'center',

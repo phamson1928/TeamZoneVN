@@ -9,36 +9,24 @@ export class UpdateProfileDto {
   })
   @IsOptional()
   @IsString()
-  @MaxLength(500, { message: 'Bio must not exceed 500 characters' })
+  @MaxLength(500, { message: 'Giới thiệu không được vượt quá 500 ký tự' })
   bio?: string;
 
-  @ApiPropertyOptional({
-    example: 'Competitive',
-    description: 'User play style',
-    maxLength: 50,
-  })
+  @ApiProperty({ example: 'Cạnh tranh', description: 'Play style' })
   @IsOptional()
-  @IsString()
-  @MaxLength(50, { message: 'Play style must not exceed 50 characters' })
+  @MaxLength(50, { message: 'Phong cách chơi không được vượt quá 50 ký tự' })
   playStyle?: string;
 
-  @ApiPropertyOptional({
-    example: 'Asia/Ho_Chi_Minh',
-    description: 'User timezone',
-    maxLength: 50,
-  })
+  @ApiProperty({ example: 'GMT+7', description: 'Timezone' })
   @IsOptional()
-  @IsString()
-  @MaxLength(50, { message: 'Timezone must not exceed 50 characters' })
+  @MaxLength(50, { message: 'Múi giờ không được vượt quá 50 ký tự' })
   timezone?: string;
 
-  @ApiPropertyOptional({
-    example: 'Discord: user#1234',
-    description: 'User contact information',
-    maxLength: 500,
+  @ApiProperty({
+    example: 'Discord: username#1234',
+    description: 'Contact information',
   })
   @IsOptional()
-  @IsString()
-  @MaxLength(500, { message: 'Contact info must not exceed 500 characters' })
+  @MaxLength(500, { message: 'Thông tin liên lạc không được vượt quá 500 ký tự' })
   contactInfo?: string;
 }

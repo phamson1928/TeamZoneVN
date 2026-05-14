@@ -16,7 +16,7 @@ export class FilesService {
     folder: string = '',
   ) {
     if (!file) {
-      throw new BadRequestException('No file uploaded');
+      throw new BadRequestException('Chưa có file nào được tải lên');
     }
 
     const fileExt = path.extname(file.originalname);

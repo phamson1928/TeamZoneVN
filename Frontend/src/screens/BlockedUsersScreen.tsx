@@ -1,17 +1,19 @@
 import React from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, UserX } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 
 import { Container } from '../components/Container';
+import { useAlert } from '../components/AlertProvider';
 import { theme } from '../theme';
 import { apiClient } from '../api/client';
 
 export const BlockedUsersScreen = () => {
     const navigation = useNavigation();
     const queryClient = useQueryClient();
+    const { showAlert } = useAlert();
 
     const { data: blockedUsers, isLoading } = useQuery({
         queryKey: ['blocked-users'],
@@ -27,22 +29,24 @@ export const BlockedUsersScreen = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['blocked-users'] });
-            Alert.alert('Thành công', 'Đã bỏ chặn người dùng này');
+            showAlert({ title: 'Thành công', message: 'Đã bỏ chặn người dùng này', variant: 'success' });
         },
         onError: () => {
-            Alert.alert('Lỗi', 'Không thể bỏ chặn người dùng');
+            showAlert({ title: 'Lỗi', message: 'Không thể bỏ chặn người dùng', variant: 'error' });
         },
     });
 
-    const handleUnblock = (userId: string, username: string) => {
-        Alert.alert(
-            'Xác nhận bỏ chặn',
-            `Bạn có chắc chắn muốn bỏ chặn ${username}? Họ sẽ có thể gửi lời mời kết bạn và tin nhắn cho bạn.`,
-            [
-                { text: 'Hủy', style: 'cancel' },
-                { text: 'Bỏ chặn', style: 'default', onPress: () => unblockMutation.mutate(userId) },
-            ]
-        );
+    const handleUnblock = async (userId: string, username: string) => {
+        const result = await showAlert({
+            title: 'Xác nhận bỏ chặn',
+            message: `Bạn có chắc chắn muốn bỏ chặn ${username}? Họ sẽ có thể gửi lời mời kết bạn và tin nhắn cho bạn.`,
+            variant: 'info',
+            primaryLabel: 'Bỏ chặn',
+            secondaryLabel: 'Hủy',
+        });
+        if (result === 'primary') {
+            unblockMutation.mutate(userId);
+        }
     };
 
     return (

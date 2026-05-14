@@ -7,7 +7,7 @@ export class BlocksService {
 
     async blockUser(blockerId: string, blockedId: string) {
         if (blockerId === blockedId) {
-            throw new BadRequestException('You cannot block yourself');
+            throw new BadRequestException('Bạn không thể chặn chính mình');
         }
 
         const targetUser = await this.prisma.user.findUnique({
@@ -15,7 +15,7 @@ export class BlocksService {
         });
 
         if (!targetUser) {
-            throw new NotFoundException('User to block not found');
+            throw new NotFoundException('Người dùng không tồn tại');
         }
 
         // Check if already blocked
@@ -29,7 +29,7 @@ export class BlocksService {
         });
 
         if (existingBlock) {
-            throw new BadRequestException('User is already blocked');
+            throw new BadRequestException('Người dùng này đã bị chặn');
         }
 
         // Remove friendship if exists
@@ -70,7 +70,7 @@ export class BlocksService {
         });
 
         if (!existingBlock) {
-            throw new BadRequestException('User is not blocked');
+            throw new BadRequestException('Người dùng này không bị chặn');
         }
 
         return this.prisma.userBlock.delete({

@@ -12,7 +12,7 @@ export class RegisterDto {
     example: 'user@example.com',
     description: 'User email address',
   })
-  @IsEmail({}, { message: 'Invalid email format' })
+  @IsEmail({}, { message: 'Email không hợp lệ' })
   email!: string;
 
   @ApiProperty({
@@ -20,10 +20,10 @@ export class RegisterDto {
     description: 'Username (3-30 characters, alphanumeric and underscores)',
   })
   @IsString()
-  @MinLength(3, { message: 'Username must be at least 3 characters' })
-  @MaxLength(30, { message: 'Username must not exceed 30 characters' })
+  @MinLength(3, { message: 'Tên đăng nhập phải có ít nhất 3 ký tự' })
+  @MaxLength(30, { message: 'Tên đăng nhập không được vượt quá 30 ký tự' })
   @Matches(/^[a-zA-Z0-9_]+$/, {
-    message: 'Username can only contain letters, numbers and underscores',
+    message: 'Tên đăng nhập chỉ được chứa chữ, số và dấu gạch dưới',
   })
   username!: string;
 
@@ -32,7 +32,7 @@ export class RegisterDto {
     description: 'Password (min 6 characters)',
   })
   @IsString()
-  @MinLength(6, { message: 'Password must be at least 6 characters' })
-  @MaxLength(100, { message: 'Password must not exceed 100 characters' })
+  @MinLength(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' })
+  @MaxLength(100, { message: 'Mật khẩu không được vượt quá 100 ký tự' })
   password!: string;
 }

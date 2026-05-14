@@ -5,7 +5,6 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -15,6 +14,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Container } from '../components/Container';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
+import { useAlert } from '../components/AlertProvider';
 import { useAuthStore } from '../store/useAuthStore';
 import { apiClient } from '../api/client';
 import { theme } from '../theme';
@@ -24,6 +24,7 @@ const PLAY_STYLES = ['Vui vẻ', 'Cạnh tranh', 'Chill', 'Hardcore'];
 export const EditProfileScreen = () => {
   const navigation = useNavigation();
   const { user, updateUser, logout } = useAuthStore();
+  const { showAlert } = useAlert();
 
   const [bio, setBio] = useState(user?.profile?.bio || '');
   const [playStyle, setPlayStyle] = useState(
@@ -46,12 +47,19 @@ export const EditProfileScreen = () => {
     },
     onSuccess: data => {
       updateUser(data.data);
-      Alert.alert('Thành công', 'Cập nhật hồ sơ thành công');
-      navigation.goBack();
+      showAlert({
+        title: 'Thành công',
+        message: 'Cập nhật hồ sơ thành công',
+        variant: 'success',
+      }).then(() => navigation.goBack());
     },
     onError: error => {
       console.error('Update profile error:', error);
-      Alert.alert('Lỗi', 'Không thể cập nhật hồ sơ. Vui lòng thử lại.');
+      showAlert({
+        title: 'Lỗi',
+        message: 'Không thể cập nhật hồ sơ. Vui lòng thử lại.',
+        variant: 'error',
+      });
     },
   });
 
@@ -69,27 +77,34 @@ export const EditProfileScreen = () => {
       await apiClient.delete('/users/me');
     },
     onSuccess: () => {
-      Alert.alert('Thành công', 'Tài khoản của bạn đã được xóa hoàn toàn');
-      logout();
+      showAlert({
+        title: 'Thành công',
+        message: 'Tài khoản của bạn đã được xóa hoàn toàn',
+        variant: 'success',
+      }).then(() => logout());
     },
     onError: () => {
-      Alert.alert('Lỗi', 'Không thể xóa tài khoản. Vui lòng thử lại.');
+      showAlert({
+        title: 'Lỗi',
+        message: 'Không thể xóa tài khoản. Vui lòng thử lại.',
+        variant: 'error',
+      });
     },
   });
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Xóa tài khoản vĩnh viễn',
-      'Hành động này không thể hoàn tác. Toàn bộ dữ liệu hồ sơ, game, zone, và tin nhắn của bạn sẽ bị xóa sạch.',
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Xóa vĩnh viễn',
-          style: 'destructive',
-          onPress: () => deleteAccountMutation.mutate(),
-        },
-      ],
-    );
+  const handleDeleteAccount = async () => {
+    const result = await showAlert({
+      title: 'Xóa tài khoản vĩnh viễn',
+      message:
+        'Hành động này không thể hoàn tác. Toàn bộ dữ liệu hồ sơ, game, zone, và tin nhắn của bạn sẽ bị xóa sạch.',
+      variant: 'error',
+      primaryLabel: 'Xóa vĩnh viễn',
+      secondaryLabel: 'Hủy',
+      primaryDestructive: true,
+    });
+    if (result === 'primary') {
+      deleteAccountMutation.mutate();
+    }
   };
 
   return (
