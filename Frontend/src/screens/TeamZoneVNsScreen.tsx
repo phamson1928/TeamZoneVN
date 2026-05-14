@@ -152,7 +152,8 @@ export const TeamZoneVNsScreen = () => {
   const renderZoneItem = ({ item }: { item: Zone }) => {
     const borderColor = getBorderColorById(item.id);
     const approvedCount = item._count?.joinRequests ?? 0;
-    const currentPlayers = approvedCount + 1;
+    const groupMembers = item.group?._count?.members ?? 0;
+    const currentPlayers = groupMembers > 0 ? groupMembers : (approvedCount + 1);
     const maxPlayers = item.requiredPlayers + 1;
     const progress = Math.min(currentPlayers / (maxPlayers || 1), 1);
 
@@ -165,7 +166,6 @@ export const TeamZoneVNsScreen = () => {
       switch (item.status) {
         case 'OPEN': return { color: '#22C55E', label: 'OPEN', bg: 'rgba(34,197,94,0.12)' };
         case 'FULL': return { color: '#EF4444', label: 'FULL', bg: 'rgba(239,68,68,0.12)' };
-        case 'CLOSED': return { color: '#64748B', label: 'CLOSED', bg: 'rgba(100,116,139,0.12)' };
         default: return { color: '#94A3B8', label: item.status, bg: 'rgba(148,163,184,0.12)' };
       }
     };

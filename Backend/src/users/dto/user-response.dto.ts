@@ -10,6 +10,9 @@ export class UserProfileResponseDto {
   @ApiPropertyOptional({ example: 'Asia/Ho_Chi_Minh' })
   timezone?: string | null;
 
+  @ApiPropertyOptional({ example: 'Discord: user#1234' })
+  contactInfo?: string | null;
+
   @ApiPropertyOptional({ example: '2024-01-15T10:30:00.000Z' })
   lastActiveAt?: Date | null;
 }

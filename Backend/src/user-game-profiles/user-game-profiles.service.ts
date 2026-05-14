@@ -4,12 +4,36 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CreateUserGameProfileDto } from './dto/create-user-game-profile.dto.js';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UserGameProfilesService {
-  constructor(private prisma: PrismaService) {}
+  private readonly storageBaseUrl: string;
+
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    this.storageBaseUrl = `${supabaseUrl}/storage/v1/object/public/game-assets`;
+  }
+
+  private transformGameUrls(game: any) {
+    if (!game) return game;
+
+    const transform = (path: string | null) => {
+      if (!path) return null;
+      if (path.startsWith('http')) return path;
+      return `${this.storageBaseUrl}/${path}`;
+    };
+
+    return {
+      ...game,
+      iconUrl: transform(game.iconUrl),
+    };
+  }
 
   async create(userId: string, dto: CreateUserGameProfileDto) {
     // Check if game exists
@@ -28,7 +52,7 @@ export class UserGameProfilesService {
       throw new ConflictException('You already have a profile for this game');
     }
 
-    return this.prisma.userGameProfile.create({
+    const profile = await this.prisma.userGameProfile.create({
       data: {
         userId,
         gameId: dto.gameId,
@@ -39,10 +63,15 @@ export class UserGameProfilesService {
         },
       },
     });
+
+    return {
+      ...profile,
+      game: this.transformGameUrls(profile.game),
+    };
   }
 
   async findAllByMe(userId: string) {
-    return this.prisma.userGameProfile.findMany({
+    const profiles = await this.prisma.userGameProfile.findMany({
       where: { userId },
       include: {
         game: {
@@ -50,6 +79,11 @@ export class UserGameProfilesService {
         },
       },
     });
+
+    return profiles.map((p) => ({
+      ...p,
+      game: this.transformGameUrls(p.game),
+    }));
   }
 
   async findOne(id: string) {
@@ -64,7 +98,10 @@ export class UserGameProfilesService {
     if (!profile) {
       throw new NotFoundException('User game profile not found');
     }
-    return profile;
+    return {
+      ...profile,
+      game: this.transformGameUrls(profile.game),
+    };
   }
 
   async remove(userId: string, id: string) {

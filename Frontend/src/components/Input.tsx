@@ -12,6 +12,7 @@ import { theme } from '../theme';
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
+  description?: string;
   containerStyle?: ViewStyle;
   variant?: 'default' | 'search';
   leftIcon?: React.ReactNode;
@@ -27,6 +28,7 @@ export const Input = forwardRef<InputRef, InputProps>(
     {
       label,
       error,
+      description,
       containerStyle,
       variant = 'default',
       leftIcon,
@@ -79,6 +81,9 @@ export const Input = forwardRef<InputRef, InputProps>(
           />
         </View>
         {error && <Text style={styles.errorText}>{error}</Text>}
+        {description && !error && (
+          <Text style={styles.description}>{description}</Text>
+        )}
       </View>
     );
   },
@@ -133,5 +138,11 @@ const styles = StyleSheet.create({
     color: theme.colors.error,
     fontSize: 12,
     marginTop: theme.spacing.xs,
+  },
+  description: {
+    color: '#64748B',
+    fontSize: 11.5,
+    marginTop: theme.spacing.xs,
+    lineHeight: 16,
   },
 });

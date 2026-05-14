@@ -30,12 +30,16 @@ export const EditProfileScreen = () => {
     user?.profile?.playStyle || PLAY_STYLES[0],
   );
   const [timezone, setTimezone] = useState(user?.profile?.timezone || '');
+  const [contactInfo, setContactInfo] = useState(
+    user?.profile?.contactInfo || '',
+  );
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: {
       bio: string;
       playStyle: string;
       timezone: string;
+      contactInfo: string;
     }) => {
       const response = await apiClient.patch('/users/me', data);
       return response.data;
@@ -56,6 +60,7 @@ export const EditProfileScreen = () => {
       bio,
       playStyle,
       timezone,
+      contactInfo,
     });
   };
 
@@ -142,6 +147,14 @@ export const EditProfileScreen = () => {
           value={timezone}
           onChangeText={setTimezone}
           placeholder="VD: GMT+7"
+        />
+
+        <Input
+          label="Thông tin liên lạc mặc định"
+          value={contactInfo}
+          onChangeText={setContactInfo}
+          placeholder="VD: Discord: username#1234, Zalo: 0123..."
+          description="Thông tin này sẽ tự động được sử dụng khi bạn tạo Zone mới nếu bạn không nhập thông tin riêng cho Zone đó."
         />
 
         <Button

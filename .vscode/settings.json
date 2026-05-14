@@ -5,5 +5,15 @@
     "**/node_modules/**",
     "**/.git/**"
   ],
+  "java.project.importHint": false,
+  "files.exclude": {
+    "**/node_modules": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true
+  },
   "typescript.autoClosingTags": false
 }

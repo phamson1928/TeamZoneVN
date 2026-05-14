@@ -100,16 +100,6 @@ export class ZonesController {
     return this.zonesService.adminDeleteZone(id);
   }
 
-  @Patch('admin/:id/close')
-  @UseGuards(RolesGuard)
-  @Roles('ADMIN')
-  @ApiOperation({ summary: 'Force close zone [ADMIN ONLY]' })
-  @ApiParam({ name: 'id', description: 'Zone ID (UUID)' })
-  @ApiResponse({ status: 200, description: 'Closed' })
-  closeByAdmin(@Param('id') id: string) {
-    return this.zonesService.adminCloseZone(id);
-  }
-
   @Get(':id/public')
   @Public()
   @ApiOperation({ summary: 'Lấy chi tiết zone (public)' })

@@ -20,7 +20,7 @@ import { useAuthStore } from '../store/useAuthStore';
 
 import { STRINGS } from '../constants/strings';
 
-const TEAMZONE_LOGO = require('../../assets/logo-has-background.png');
+const TEAMZONE_LOGO = require('../../assets/non-background-teamzonevn-logo.png');
 
 export const RegisterScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');

@@ -31,4 +31,14 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(50, { message: 'Timezone must not exceed 50 characters' })
   timezone?: string;
+
+  @ApiPropertyOptional({
+    example: 'Discord: user#1234',
+    description: 'User contact information',
+    maxLength: 500,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500, { message: 'Contact info must not exceed 500 characters' })
+  contactInfo?: string;
 }

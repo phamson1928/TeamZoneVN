@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -57,4 +58,14 @@ export class CreateZoneDto {
   @IsOptional()
   @IsBoolean()
   autoApprove?: boolean = false;
+
+  @ApiPropertyOptional({
+    example: 'Discord: user#1234',
+    description: 'Contact information for the zone',
+    maxLength: 500,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  contactInfo?: string;
 }

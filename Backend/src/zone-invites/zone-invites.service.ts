@@ -171,7 +171,7 @@ export class ZoneInvitesService {
     });
 
     // Trigger tạo group nếu zone đã đủ người (nhất quán với approve thủ công)
-    await this.groupsService.createGroupFromZone(invite.zoneId);
+    await this.groupsService.syncGroupFromZone(invite.zoneId);
 
     return { message: 'Đã chấp nhận lời mời, bạn đã tham gia zone' };
   }

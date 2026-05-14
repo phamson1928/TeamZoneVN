@@ -11,26 +11,19 @@ import {
   Image,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import {
-  GoogleSignin,
-  statusCodes,
-} from '@react-native-google-signin/google-signin';
 import { Svg, Path, G } from 'react-native-svg';
 import { Container } from '../components/Container';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
+import { FadeInView } from '../components/AnimatedTransition';
 import { theme } from '../theme';
 import { apiClient } from '../api/client';
 import { useAuthStore } from '../store/useAuthStore';
 import { STRINGS } from '../constants/strings';
 import { RootStackParamList } from '../navigation';
 
-// Configure Google Sign-In
-GoogleSignin.configure({
-  webClientId:
-    '946383947788-mc938c7idvv3opb987p0fr1cbug97qs1.apps.googleusercontent.com',
-  offlineAccess: true,
-});
+const GOOGLE_WEB_CLIENT_ID =
+  '946383947788-mc938c7idvv3opb987p0fr1cbug97qs1.apps.googleusercontent.com';
 
 // Simple Google Icon SVG
 const GoogleIcon = () => (
@@ -58,7 +51,7 @@ const GoogleIcon = () => (
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
-const TEAMZONE_LOGO = require('../../assets/logo-has-background.png');
+const TEAMZONE_LOGO = require('../../assets/non-background-teamzonevn-logo.png');
 
 export const LoginScreen = ({ navigation }: Props) => {
   const [email, setEmail] = useState('');
@@ -69,6 +62,36 @@ export const LoginScreen = ({ navigation }: Props) => {
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
+
+      // Expo Go does not include native modules like @react-native-google-signin/google-signin.
+      // We load it lazily so the screen can render without crashing.
+      let GoogleSignin: any;
+      let statusCodes: any;
+      try {
+        ({ GoogleSignin, statusCodes } = await import(
+          '@react-native-google-signin/google-signin'
+        ));
+      } catch {
+        Alert.alert(
+          'Không hỗ trợ trên Expo Go',
+          'Đăng nhập Google cần Development Build (expo run:android/ios) hoặc chuyển sang expo-auth-session.',
+        );
+        return;
+      }
+
+      try {
+        GoogleSignin.configure({
+          webClientId: GOOGLE_WEB_CLIENT_ID,
+          offlineAccess: true,
+        });
+      } catch {
+        Alert.alert(
+          'Không hỗ trợ trên Expo Go',
+          'Đăng nhập Google cần Development Build (expo run:android/ios) hoặc chuyển sang expo-auth-session.',
+        );
+        return;
+      }
+
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       const idToken = userInfo.data?.idToken;
@@ -87,11 +110,12 @@ export const LoginScreen = ({ navigation }: Props) => {
 
       setAuth(userResponse.data.data, tokens.accessToken, tokens.refreshToken);
     } catch (error: any) {
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+      const code = error?.code;
+      if (code === 'SIGN_IN_CANCELLED') {
         // user cancelled the login flow
-      } else if (error.code === statusCodes.IN_PROGRESS) {
+      } else if (code === 'IN_PROGRESS') {
         // operation (e.g. sign in) is in progress already
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+      } else if (code === 'PLAY_SERVICES_NOT_AVAILABLE') {
         Alert.alert('Lỗi', 'Google Play Services không khả dụng');
       } else {
         const message =
@@ -154,19 +178,21 @@ export const LoginScreen = ({ navigation }: Props) => {
           showsVerticalScrollIndicator={false}
         >
           {/* Hero Section */}
-          <View style={styles.hero}>
-            <View style={styles.logoContainer}>
-              <View style={styles.logoIconBg}>
-                <Image source={TEAMZONE_LOGO} style={styles.logoImage} resizeMode="contain" />
+          <FadeInView direction="down" duration={600}>
+            <View style={styles.hero}>
+              <View style={styles.logoContainer}>
+                <View style={styles.logoIconBg}>
+                  <Image source={TEAMZONE_LOGO} style={styles.logoImage} resizeMode="contain" />
+                </View>
+              </View>
+              <Text style={styles.logoText}>TeamZoneVN</Text>
+              <View style={styles.taglineRow}>
+                <Text style={styles.tagline}>TÌM BẠN - CHIẾN GAME</Text>
               </View>
             </View>
-            <Text style={styles.logoText}>TeamZoneVN</Text>
-            <View style={styles.taglineRow}>
-              <Text style={styles.tagline}>TÌM BẠN - CHIẾN GAME</Text>
-            </View>
-          </View>
+          </FadeInView>
 
-          {/* Form Card */}
+          {/* Form Card - không wrap FadeInView để tránh lỗi autofill vàng */}
           <View style={styles.formCard}>
             <Text style={styles.title}>{STRINGS.LOGIN_TITLE}</Text>
             <Text style={styles.subtitle}>Chào mừng trở lại, gamer</Text>

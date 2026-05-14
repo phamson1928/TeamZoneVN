@@ -17,7 +17,7 @@ function resolveBaseUrl(): string {
   return 'http://localhost:3000';
 }
 
-const BASE_URL = resolveBaseUrl();
+export const BASE_URL = resolveBaseUrl();
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,

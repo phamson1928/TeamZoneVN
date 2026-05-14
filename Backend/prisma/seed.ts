@@ -18,6 +18,7 @@ type SeedUser = {
   role: UserRole;
   bio: string;
   style: string;
+  contactInfo?: string;
   warnCount?: number;
   tempBannedUntil?: Date;
   status?: UserStatus;
@@ -34,6 +35,7 @@ type SeedZone = {
   game: string;
   title: string;
   desc: string;
+  contactInfo?: string;
   players: number;
   tags: string[];
   contacts: Array<{ type: ContactMethodType; value: string }>;
@@ -110,6 +112,7 @@ async function main() {
       role: 'USER',
       bio: 'Tài khoản demo (dùng khi chưa đăng nhập Google)',
       style: 'Casual',
+      contactInfo: 'Discord: demo_user#1234',
     },
     {
       email: 'admin@teamzonevn.com',
@@ -117,6 +120,7 @@ async function main() {
       role: 'ADMIN',
       bio: 'Hệ thống TeamZoneVN',
       style: 'Competitive',
+      contactInfo: 'admin@teamzonevn.com',
     },
     {
       email: 'son.pham@example.com',
@@ -124,6 +128,7 @@ async function main() {
       role: 'USER',
       bio: 'Main Mid, tìm team leo Rank Cao Thủ',
       style: 'Aggressive',
+      contactInfo: 'Discord: songoku_vn',
     },
     {
       email: 'linh.nguyen@example.com',
@@ -131,6 +136,7 @@ async function main() {
       role: 'USER',
       bio: 'Chỉ thích đi ngắm cảnh và đánh Boss',
       style: 'Casual',
+      contactInfo: 'UID: 812345678',
     },
     // warnCount chỉ phục vụ demo báo cáo / moderation; API xem hồ sơ không chặn theo warnCount (chỉ user BANNED bị ẩn).
     {
@@ -140,6 +146,7 @@ async function main() {
       bio: 'Bắn mọi thể loại FPS',
       style: 'Competitive',
       warnCount: 1,
+      contactInfo: 'Discord: tuan_fps',
     },
     {
       email: 'huong.le@example.com',
@@ -147,6 +154,7 @@ async function main() {
       role: 'USER',
       bio: 'Main SP, không toxic, chơi vui là chính',
       style: 'Supportive',
+      contactInfo: 'Discord: huong_sp',
     },
     {
       email: 'duy.nguyen@example.com',
@@ -184,6 +192,7 @@ async function main() {
           create: {
             bio: u.bio,
             playStyle: u.style,
+            contactInfo: u.contactInfo || null,
             timezone: 'Asia/Ho_Chi_Minh',
           },
         },
@@ -275,6 +284,7 @@ async function main() {
       game: 'Valorant',
       title: 'Leo Rank Ascendant/Immortal',
       desc: 'Cần Duelist hoặc Sentinel cứng, có mic Discord giao tiếp tốt. Chơi nghiêm túc không toxic.',
+      contactInfo: 'Discord: songoku_vn',
       players: 2,
       tags: ['Leo Rank', 'Có Mic', 'Hardcore'],
       contacts: [{ type: 'DISCORD', value: 'SonGoku#1234' }],
@@ -284,6 +294,7 @@ async function main() {
       game: 'Genshin Impact',
       title: 'Farm Thánh Di Vật - Chill',
       desc: 'Cần tìm bạn đi coop farm bí cảnh, mình hụt damage quá. Newbie friendly!',
+      contactInfo: 'UID: 812345678',
       players: 3,
       tags: ['Chill', 'Người Mới', 'Vui Vẻ'],
       contacts: [{ type: 'INGAME', value: '812345678' }],
@@ -293,6 +304,7 @@ async function main() {
       game: 'CS2',
       title: 'Premier Mode 15k+ Elo',
       desc: 'Tìm 3 ông bắn Premier, hiểu map, smoke chuẩn. Vào việc luôn.',
+      contactInfo: 'Discord: tuan_fps',
       players: 3,
       tags: ['Leo Rank', 'Pro', 'Có Mic'],
       contacts: [{ type: 'DISCORD', value: 'TuanFPS#9999' }],
@@ -361,6 +373,7 @@ async function main() {
         gameId: games[z.game].id,
         title: z.title,
         description: z.desc,
+        contactInfo: z.contactInfo || null,
         requiredPlayers: z.players,
         status: ZoneStatus.OPEN,
         tags: {
@@ -388,7 +401,7 @@ async function main() {
   // 5. Create Groups & Messages
   console.log('💬 Creating groups and demo messages...');
 
-  // Group 1: For the Valorant hard rank zone
+  // Group 1: For the Valorant hard rank zone (requiredPlayers=2, maxPlayers=3, group đủ 3 → FULL)
   const group1 = await prisma.group.create({
     data: {
       zoneId: createdZones[0].id,
@@ -403,6 +416,7 @@ async function main() {
       },
     },
   });
+  await prisma.zone.update({ where: { id: createdZones[0].id }, data: { status: 'FULL' } });
 
   await prisma.message.createMany({
     data: [
@@ -570,16 +584,6 @@ async function main() {
       inviterId: users['SonGoku_VN'].id,
       inviteeId: users['Huong_Support'].id,
       status: 'PENDING',
-    },
-  });
-
-  // 9. Create Quick Match Queue
-  console.log('⏱️ Creating quick match queue entries...');
-  await prisma.quickMatchQueue.create({
-    data: {
-      userId: users['Duy_Solo_Top'].id,
-      gameId: games['League of Legends'].id,
-      requiredPlayers: 5,
     },
   });
 

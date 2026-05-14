@@ -68,7 +68,7 @@ export class JoinRequestsService {
         },
       });
 
-      const group = await this.groupsService.createGroupFromZone(zoneId);
+      const group = await this.groupsService.syncGroupFromZone(zoneId);
 
       // Gửi notification cho user biết họ được chấp nhận tự động
       await this.notificationsService.create(userId, {
@@ -152,7 +152,7 @@ export class JoinRequestsService {
 
     let groupId: string | undefined;
     if (action === 'APPROVED') {
-      const group = await this.groupsService.createGroupFromZone(
+      const group = await this.groupsService.syncGroupFromZone(
         request.zoneId,
       );
       groupId = group?.id;

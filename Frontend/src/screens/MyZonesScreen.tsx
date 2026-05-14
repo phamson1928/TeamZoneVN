@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useEffect } from 'react';
+import React, { useCallback, useRef, useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,6 +10,11 @@ import {
   Alert,
   StatusBar,
   Animated,
+  Modal,
+  Pressable,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -27,6 +32,8 @@ import {
   Eye,
   Calendar,
   Zap,
+  Trash2,
+  X,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -34,6 +41,12 @@ import { apiClient } from '../api/client';
 import { theme } from '../theme';
 import { Zone } from '../types';
 import { RootStackParamList } from '../navigation';
+import { ScaleInView } from '../components/AnimatedTransition';
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const getStatusConfig = (status: string) => {
   switch (status) {
@@ -50,13 +63,6 @@ const getStatusConfig = (status: string) => {
         bg: 'rgba(245,158,11,0.12)',
         label: 'FULL',
         icon: '🟡',
-      };
-    case 'CLOSED':
-      return {
-        color: '#EF4444',
-        bg: 'rgba(239,68,68,0.12)',
-        label: 'CLOSED',
-        icon: '🔴',
       };
     default:
       return {
@@ -113,22 +119,26 @@ const AnimatedStatusDot = ({ status }: { status: string }) => {
   );
 };
 
-export const MyZonesScreen = () => {
+export const MyZonesScreen = ({ embedded = false }: { embedded?: boolean }) => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
+  const [actionSheetZone, setActionSheetZone] = useState<Zone | null>(null);
+  const [deleteZoneId, setDeleteZoneId] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      StatusBar.setBarStyle('dark-content');
-      StatusBar.setBackgroundColor('transparent');
-      StatusBar.setTranslucent(true);
-    }, []),
+      if (!embedded) {
+        StatusBar.setBarStyle('dark-content');
+        StatusBar.setBackgroundColor('transparent');
+        StatusBar.setTranslucent(true);
+      }
+    }, [embedded]),
   );
 
   const {
-    data: zones = [],
+    data: allZones = [],
     isLoading,
     refetch,
   } = useQuery({
@@ -138,6 +148,9 @@ export const MyZonesScreen = () => {
       return response.data.data as Zone[];
     },
   });
+
+  // "Phòng chờ" (embedded) chỉ hiện zone chưa FULL
+  const zones = embedded ? allZones.filter(z => z.status !== 'FULL') : allZones;
 
   const deleteMutation = useMutation({
     mutationFn: async (zoneId: string) => {
@@ -153,46 +166,15 @@ export const MyZonesScreen = () => {
   });
 
   const handleDelete = (zoneId: string) => {
-    Alert.alert('Xác nhận xóa', 'Bạn có chắc chắn muốn xóa phòng này?', [
-      { text: 'Hủy', style: 'cancel' },
-      {
-        text: 'Xóa',
-        style: 'destructive',
-        onPress: () => deleteMutation.mutate(zoneId),
-      },
-    ]);
+    setDeleteZoneId(zoneId);
   };
 
-  const handleEdit = () => {
-    Alert.alert('Sắp ra mắt', 'Tính năng chỉnh sửa đang được phát triển');
+  const handleEdit = (zone: Zone) => {
+    navigation.navigate('CreateZone', { zoneId: zone.id });
   };
 
   const handleOptions = (zone: Zone) => {
-    Alert.alert(
-      zone.title,
-      'Chọn hành động',
-      [
-        {
-          text: 'Xem chi tiết',
-          onPress: () =>
-            navigation.navigate('ZoneDetails', { zoneId: zone.id }),
-        },
-        {
-          text: 'Chỉnh sửa',
-          onPress: () => handleEdit(),
-        },
-        {
-          text: 'Xóa phòng',
-          onPress: () => handleDelete(zone.id),
-          style: 'destructive',
-        },
-        {
-          text: 'Hủy',
-          style: 'cancel',
-        },
-      ],
-      { cancelable: true },
-    );
+    setActionSheetZone(zone);
   };
 
   const renderZoneItem = ({ item, index }: { item: Zone; index: number }) => {
@@ -204,11 +186,99 @@ export const MyZonesScreen = () => {
     const approvedCount = requests.filter(
       (r: any) => r.status === 'APPROVED',
     ).length;
-    const currentPlayers = approvedCount + 1;
+    const groupMembers = item.group?._count?.members ?? 0;
+    const currentPlayers = groupMembers > 0 ? groupMembers : (approvedCount + 1);
     const tagCount = item.tags?.length ?? 0;
 
+    if (embedded) {
+      return (
+        <ScaleInView>
+          <View style={styles.embeddedCard}>
+          {/* Row 1: Game icon + title + 3-dot */}
+          <View style={styles.embeddedCardHeader}>
+            <TouchableOpacity
+              style={styles.embeddedCardHeaderLeft}
+              onPress={() =>
+                navigation.navigate('ZoneDetails', { zoneId: item.id })
+              }
+              activeOpacity={0.7}
+            >
+              {item.game?.iconUrl ? (
+                <View style={[styles.embeddedGameIcon, styles.gameIconPlaceholderEmbed]}>
+                  <Gamepad2 size={18} color="#2563EB" />
+                  <Image
+                    source={{ uri: item.game.iconUrl }}
+                    style={StyleSheet.absoluteFill}
+                    contentFit="cover"
+                    transition={300}
+                    cachePolicy="disk"
+                  />
+                </View>
+              ) : (
+                <View style={[styles.embeddedGameIcon, styles.gameIconPlaceholderEmbed]}>
+                  <Gamepad2 size={18} color="#2563EB" />
+                </View>
+              )}
+              <View style={styles.embeddedTitleArea}>
+                <Text style={styles.embeddedTitle} numberOfLines={1}>
+                  {item.title}
+                </Text>
+                <Text style={styles.embeddedGameName} numberOfLines={1}>
+                  {item.game?.name || 'Unknown'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.embeddedOptionsBtn}
+              onPress={() => handleOptions(item)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <MoreVertical size={18} color="#94A3B8" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Row 2: Badge + meta + status */}
+          <View style={styles.embeddedCardMeta}>
+            <View style={[styles.embeddedBadge, { backgroundColor: statusConfig.bg }]}>
+              <View style={[styles.embeddedBadgeDot, { backgroundColor: statusConfig.color }]} />
+              <Text style={[styles.embeddedBadgeLabel, { color: statusConfig.color }]}>
+                {statusConfig.label}
+              </Text>
+            </View>
+
+            <View style={styles.embeddedMetaItem}>
+              <Users size={14} color="#64748B" />
+              <Text style={styles.embeddedMetaText}>
+                {currentPlayers}/{item.requiredPlayers + 1}
+              </Text>
+            </View>
+
+            <View style={styles.embeddedMetaItem}>
+              <Clock size={14} color="#64748B" />
+              <Text style={styles.embeddedMetaText}>
+                {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+              </Text>
+            </View>
+          </View>
+
+          {/* Row 3: Pending alert (if any) */}
+          {pendingCount > 0 && (
+            <View style={styles.embeddedPendingRow}>
+              <Zap size={14} color="#F59E0B" />
+              <Text style={styles.embeddedPendingText}>
+                {pendingCount} yêu cầu đang chờ
+              </Text>
+            </View>
+          )}
+          </View>
+        </ScaleInView>
+      );
+    }
+
     return (
-      <View style={styles.timelineItem}>
+      <ScaleInView>
+        <View style={styles.timelineItem}>
         {/* Timeline Line */}
         {index !== zones.length - 1 && <View style={styles.timelineLine} />}
 
@@ -225,141 +295,138 @@ export const MyZonesScreen = () => {
         </View>
 
         {/* Content Card */}
-        <TouchableOpacity
-          style={styles.contentCard}
-          onPress={() =>
-            navigation.navigate('ZoneDetails', { zoneId: item.id })
-          }
-          activeOpacity={0.7}
-        >
-          {/* Header */}
-          <View style={styles.cardHeader}>
-            <View style={styles.gameSection}>
+        <View style={styles.contentCard}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() =>
+              navigation.navigate('ZoneDetails', { zoneId: item.id })
+            }
+          >
+            {/* Header */}
+            <View style={styles.cardHeader}>
+              <View style={styles.gameSection}>
               {item.game?.iconUrl ? (
-                <View style={styles.gameIconWrapper}>
+                <View style={[styles.gameIconWrapper, styles.gameIconPlaceholder]}>
+                  <Gamepad2 size={20} color="#2563EB" />
                   <Image
                     source={{ uri: item.game.iconUrl }}
-                    style={styles.gameIcon}
+                    style={StyleSheet.absoluteFill}
                     contentFit="cover"
                     transition={500}
                     cachePolicy="disk"
                   />
                 </View>
               ) : (
-                <View
-                  style={[styles.gameIconWrapper, styles.gameIconPlaceholder]}
-                >
+                <View style={[styles.gameIconWrapper, styles.gameIconPlaceholder]}>
                   <Gamepad2 size={20} color="#2563EB" />
                 </View>
               )}
-              <View style={styles.gameInfo}>
-                <Text style={styles.gameLabel}>Game</Text>
-                <Text style={styles.gameName} numberOfLines={1}>
-                  {item.game?.name || 'Unknown'}
-                </Text>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={styles.optionsButton}
-              onPress={() => handleOptions(item)}
-            >
-              <MoreVertical size={20} color="#64748B" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Status Badge */}
-          <View
-            style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}
-          >
-            <Text style={styles.statusEmoji}>{statusConfig.icon}</Text>
-            <Text style={[styles.statusLabel, { color: statusConfig.color }]}>
-              {statusConfig.label}
-            </Text>
-          </View>
-
-          {/* Title */}
-          <Text style={styles.zoneTitle} numberOfLines={2}>
-            {item.title}
-          </Text>
-
-          {/* Info Grid */}
-          <View style={styles.infoGrid}>
-            {/* Players */}
-            <View style={styles.infoItem}>
-              <View style={styles.infoIconBg}>
-                <Users size={16} color="#2563EB" />
-              </View>
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Người chơi</Text>
-                <Text style={styles.infoValue}>
-                  {currentPlayers}/{item.requiredPlayers + 1}
-                </Text>
-              </View>
-            </View>
-
-            {/* Tags */}
-            <View style={styles.infoItem}>
-              <View
-                style={[
-                  styles.infoIconBg,
-                  { backgroundColor: 'rgba(245,158,11,0.15)' },
-                ]}
-              >
-                <Trophy size={16} color="#F59E0B" />
-              </View>
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Tags</Text>
-                <Text style={styles.infoValue}>
-                  {tagCount > 0 ? `${tagCount} thẻ` : 'Chưa có'}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Pending Requests Alert */}
-          {pendingCount > 0 && (
-            <View style={styles.pendingAlert}>
-              <View style={styles.pendingAlertLeft}>
-                <View style={styles.pendingIcon}>
-                  <Clock size={16} color="#F59E0B" />
+                <View style={styles.gameInfo}>
+                  <Text style={styles.gameLabel}>Game</Text>
+                  <Text style={styles.gameName} numberOfLines={1}>
+                    {item.game?.name || 'Unknown'}
+                  </Text>
                 </View>
-                <Text style={styles.pendingText}>
-                  <Text style={styles.pendingCount}>{pendingCount}</Text> yêu
-                  cầu đang chờ duyệt
-                </Text>
               </View>
-              <Zap size={16} color="#F59E0B" />
             </View>
-          )}
 
-          {/* Footer */}
-          <View style={styles.cardFooter}>
-            <View style={styles.dateInfo}>
-              <Calendar size={14} color="#94A3B8" />
-              <Text style={styles.dateText}>
-                {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+            {/* Status Badge */}
+            <View
+              style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}
+            >
+              <Text style={styles.statusEmoji}>{statusConfig.icon}</Text>
+              <Text style={[styles.statusLabel, { color: statusConfig.color }]}>
+                {statusConfig.label}
               </Text>
             </View>
 
-            <TouchableOpacity
-              style={styles.viewButton}
-              onPress={() =>
-                navigation.navigate('ZoneDetails', { zoneId: item.id })
-              }
-            >
-              <Eye size={16} color="#2563EB" />
-              <Text style={styles.viewButtonText}>Xem chi tiết</Text>
-              <ChevronRight size={16} color="#2563EB" />
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
+            {/* Title */}
+            <Text style={styles.zoneTitle} numberOfLines={2}>
+              {item.title}
+            </Text>
+
+            {/* Info Grid */}
+            <View style={styles.infoGrid}>
+              {/* Players */}
+              <View style={styles.infoItem}>
+                <View style={styles.infoIconBg}>
+                  <Users size={16} color="#2563EB" />
+                </View>
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Người chơi</Text>
+                  <Text style={styles.infoValue}>
+                    {currentPlayers}/{item.requiredPlayers + 1}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Tags */}
+              <View style={styles.infoItem}>
+                <View
+                  style={[
+                    styles.infoIconBg,
+                    { backgroundColor: 'rgba(245,158,11,0.15)' },
+                  ]}
+                >
+                  <Trophy size={16} color="#F59E0B" />
+                </View>
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Tags</Text>
+                  <Text style={styles.infoValue}>
+                    {tagCount > 0 ? `${tagCount} thẻ` : 'Chưa có'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Pending Requests Alert */}
+            {pendingCount > 0 && (
+              <View style={styles.pendingAlert}>
+                <View style={styles.pendingAlertLeft}>
+                  <View style={styles.pendingIcon}>
+                    <Clock size={16} color="#F59E0B" />
+                  </View>
+                  <Text style={styles.pendingText}>
+                    <Text style={styles.pendingCount}>{pendingCount}</Text> yêu
+                    cầu đang chờ duyệt
+                  </Text>
+                </View>
+                <Zap size={16} color="#F59E0B" />
+              </View>
+            )}
+
+            {/* Footer */}
+            <View style={styles.cardFooter}>
+              <View style={styles.dateInfo}>
+                <Calendar size={14} color="#94A3B8" />
+                <Text style={styles.dateText}>
+                  {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+                </Text>
+              </View>
+
+              <View style={styles.viewButton}>
+                <Eye size={16} color="#2563EB" />
+                <Text style={styles.viewButtonText}>Xem chi tiết</Text>
+                <ChevronRight size={16} color="#2563EB" />
+              </View>
+            </View>
+          </TouchableOpacity>
+
+          {/* 3-dot button - OUTSIDE the navigation touchable */}
+          <TouchableOpacity
+            style={styles.optionsButtonAbsolute}
+            onPress={() => handleOptions(item)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <MoreVertical size={20} color="#64748B" />
+          </TouchableOpacity>
+        </View>
       </View>
+        </ScaleInView>
     );
   };
 
-  const renderHeader = () => (
-    <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+  const renderHeader = () => (<View style={[styles.header, { paddingTop: insets.top + 16 }]}>
       <View style={styles.headerContent}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -378,9 +445,132 @@ export const MyZonesScreen = () => {
     </View>
   );
 
+  const renderDeleteModal = () => (
+    <Modal
+      visible={!!deleteZoneId}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setDeleteZoneId(null)}
+    >
+      <Pressable
+        style={styles.deleteOverlay}
+        onPress={() => setDeleteZoneId(null)}
+      >
+        <Pressable style={styles.deleteCard} onPress={(e) => e.stopPropagation()}>
+          <View style={styles.deleteIconCircle}>
+            <Trash2 size={28} color="#EF4444" />
+          </View>
+          <Text style={styles.deleteTitle}>Xóa phòng</Text>
+          <Text style={styles.deleteMessage}>
+            Bạn có chắc chắn muốn xóa phòng này không? Hành động này không thể
+            hoàn tác.
+          </Text>
+          <View style={styles.deleteActions}>
+            <TouchableOpacity
+              style={styles.deleteCancelBtn}
+              onPress={() => setDeleteZoneId(null)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.deleteCancelText}>Hủy</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteConfirmBtn}
+                onPress={() => {
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                  if (deleteZoneId) deleteMutation.mutate(deleteZoneId);
+                  setDeleteZoneId(null);
+              }}
+              disabled={deleteMutation.isPending}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.deleteConfirmText}>
+                {deleteMutation.isPending ? 'Đang xóa...' : 'Xóa'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+
+  const selectedZone = actionSheetZone;
+
+  const renderActionSheet = () => (
+    <Modal
+      visible={!!actionSheetZone}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setActionSheetZone(null)}
+    >
+      <Pressable
+        style={styles.actionSheetOverlay}
+        onPress={() => setActionSheetZone(null)}
+      >
+        <Pressable style={styles.actionSheetCard} onPress={(e) => e.stopPropagation()}>
+          <Text style={styles.actionSheetTitle} numberOfLines={1}>
+            {selectedZone?.title || 'Phòng'}
+          </Text>
+          <View style={styles.actionSheetDivider} />
+
+          <TouchableOpacity
+            style={styles.actionSheetOption}
+            onPress={() => {
+              if (selectedZone) navigation.navigate('ZoneDetails', { zoneId: selectedZone.id });
+              setActionSheetZone(null);
+            }}
+            activeOpacity={0.6}
+          >
+            <Eye size={18} color="#94A3B8" />
+            <Text style={styles.actionSheetOptionText}>Xem chi tiết</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionSheetOption}
+            onPress={() => {
+              setActionSheetZone(null);
+              setTimeout(() => {
+                if (selectedZone) handleEdit(selectedZone);
+              }, 200);
+            }}
+            activeOpacity={0.6}
+          >
+            <Calendar size={18} color="#94A3B8" />
+            <Text style={styles.actionSheetOptionText}>Chỉnh sửa</Text>
+          </TouchableOpacity>
+
+          <View style={styles.actionSheetDivider} />
+
+          <TouchableOpacity
+            style={styles.actionSheetOption}
+            onPress={() => {
+              const zoneId = selectedZone?.id;
+              setActionSheetZone(null);
+              if (zoneId) setTimeout(() => handleDelete(zoneId), 200);
+            }}
+            activeOpacity={0.6}
+          >
+            <Trash2 size={18} color="#EF4444" />
+            <Text style={[styles.actionSheetOptionText, { color: '#EF4444' }]}>Xóa phòng</Text>
+          </TouchableOpacity>
+
+          <View style={styles.actionSheetDivider} />
+
+          <TouchableOpacity
+            style={styles.actionSheetOption}
+            onPress={() => setActionSheetZone(null)}
+            activeOpacity={0.6}
+          >
+            <X size={18} color="#64748B" />
+            <Text style={[styles.actionSheetOptionText, { color: '#64748B' }]}>Hủy</Text>
+          </TouchableOpacity>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+
   return (
-    <View style={styles.container}>
-      {renderHeader()}
+    <View style={embedded ? styles.embeddedContainer : styles.container}>
+      {!embedded && renderHeader()}
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -432,7 +622,7 @@ export const MyZonesScreen = () => {
       )}
 
       {/* Floating Action Button */}
-      {!isLoading && zones.length > 0 && (
+      {!isLoading && zones.length > 0 && !embedded && (
         <TouchableOpacity
           style={[styles.fab, { bottom: insets.bottom + 24 }]}
           onPress={() => navigation.navigate('CreateZone')}
@@ -443,6 +633,9 @@ export const MyZonesScreen = () => {
           </View>
         </TouchableOpacity>
       )}
+
+      {renderActionSheet()}
+      {renderDeleteModal()}
     </View>
   );
 };
@@ -451,6 +644,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0F172A',
+  },
+  embeddedContainer: {
+    flex: 1,
+    backgroundColor: 'transparent',
   },
   header: {
     backgroundColor: '#0F172A',
@@ -556,6 +753,108 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
 
+  // Embedded Card (inside GroupsScreen tab)
+  embeddedCard: {
+    backgroundColor: '#1E293B',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  embeddedCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  embeddedCardHeaderLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  embeddedGameIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#0F172A',
+    overflow: 'hidden',
+  },
+  gameIconPlaceholderEmbed: {
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  embeddedTitleArea: {
+    flex: 1,
+  },
+  embeddedTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFF',
+  },
+  embeddedGameName: {
+    fontSize: 12,
+    color: '#2563EB',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  embeddedOptionsBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  embeddedCardMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  embeddedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  embeddedBadgeDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  embeddedBadgeLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  embeddedMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  embeddedMetaText: {
+    fontSize: 12,
+    color: '#94A3B8',
+    fontWeight: '500',
+  },
+  embeddedPendingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
+  },
+  embeddedPendingText: {
+    fontSize: 12,
+    color: '#F59E0B',
+    fontWeight: '600',
+  },
+
   // Content Card
   contentCard: {
     flex: 1,
@@ -587,6 +886,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 12,
     overflow: 'hidden',
+    position: 'relative',
   },
   gameIcon: {
     width: '100%',
@@ -620,6 +920,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  optionsButtonAbsolute: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -844,5 +1156,118 @@ const styles = StyleSheet.create({
     backgroundColor: '#2563EB',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  // ─── Action Sheet ──────────────────────────
+  actionSheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+    paddingBottom: 40,
+    paddingHorizontal: 16,
+  },
+  actionSheetCard: {
+    backgroundColor: '#1E293B',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  actionSheetTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFF',
+    textAlign: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  actionSheetDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    marginHorizontal: 12,
+  },
+  actionSheetOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+  },
+  actionSheetOptionText: {
+    fontSize: 15,
+    color: '#FFF',
+    fontWeight: '500',
+  },
+
+  // ─── Delete Modal ─────────────────────────
+  deleteOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  deleteCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#1E293B',
+    borderRadius: 24,
+    padding: 28,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  deleteIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(239,68,68,0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  deleteTitle: {
+    fontSize: 19,
+    fontWeight: '800',
+    color: '#FFF',
+    marginBottom: 10,
+  },
+  deleteMessage: {
+    fontSize: 14,
+    color: '#94A3B8',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  deleteActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  deleteCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    alignItems: 'center',
+  },
+  deleteCancelText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#94A3B8',
+  },
+  deleteConfirmBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+  },
+  deleteConfirmText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFF',
   },
 });

@@ -39,6 +39,7 @@ import { theme, getBorderColorById } from '../theme';
 import { Zone, Game, Platform, NotificationItem } from '../types';
 import { Button } from '../components/Button';
 import { NotificationPopover } from '../components/NotificationPopover';
+import { ScaleInView } from '../components/AnimatedTransition';
 import { useAuthStore } from '../store/useAuthStore';
 import { STRINGS } from '../constants/strings';
 
@@ -75,6 +76,8 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'players_asc', label: 'Ít người nhất' },
   { value: 'players_desc', label: 'Nhiều người nhất' },
 ];
+
+const TEAMZONE_LOGO = require('../../assets/non-background-teamzonevn-logo.png');
 
 const GameCardComponent = React.memo(
   ({ game, onPress }: { game: Game; onPress: () => void }) => {
@@ -159,7 +162,7 @@ const getStatusConfig = (status: string) => {
     default:
       return {
         color: '#64748B',
-        label: 'CLOSED',
+        label: 'UNKNOWN',
         bg: 'rgba(100,116,139,0.15)',
       };
   }
@@ -178,10 +181,12 @@ const ZoneCardComponent = React.memo(
     const hasMic =
       item.tags?.some(t => t.tag?.name?.toLowerCase().includes('mic')) ?? false;
     const statusCfg = getStatusConfig(item.status);
-    const approvedCount = item._count?.joinRequests ?? 0;
-    const currentPlayers = approvedCount + 1;
-    const maxPlayers = item.requiredPlayers + 1;
-    const progress = Math.min(currentPlayers / (maxPlayers || 1), 1);
+      const approvedCount = item._count?.joinRequests ?? 0;
+      const groupMembers = item.group?._count?.members ?? 0;
+      const currentPlayers = groupMembers > 0 ? groupMembers : (approvedCount + 1);
+      const maxPlayers = item.requiredPlayers + 1;
+      const remainingSlots = Math.max(0, maxPlayers - currentPlayers);
+      const progress = Math.min(currentPlayers / (maxPlayers || 1), 1);
     const otherTags =
       item.tags
         ?.filter(t => !t.tag?.name?.toLowerCase().includes('mic'))
@@ -255,7 +260,7 @@ const ZoneCardComponent = React.memo(
             <View style={styles.slotsPill}>
               <Users size={10} color="#F59E0B" />
               <Text style={styles.slotsPillText} numberOfLines={1}>
-                Cần thêm {item.requiredPlayers} người
+                {remainingSlots > 0 ? `Cần thêm ${remainingSlots} người` : 'Đã đủ người'}
               </Text>
             </View>
           </View>
@@ -355,10 +360,6 @@ export const HomeScreen = () => {
   } = useQuery({
     queryKey: ['zones', 'search', submittedSearch, sortBy],
     queryFn: async () => {
-      if (!submittedSearch.trim() && sortBy === 'newest') {
-        const response = await apiClient.get('/zones/suggested');
-        return response.data.data as Zone[];
-      }
       let url = `/zones/search?page=1&limit=20&sortBy=${sortBy}`;
       if (submittedSearch.trim()) {
         url += `&q=${encodeURIComponent(submittedSearch.trim())}`;
@@ -498,15 +499,17 @@ export const HomeScreen = () => {
         : false;
 
       return (
-        <ZoneCardComponent
-          item={item}
-          hasPending={hasPending}
-          onPress={() => {
-            InteractionManager.runAfterInteractions(() => {
-              navigation.navigate('ZoneDetails', { zoneId: item.id });
-            });
-          }}
-        />
+        <ScaleInView>
+          <ZoneCardComponent
+            item={item}
+            hasPending={hasPending}
+            onPress={() => {
+              InteractionManager.runAfterInteractions(() => {
+                navigation.navigate('ZoneDetails', { zoneId: item.id });
+              });
+            }}
+          />
+        </ScaleInView>
       );
     },
     [navigation, myJoinRequests],
@@ -587,20 +590,6 @@ export const HomeScreen = () => {
               {submittedSearch.trim() ? 'KẾT QUẢ TÌM KIẾM' : 'KHU VỰC GỢI Ý'}
             </Text>
           </View>
-          <TouchableOpacity
-            style={styles.quickMatchBtn}
-            onPress={() => navigation.navigate('QuickMatch' as never)}
-          >
-            <LinearGradient
-              colors={['#2563FF', '#7C3AED']}
-              style={styles.quickMatchGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <Zap color="#fff" size={12} fill="#fff" />
-              <Text style={styles.quickMatchText}>Ghép Nhanh</Text>
-            </LinearGradient>
-          </TouchableOpacity>
         </View>
       </View>
     ),
@@ -623,26 +612,12 @@ export const HomeScreen = () => {
         {/* Top Bar */}
         <View style={styles.topBar}>
           <View style={styles.userInfo}>
-            <View style={styles.userAvatarContainer}>
-              {user?.avatarUrl ? (
-                <Image
-                  source={{ uri: user.avatarUrl }}
-                  style={styles.userAvatar}
-                  contentFit="cover"
-                  transition={500}
-                  cachePolicy="disk"
-                />
-              ) : (
-                <LinearGradient
-                  colors={['#2563FF', '#7C3AED']}
-                  style={[styles.userAvatar, styles.userAvatarPlaceholder]}
-                >
-                  <Text style={styles.userAvatarText}>
-                    {user?.username?.charAt(0).toUpperCase() || 'G'}
-                  </Text>
-                </LinearGradient>
-              )}
-              <View style={styles.onlineDot} />
+            <View style={styles.logoHeaderContainer}>
+              <Image
+                source={TEAMZONE_LOGO}
+                style={styles.headerLogo}
+                contentFit="contain"
+              />
             </View>
             <View>
               <Text style={styles.headerTitle}>TEAMZONEVN</Text>
@@ -770,6 +745,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  logoHeaderContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  headerLogo: {
+    width: 32,
+    height: 32,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: theme.colors.primary,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+  headerSubtitle: {
+    fontSize: 10,
+    color: '#64748B',
+    fontWeight: '700',
+    letterSpacing: 2,
+    marginTop: -2,
+  },
   userAvatarContainer: {
     position: 'relative',
     width: 42,
@@ -801,21 +804,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#22C55E',
     borderWidth: 2,
     borderColor: '#0F172A',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: theme.colors.text,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-    lineHeight: 20,
-  },
-  headerSubtitle: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: theme.colors.primary,
-    letterSpacing: 3,
-    textTransform: 'uppercase',
   },
   notificationButton: {
     width: 42,
@@ -1099,23 +1087,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 100,
-  },
-  quickMatchBtn: {
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  quickMatchGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  quickMatchText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '800',
-    textTransform: 'uppercase',
   },
 
   // Zone Card - New Gaming Dashboard Style

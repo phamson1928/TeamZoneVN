@@ -22,7 +22,6 @@ import { MessagesModule } from './messages/messages.module';
 import { DashboardModule } from './dashboard/dashboard.module.js';
 import { FriendsModule } from './friends/friends.module';
 import { ZoneInvitesModule } from './zone-invites/zone-invites.module';
-import { QuickMatchModule } from './quick-match/quick-match.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { BlocksModule } from './blocks/blocks.module';
 
@@ -63,7 +62,6 @@ import { BlocksModule } from './blocks/blocks.module';
     DashboardModule,
     FriendsModule,
     ZoneInvitesModule,
-    QuickMatchModule,
     LeaderboardModule,
     BlocksModule,
   ],

@@ -15,11 +15,11 @@ import {
   Gamepad2,
   Heart,
   Trophy,
-  MapPin,
   Settings,
   LogOut,
   Zap,
   Users,
+  MessageCircle,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -195,6 +195,18 @@ export const ProfileScreen = () => {
           <Text style={styles.bioText}>
             {user?.profile?.bio || STRINGS.BIO_PLACEHOLDER}
           </Text>
+
+          {user?.profile?.contactInfo && (
+            <>
+              <View style={styles.contactDivider} />
+              <View style={styles.contactRow}>
+                <MessageCircle size={14} color={theme.colors.primary} />
+                <Text style={styles.contactText}>
+                  {user.profile.contactInfo}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
 
         {/* Stats Row */}
@@ -255,13 +267,16 @@ export const ProfileScreen = () => {
           gameProfiles.map((profile: UserGameProfile) => {
             return (
               <View key={profile.id} style={styles.gameProfileCard}>
-                <Image
-                  source={{ uri: profile.game.iconUrl }}
-                  style={styles.gameProfileIcon}
-                  contentFit="cover"
-                  transition={500}
-                  cachePolicy="disk"
-                />
+                <View style={[styles.gameProfileIcon, styles.gameProfileIconPlaceholder]}>
+                  <Gamepad2 size={22} color="#2563EB" />
+                  <Image
+                    source={{ uri: profile.game.iconUrl || 'https://via.placeholder.com/150' }}
+                    style={StyleSheet.absoluteFill}
+                    contentFit="cover"
+                    transition={500}
+                    cachePolicy="disk"
+                  />
+                </View>
                 <View style={styles.gameProfileInfo}>
                   <Text style={styles.gameProfileName}>
                     {profile.game.name}
@@ -324,15 +339,6 @@ export const ProfileScreen = () => {
                 Top người dùng yêu thích
               </Text>
             </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.myZonesButton}
-            onPress={() => navigation.navigate('MyZones' as never)}
-            activeOpacity={0.92}
-          >
-            <MapPin size={18} color="#FFF" strokeWidth={2.2} />
-            <Text style={styles.myZonesText}>My Zones (Khu vực của tôi)</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.logoutButton} onPress={logout}>
@@ -500,6 +506,21 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontStyle: 'italic',
   },
+  contactDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    marginVertical: 12,
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  contactText: {
+    fontSize: 13,
+    color: theme.colors.primary,
+    flex: 1,
+  },
 
   // Stats
   statsRow: {
@@ -595,6 +616,13 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 12,
     margin: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  gameProfileIconPlaceholder: {
+    backgroundColor: '#0F172A',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   gameProfileInfo: {
     flex: 1,

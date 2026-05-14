@@ -10,7 +10,7 @@ import {
 import { Image } from 'expo-image';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Gamepad2, Heart, ChevronLeft, UserX } from 'lucide-react-native';
+import { Gamepad2, Heart, ChevronLeft, UserX, MessageCircle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Alert } from 'react-native';
 
@@ -95,18 +95,30 @@ export const PublicProfileScreen = () => {
         );
       }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['public-profile', userId] });
-    },
   });
 
   const sendFriendRequestMutation = useMutation({
     mutationFn: async () => {
       await apiClient.post(`/friends/request/${userId}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['public-profile', userId] });
-      queryClient.invalidateQueries({ queryKey: ['friends'] });
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['public-profile', userId] });
+      const prev = queryClient.getQueryData<UserPublicProfile>([
+        'public-profile',
+        userId,
+      ]);
+      if (prev) {
+        queryClient.setQueryData<UserPublicProfile>(
+          ['public-profile', userId],
+          { ...prev, friendshipRelation: 'PENDING_SENT' as any },
+        );
+      }
+      return { prev };
+    },
+    onError: (err, vars, context) => {
+      if (context?.prev) {
+        queryClient.setQueryData(['public-profile', userId], context.prev);
+      }
     },
   });
 
@@ -114,9 +126,24 @@ export const PublicProfileScreen = () => {
     mutationFn: async (friendshipId: string) => {
       await apiClient.patch(`/friends/request/${friendshipId}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['public-profile', userId] });
-      queryClient.invalidateQueries({ queryKey: ['friends'] });
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['public-profile', userId] });
+      const prev = queryClient.getQueryData<UserPublicProfile>([
+        'public-profile',
+        userId,
+      ]);
+      if (prev) {
+        queryClient.setQueryData<UserPublicProfile>(
+          ['public-profile', userId],
+          { ...prev, friendshipRelation: 'FRIENDS' as any },
+        );
+      }
+      return { prev };
+    },
+    onError: (err, vars, context) => {
+      if (context?.prev) {
+        queryClient.setQueryData(['public-profile', userId], context.prev);
+      }
     },
   });
 
@@ -125,9 +152,24 @@ export const PublicProfileScreen = () => {
     mutationFn: async () => {
       await apiClient.delete(`/friends/${userId}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['public-profile', userId] });
-      queryClient.invalidateQueries({ queryKey: ['friends'] });
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['public-profile', userId] });
+      const prev = queryClient.getQueryData<UserPublicProfile>([
+        'public-profile',
+        userId,
+      ]);
+      if (prev) {
+        queryClient.setQueryData<UserPublicProfile>(
+          ['public-profile', userId],
+          { ...prev, friendshipRelation: 'NONE' as any },
+        );
+      }
+      return { prev };
+    },
+    onError: (err, vars, context) => {
+      if (context?.prev) {
+        queryClient.setQueryData(['public-profile', userId], context.prev);
+      }
     },
   });
 
@@ -206,7 +248,7 @@ export const PublicProfileScreen = () => {
     );
   }
 
-  if (isLoading || isFetching) {
+  if (isLoading || (isFetching && !profile)) {
     return (
       <Container>
         <ActivityIndicator
@@ -317,6 +359,18 @@ export const PublicProfileScreen = () => {
           <Text style={styles.bioText}>
             {profile.profile?.bio || STRINGS.BIO_PLACEHOLDER}
           </Text>
+
+          {profile.profile?.contactInfo && (
+            <>
+              <View style={styles.contactDivider} />
+              <View style={styles.contactRow}>
+                <MessageCircle size={14} color={theme.colors.primary} />
+                <Text style={styles.contactText}>
+                  {profile.profile.contactInfo}
+                </Text>
+              </View>
+            </>
+          )}
 
           {!isMe && friendPrimary && (
             <View style={styles.actionButtons}>
@@ -528,6 +582,21 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     lineHeight: 20,
     fontStyle: 'italic',
+  },
+  contactDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    marginVertical: 12,
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  contactText: {
+    fontSize: 13,
+    color: theme.colors.primary,
+    flex: 1,
   },
   actionButtons: {
     flexDirection: 'row',

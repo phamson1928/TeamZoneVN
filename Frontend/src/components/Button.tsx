@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   TouchableOpacity,
   Text,
   StyleSheet,
   ActivityIndicator,
+  Animated,
   ViewStyle,
   TextStyle,
   View,
@@ -117,6 +118,26 @@ export const Button: React.FC<ButtonProps> = ({
     return { color: '#94A3B8' };
   };
 
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.96,
+      damping: 20,
+      stiffness: 150,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      damping: 20,
+      stiffness: 150,
+      useNativeDriver: true,
+    }).start();
+  };
+
   const renderContent = () => {
     const textColor = isOutline
       ? theme.colors.primary
@@ -195,9 +216,57 @@ export const Button: React.FC<ButtonProps> = ({
   }
 
   if (isSolid) {
-    return (
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
       <TouchableOpacity
         onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled || loading}
+        activeOpacity={0.8}
+        style={[
+          styles.container,
+          { height: getButtonHeight(), borderRadius: getBorderRadius() },
+          shadowStyle,
+          getPillStyle(),
+          style,
+        ]}
+      >
+        {isOutline || isGhost ? (
+          <View style={[styles.outlineContainer, { borderRadius: getBorderRadius() }]}>
+            {renderContent()}
+          </View>
+        ) : isSolid ? (
+          <View
+            style={[
+              styles.solidContainer,
+              { borderRadius: getBorderRadius() },
+              disabled && styles.disabledSolid,
+            ]}
+          >
+            {renderContent()}
+          </View>
+        ) : (
+          <LinearGradient
+            colors={getGradientColors()}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.gradient, { borderRadius: getBorderRadius() }]}
+          >
+            {renderContent()}
+          </LinearGradient>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+  }
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         disabled={disabled || loading}
         activeOpacity={0.8}
         style={[
@@ -205,44 +274,22 @@ export const Button: React.FC<ButtonProps> = ({
           {
             height: getButtonHeight(),
             borderRadius: getBorderRadius(),
-            backgroundColor: disabled ? '#1E293B' : theme.colors.primary,
+            backgroundColor: disabled ? '#1E293B' : theme.colors.primary, // Fallback bg color
           },
           shadowStyle,
           style,
         ]}
       >
-        <View style={[styles.gradient, { borderRadius: getBorderRadius() }]}>
+        <LinearGradient
+          colors={getGradientColors()}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.gradient, { borderRadius: getBorderRadius() }]}
+        >
           {renderContent()}
-        </View>
+        </LinearGradient>
       </TouchableOpacity>
-    );
-  }
-
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={disabled || loading}
-      activeOpacity={0.8}
-      style={[
-        styles.container,
-        {
-          height: getButtonHeight(),
-          borderRadius: getBorderRadius(),
-          backgroundColor: disabled ? '#1E293B' : theme.colors.primary, // Fallback bg color
-        },
-        shadowStyle,
-        style,
-      ]}
-    >
-      <LinearGradient
-        colors={getGradientColors()}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={[styles.gradient, { borderRadius: getBorderRadius() }]}
-      >
-        {renderContent()}
-      </LinearGradient>
-    </TouchableOpacity>
+    </Animated.View>
   );
 };
 
@@ -261,6 +308,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 10, // Slightly more gap for icon/text
+  },
+  outlineContainer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  solidContainer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    backgroundColor: theme.colors.primary,
+  },
+  disabledSolid: {
+    backgroundColor: '#334155',
+    opacity: 0.6,
   },
   text: {
     color: '#FFFFFF',

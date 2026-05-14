@@ -32,7 +32,7 @@ export class DashboardController {
         schema: {
             example: {
                 users: { total: 1200, active: 1150, banned: 50 },
-                zones: { total: 340, open: 200, closed: 120, full: 20 },
+                zones: { total: 340, open: 200, full: 140 },
                 groups: { total: 180, active: 120, dissolved: 60 },
                 reports: { open: 15, resolved: 85, total: 100 },
                 growth: {
@@ -89,7 +89,7 @@ export class DashboardController {
         description: 'Mảng (gameId, gameName, count) để vẽ pie/bar chart phân bố zone theo game',
         schema: {
             example: {
-                label: 'Phân bố Zones theo Game (không tính CLOSED)',
+                label: 'Phân bố Zones theo Game',
                 data: [
                     { gameId: 'uuid-1', gameName: 'Liên Quân', count: 45 },
                     { gameId: 'uuid-2', gameName: 'PUBG', count: 30 },
@@ -138,15 +138,6 @@ export class DashboardController {
     @ApiQuery({ name: 'period', required: false, enum: DashboardPeriod })
     getSocialEngagementChart(@Query() query: DashboardQueryDto) {
         return this.dashboardService.getSocialEngagementChart(
-            query.period ?? DashboardPeriod.SEVEN_DAYS,
-        );
-    }
-
-    @Get('charts/quick-match')
-    @ApiOperation({ summary: '[Admin] Chart thống kê Quick Match (ghép thành công theo game)' })
-    @ApiQuery({ name: 'period', required: false, enum: DashboardPeriod })
-    getQuickMatchChart(@Query() query: DashboardQueryDto) {
-        return this.dashboardService.getQuickMatchChart(
             query.period ?? DashboardPeriod.SEVEN_DAYS,
         );
     }

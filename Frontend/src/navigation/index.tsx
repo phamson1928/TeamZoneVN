@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuthStore } from '../store/useAuthStore';
@@ -26,7 +26,6 @@ import { ChatRoomScreen } from '../screens/ChatRoomScreen';
 import { LeaderboardScreen } from '../screens/LeaderboardScreen';
 import { FriendsScreen } from '../screens/FriendsScreen';
 import { PublicProfileScreen } from '../screens/PublicProfileScreen';
-import { QuickMatchScreen } from '../screens/QuickMatchScreen';
 import { InviteFriendsScreen } from '../screens/InviteFriendsScreen';
 import { BlockedUsersScreen } from '../screens/BlockedUsersScreen';
 
@@ -37,7 +36,7 @@ export type RootStackParamList = {
   Register: undefined;
   MainTabs: undefined;
   ZoneDetails: { zoneId: string };
-  CreateZone: { gameId?: string } | undefined;
+  CreateZone: { gameId?: string; zoneId?: string } | undefined;
   EditProfile: undefined;
   AddGameProfile: undefined;
   TeamZoneVNs: { gameId: string; gameName: string };
@@ -47,7 +46,6 @@ export type RootStackParamList = {
   Leaderboard: undefined;
   Friends: undefined;
   PublicProfile: { userId: string };
-  QuickMatch: undefined;
   InviteFriends: { zoneId: string };
   BlockedUsers: undefined;
 };
@@ -192,7 +190,11 @@ const TabNavigator = () => (
 );
 
 const AuthNavigator = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
+  <Stack.Navigator screenOptions={{
+    headerShown: false,
+    animation: 'slide_from_right',
+    contentStyle: { backgroundColor: theme.colors.background },
+  }}>
     <Stack.Screen name="Login" component={LoginScreen} />
     <Stack.Screen name="Register" component={RegisterScreen} />
   </Stack.Navigator>
@@ -207,7 +209,7 @@ const MainNavigator = () => (
   >
     <Stack.Screen name="MainTabs" component={TabNavigator} />
     <Stack.Screen name="ZoneDetails" component={ZoneDetailsScreen} />
-    <Stack.Screen name="CreateZone" component={CreateZoneScreen} />
+    <Stack.Screen name="CreateZone" component={CreateZoneScreen} options={{ animation: 'slide_from_bottom' }} />
     <Stack.Screen name="EditProfile" component={EditProfileScreen} />
     <Stack.Screen name="AddGameProfile" component={AddGameProfileScreen} />
     <Stack.Screen name="TeamZoneVNs" component={TeamZoneVNsScreen} />
@@ -217,7 +219,6 @@ const MainNavigator = () => (
     <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
     <Stack.Screen name="Friends" component={FriendsScreen} />
     <Stack.Screen name="PublicProfile" component={PublicProfileScreen} />
-    <Stack.Screen name="QuickMatch" component={QuickMatchScreen} />
     <Stack.Screen name="InviteFriends" component={InviteFriendsScreen} />
     <Stack.Screen name="BlockedUsers" component={BlockedUsersScreen} />
   </Stack.Navigator>
@@ -260,8 +261,21 @@ export const AppNavigator = () => {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <NavigationContainer theme={{
+      ...DarkTheme,
+      colors: {
+        ...DarkTheme.colors,
+        background: theme.colors.background,
+        card: theme.colors.background,
+        primary: theme.colors.primary,
+        text: theme.colors.text,
+        border: theme.colors.border,
+      },
+    }}>
+      <Stack.Navigator screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: theme.colors.background },
+      }}>
         {showOnboarding ? (
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         ) : null}

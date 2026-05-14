@@ -29,11 +29,12 @@ import {
 } from 'lucide-react-native';
 import { format, isToday, isYesterday } from 'date-fns';
 import { theme } from '../theme';
-import { apiClient } from '../api/client';
+import { apiClient, BASE_URL } from '../api/client';
 import { useAuthStore } from '../store/useAuthStore';
 import { Message, UserPublicProfile } from '../types';
+import { FadeInView, ScaleInView } from '../components/AnimatedTransition';
 
-const SOCKET_URL = 'http://192.168.1.47:3000/chat';
+const SOCKET_URL = `${BASE_URL}/chat`;
 
 function formatMessageDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -74,6 +75,7 @@ export const ChatRoomScreen = () => {
     username: string;
     avatarUrl?: string | null;
   } | null>(null);
+  const [showMemberList, setShowMemberList] = useState(false);
   const [pendingLikeUserIds, setPendingLikeUserIds] = useState<Set<string>>(
     new Set(),
   );
@@ -346,77 +348,81 @@ export const ChatRoomScreen = () => {
     const avatarColor = getAvatarColor(item.sender?.username || '?');
 
     return (
-      <View
-        style={[styles.msgRow, isMine ? styles.msgRowMine : styles.msgRowOther]}
-      >
-        {/* Avatar cho người khác */}
-        {!isMine &&
-          (isFirstInGroup ? (
-            <TouchableOpacity
-              style={[styles.avatar, { backgroundColor: avatarColor }]}
-              onPress={() => openUserPreview(item.sender)}
-              activeOpacity={0.8}
-            >
-              {item.sender?.avatarUrl ? (
-                <Image
-                  source={{ uri: item.sender.avatarUrl }}
-                  style={styles.avatarImg}
-                  contentFit="cover"
-                />
-              ) : (
-                <Text style={styles.avatarLetter}>
-                  {item.sender?.username?.charAt(0)?.toUpperCase() || '?'}
-                </Text>
-              )}
-            </TouchableOpacity>
-          ) : (
-            <View style={[styles.avatar, { opacity: 0 }]} />
-          ))}
-
+      <FadeInView direction="up" delay={Math.min(index * 30, 300)} duration={350}>
         <View
-          style={[
-            styles.bubbleWrapper,
-            isMine ? styles.bubbleWrapperMine : styles.bubbleWrapperOther,
-          ]}
+          style={[styles.msgRow, isMine ? styles.msgRowMine : styles.msgRowOther]}
         >
-          {/* Tên người gửi (chỉ hiện dòng đầu nhóm) */}
-          {!isMine && isFirstInGroup && (
-            <TouchableOpacity
-              onPress={() => openUserPreview(item.sender)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.senderName, { color: avatarColor }]}>
-                {item.sender?.username}
-              </Text>
-            </TouchableOpacity>
-          )}
+          {/* Avatar cho người khác */}
+          {!isMine &&
+            (isFirstInGroup ? (
+              <TouchableOpacity
+                style={[styles.avatar, { backgroundColor: avatarColor }]}
+                onPress={() => openUserPreview(item.sender)}
+                activeOpacity={0.8}
+              >
+                {item.sender?.avatarUrl ? (
+                  <Image
+                    source={{ uri: item.sender.avatarUrl }}
+                    style={styles.avatarImg}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <Text style={styles.avatarLetter}>
+                    {item.sender?.username?.charAt(0)?.toUpperCase() || '?'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            ) : (
+              <View style={[styles.avatar, { opacity: 0 }]} />
+            ))}
 
           <View
             style={[
-              styles.bubble,
-              isMine ? styles.bubbleMine : styles.bubbleOther,
+              styles.bubbleWrapper,
+              isMine ? styles.bubbleWrapperMine : styles.bubbleWrapperOther,
             ]}
           >
-            <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>
-              {item.content}
-            </Text>
-            <Text style={[styles.bubbleTime, isMine && styles.bubbleTimeMine]}>
-              {formatMessageDate(item.createdAt)}
-            </Text>
-          </View>
-        </View>
+            {/* Tên người gửi (chỉ hiện dòng đầu nhóm) */}
+            {!isMine && isFirstInGroup && (
+              <TouchableOpacity
+                onPress={() => openUserPreview(item.sender)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.senderName, { color: avatarColor }]}>
+                  {item.sender?.username}
+                </Text>
+              </TouchableOpacity>
+            )}
 
-        {/* Nút xóa cho tin nhắn của mình */}
-        {isMine && (
-          <TouchableOpacity
-            style={styles.deleteBtn}
-            onPress={() => setShowDeleteModal(item.id)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Trash2 size={13} color="rgba(255,255,255,0.25)" />
-          </TouchableOpacity>
-        )}
-      </View>
+            <ScaleInView>
+              <View
+                style={[
+                  styles.bubble,
+                  isMine ? styles.bubbleMine : styles.bubbleOther,
+                ]}
+              >
+                <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>
+                  {item.content}
+                </Text>
+                <Text style={[styles.bubbleTime, isMine && styles.bubbleTimeMine]}>
+                  {formatMessageDate(item.createdAt)}
+                </Text>
+              </View>
+            </ScaleInView>
+          </View>
+
+          {/* Nút xóa cho tin nhắn của mình */}
+          {isMine && (
+            <TouchableOpacity
+              style={styles.deleteBtn}
+              onPress={() => setShowDeleteModal(item.id)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Trash2 size={13} color="rgba(255,255,255,0.25)" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </FadeInView>
     );
   };
 
@@ -441,7 +447,11 @@ export const ChatRoomScreen = () => {
           <ArrowLeft size={22} color="#FFF" />
         </TouchableOpacity>
 
-        <View style={styles.headerCenter}>
+        <TouchableOpacity
+          style={styles.headerCenter}
+          activeOpacity={0.7}
+          onPress={() => setShowMemberList(true)}
+        >
           <Text style={styles.headerTitle} numberOfLines={1}>
             {groupName || 'Phòng Chat'}
           </Text>
@@ -454,7 +464,7 @@ export const ChatRoomScreen = () => {
               </Text>
             </View>
           )}
-        </View>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.headerMenuBtn}
@@ -467,8 +477,8 @@ export const ChatRoomScreen = () => {
 
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        behavior="padding"
+        keyboardVerticalOffset={0}
       >
         {/* Message List */}
         {isLoadingHistory && messages.length === 0 ? (
@@ -644,6 +654,107 @@ export const ChatRoomScreen = () => {
             </View>
           </View>
         </View>
+      </Modal>
+
+      {/* Modal Danh sách thành viên (bottom sheet) */}
+      <Modal
+        visible={showMemberList}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowMemberList(false)}
+        statusBarTranslucent
+      >
+        <Pressable
+          style={styles.memberListOverlay}
+          onPress={() => setShowMemberList(false)}
+        >
+          <Pressable style={styles.memberListSheet} onPress={() => {}}>
+            {/* Handle bar */}
+            <View style={styles.memberListHandleBar}>
+              <View style={styles.memberListHandle} />
+            </View>
+
+            {/* Title */}
+            <Text style={styles.memberListTitle}>
+              {memberCount} thành viên
+            </Text>
+
+            {/* Member list */}
+            <FlatList
+              data={groupDetail?.members ?? []}
+              keyExtractor={(item: any) => item.userId}
+              style={styles.memberListScroll}
+              contentContainerStyle={styles.memberListScrollContent}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }: { item: any }) => {
+                const isLeader = item.role === 'LEADER';
+                const avatarColor = getAvatarColor(
+                  item.user?.username || '?',
+                );
+
+                return (
+                  <TouchableOpacity
+                    style={styles.memberRow}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      setShowMemberList(false);
+                      navigation.navigate('PublicProfile', {
+                        userId: item.userId,
+                      });
+                    }}
+                  >
+                    <View
+                      style={[
+                        styles.memberAvatar,
+                        { backgroundColor: avatarColor },
+                      ]}
+                    >
+                      {item.user?.avatarUrl ? (
+                        <Image
+                          source={{ uri: item.user.avatarUrl }}
+                          style={styles.memberAvatarImg}
+                          contentFit="cover"
+                        />
+                      ) : (
+                        <Text style={styles.memberAvatarLetter}>
+                          {item.user?.username
+                            ?.charAt(0)
+                            ?.toUpperCase() || '?'}
+                        </Text>
+                      )}
+                    </View>
+
+                    <View style={styles.memberInfo}>
+                      <Text style={styles.memberName} numberOfLines={1}>
+                        {item.user?.username || 'Unknown'}
+                      </Text>
+                      {isLeader && (
+                        <View style={styles.leaderBadge}>
+                          <Text style={styles.leaderBadgeText}>
+                            Trưởng nhóm
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {isLeader && (
+                      <View style={styles.crownIcon}>
+                        <Text style={styles.crownText}>👑</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+              ListEmptyComponent={
+                <View style={styles.memberListEmpty}>
+                  <Text style={styles.memberListEmptyText}>
+                    Không có thành viên
+                  </Text>
+                </View>
+              }
+            />
+          </Pressable>
+        </Pressable>
       </Modal>
 
       {/* Modal Hồ sơ nhanh từ chat */}
@@ -1019,29 +1130,31 @@ const styles = StyleSheet.create({
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    paddingHorizontal: 12,
-    paddingTop: 10,
-    backgroundColor: '#0E1A2E',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    backgroundColor: '#0A1628',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.06)',
-    gap: 10,
+    gap: 12,
   },
   inputWrapper: {
     flex: 1,
-    backgroundColor: '#1E293B',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.1)',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: Platform.OS === 'ios' ? 12 : 8,
     minHeight: 44,
+    maxHeight: 120,
     justifyContent: 'center',
   },
   input: {
     color: '#FFF',
     fontSize: 15,
-    maxHeight: 100,
     lineHeight: 20,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   sendBtn: {
     width: 44,
@@ -1050,14 +1163,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#2563FF',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: Platform.OS === 'ios' ? 0 : 2,
     shadowColor: '#2563FF',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   sendBtnDisabled: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -1274,5 +1388,109 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 13,
     fontWeight: '700',
+  },
+
+  // ─── Member List Modal (bottom sheet) ────────────────
+  memberListOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  memberListSheet: {
+    backgroundColor: '#0F172A',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '70%',
+    paddingBottom: 24,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  memberListHandleBar: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  memberListHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  memberListTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+  },
+  memberListScroll: {
+    maxHeight: 400,
+  },
+  memberListScrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  memberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderRadius: 14,
+  },
+  memberAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  memberAvatarImg: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  memberAvatarLetter: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  memberInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  memberName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFF',
+    flexShrink: 1,
+  },
+  leaderBadge: {
+    backgroundColor: 'rgba(37,99,255,0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(37,99,255,0.3)',
+  },
+  leaderBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#60A5FA',
+  },
+  crownIcon: {
+    marginLeft: 8,
+  },
+  crownText: {
+    fontSize: 18,
+  },
+  memberListEmpty: {
+    paddingVertical: 24,
+    alignItems: 'center',
+  },
+  memberListEmptyText: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 14,
   },
 });

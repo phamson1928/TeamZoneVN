@@ -42,7 +42,7 @@ export class DashboardService {
 
         const [
             totalUsers, activeUsers, bannedUsers,
-            totalZones, openZones, closedZones,
+            totalZones, openZones,
             totalGroups, activeGroups, dissolvedGroups,
             openReports, resolvedReports,
             newUsersToday, newUsersThisWeek,
@@ -56,7 +56,6 @@ export class DashboardService {
             this.prisma.user.count({ where: { status: 'BANNED' } }),
             this.prisma.zone.count(),
             this.prisma.zone.count({ where: { status: 'OPEN' } }),
-            this.prisma.zone.count({ where: { status: 'CLOSED' } }),
             this.prisma.group.count(),
             this.prisma.group.count({ where: { isActive: true } }),
             this.prisma.group.count({ where: { isActive: false } }),
@@ -74,7 +73,7 @@ export class DashboardService {
 
         return {
             users: { total: totalUsers, active: activeUsers, banned: bannedUsers },
-            zones: { total: totalZones, open: openZones, closed: closedZones, full: totalZones - openZones - closedZones },
+            zones: { total: totalZones, open: openZones, full: totalZones - openZones },
             groups: { total: totalGroups, active: activeGroups, dissolved: dissolvedGroups },
             reports: { open: openReports, resolved: resolvedReports, total: openReports + resolvedReports },
             growth: { newUsersToday, newUsersThisWeek, activeUsersToday, activeUsersThisWeek },
@@ -113,14 +112,14 @@ export class DashboardService {
           g.name        AS "gameName",
           COUNT(z.id)   AS count
         FROM "Game" g
-        LEFT JOIN "Zone" z ON z."gameId" = g.id AND z.status != 'CLOSED'
+        LEFT JOIN "Zone" z ON z."gameId" = g.id
         WHERE g."isActive" = true
         GROUP BY g.id, g.name
         ORDER BY count DESC
       `;
 
         return {
-            label: 'Phân bố Zones theo Game (không tính CLOSED)',
+            label: 'Phân bố Zones theo Game',
             data: rows.map((r) => ({ gameId: r.gameId, gameName: r.gameName, count: Number(r.count) })),
         };
     }
@@ -180,43 +179,6 @@ export class DashboardService {
         }));
 
         return { period, label: 'Xu hướng tương tác xã hội (Likes & Friendships)', data };
-    }
-
-    async getQuickMatchChart(period: DashboardPeriod) {
-        const periodStart = this.getPeriodStartDate(period);
-
-        const [matchedByGame, currentQueueByGame] = await Promise.all([
-            this.prisma.$queryRaw<{ gameId: string; gameName: string; count: bigint }[]>`
-        SELECT g.id AS "gameId", g.name AS "gameName", COUNT(z.id) AS count
-        FROM "Zone" z
-        JOIN "Game" g ON g.id = z."gameId"
-        WHERE z.title LIKE '[Quick Match]%' AND z."createdAt" >= ${periodStart}
-        GROUP BY g.id, g.name
-        ORDER BY count DESC
-      `,
-            this.prisma.$queryRaw<{ gameId: string; gameName: string; count: bigint }[]>`
-        SELECT g.id AS "gameId", g.name AS "gameName", COUNT(q.id) AS count
-        FROM "QuickMatchQueue" q
-        JOIN "Game" g ON g.id = q."gameId"
-        GROUP BY g.id, g.name
-        ORDER BY count DESC
-      `,
-        ]);
-
-        return {
-            period,
-            label: 'Thống kê Quick Match',
-            matchedByGame: matchedByGame.map((r) => ({
-                gameId: r.gameId,
-                gameName: r.gameName,
-                successCount: Number(r.count),
-            })),
-            currentQueue: currentQueueByGame.map((r) => ({
-                gameId: r.gameId,
-                gameName: r.gameName,
-                waiting: Number(r.count),
-            })),
-        };
     }
 
     async getLeaderboardTop() {

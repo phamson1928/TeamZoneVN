@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,15 +10,19 @@ import {
 import { Image } from 'expo-image';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
-import { Users, ChevronRight } from 'lucide-react-native';
+import { Users, ChevronRight, Gamepad2 } from 'lucide-react-native';
 import { Container } from '../components/Container';
 import { Header } from '../components/Header';
 import { theme } from '../theme';
 import { apiClient } from '../api/client';
 import { Group } from '../types';
+import { MyZonesScreen } from './MyZonesScreen';
+
+type TabKey = 'groups' | 'zones';
 
 export const GroupsScreen = () => {
   const navigation = useNavigation<any>();
+  const [activeTab, setActiveTab] = useState<TabKey>('groups');
 
   const {
     data: groups,
@@ -53,13 +57,16 @@ export const GroupsScreen = () => {
         })
       }
     >
-      <Image
-        source={{ uri: item.game.iconUrl || 'https://via.placeholder.com/150' }}
-        style={styles.gameIcon}
-        contentFit="cover"
-        transition={500}
-        cachePolicy="disk"
-      />
+      <View style={[styles.gameIcon, styles.gameIconPlaceholder]}>
+        <Gamepad2 size={22} color="#2563EB" />
+        <Image
+          source={{ uri: item.game.iconUrl || 'https://via.placeholder.com/150' }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          transition={500}
+          cachePolicy="disk"
+        />
+      </View>
       <View style={styles.groupInfo}>
         <Text style={styles.groupTitle} numberOfLines={1}>
           {item.zone.title}
@@ -80,9 +87,49 @@ export const GroupsScreen = () => {
     </TouchableOpacity>
   );
 
-  return (
-    <Container>
-      <Header title="Đội Của Bạn" />
+  const renderTabBar = () => (
+    <View style={styles.tabBar}>
+      <TouchableOpacity
+        style={[styles.tabItem, activeTab === 'groups' && styles.tabItemActive]}
+        onPress={() => setActiveTab('groups')}
+        activeOpacity={0.7}
+      >
+        <Users
+          size={16}
+          color={activeTab === 'groups' ? '#FFF' : theme.colors.textSecondary}
+        />
+        <Text
+          style={[
+            styles.tabLabel,
+            activeTab === 'groups' && styles.tabLabelActive,
+          ]}
+        >
+          Đội của tôi
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.tabItem, activeTab === 'zones' && styles.tabItemActive]}
+        onPress={() => setActiveTab('zones')}
+        activeOpacity={0.7}
+      >
+        <Gamepad2
+          size={16}
+          color={activeTab === 'zones' ? '#FFF' : theme.colors.textSecondary}
+        />
+        <Text
+          style={[
+            styles.tabLabel,
+            activeTab === 'zones' && styles.tabLabelActive,
+          ]}
+        >
+          Phòng chờ
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderGroupsTab = () => (
+    <>
       {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -121,6 +168,16 @@ export const GroupsScreen = () => {
           </View>
         </View>
       )}
+    </>
+  );
+
+  return (
+    <Container>
+      <Header title={activeTab === 'groups' ? 'Đội Của Bạn' : 'Phòng Chờ'} />
+      {renderTabBar()}
+      {activeTab === 'groups'
+        ? renderGroupsTab()
+        : <MyZonesScreen embedded />}
     </Container>
   );
 };
@@ -171,66 +228,101 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.06)',
   },
   gameIcon: {
-    width: 54,
-    height: 54,
-    borderRadius: theme.borderRadius.md,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  gameIconPlaceholder: {
+    backgroundColor: '#1E293B',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   groupInfo: {
     flex: 1,
     marginLeft: theme.spacing.md,
-    justifyContent: 'center',
   },
   groupTitle: {
+    color: '#FFF',
     fontSize: 15,
     fontWeight: '700',
-    color: '#fff',
-    marginBottom: 2,
   },
   gameName: {
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    fontWeight: '500',
-    marginBottom: 6,
+    color: theme.colors.primary,
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 3,
   },
   metaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 6,
+    gap: 8,
   },
   metaBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
     backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 999,
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   metaText: {
-    marginLeft: 6,
-    fontSize: 12,
     color: theme.colors.textSecondary,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '500',
   },
   actionContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginLeft: 8,
   },
   placeholderCard: {
-    backgroundColor: '#162338',
-    padding: theme.spacing.xl,
-    borderRadius: theme.borderRadius.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    borderStyle: 'dashed',
     alignItems: 'center',
+    padding: theme.spacing.lg,
   },
   placeholderText: {
     color: theme.colors.textSecondary,
     fontSize: 16,
+    fontWeight: '600',
     textAlign: 'center',
-    fontWeight: '500',
+    lineHeight: 22,
+  },
+
+  // ─── Tab Bar ──────────────────────────────
+  tabBar: {
+    flexDirection: 'row',
+    marginHorizontal: theme.spacing.md,
+    marginTop: 8,
+    marginBottom: 4,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 14,
+    padding: 4,
+  },
+  tabItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    borderRadius: 11,
+  },
+  tabItemActive: {
+    backgroundColor: '#2563FF',
+    shadowColor: '#2563FF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  tabLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.colors.textSecondary,
+  },
+  tabLabelActive: {
+    color: '#FFF',
+    fontWeight: '700',
   },
 });

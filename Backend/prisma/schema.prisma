@@ -55,6 +55,7 @@ model UserProfile {
   bio          String?
   playStyle    String?
   timezone     String?
+  contactInfo  String?   @db.VarChar(500)
   lastActiveAt DateTime?
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -112,6 +113,7 @@ model Zone {
   status          ZoneStatus          @default(OPEN)
   createdAt       DateTime            @default(now())
   autoApprove     Boolean             @default(false)
+  contactInfo     String?             @db.VarChar(500)
   group           Group?
   game            Game                @relation(fields: [gameId], references: [id], onDelete: Cascade)
   owner           User                @relation("ZoneOwner", fields: [ownerId], references: [id], onDelete: Cascade)
@@ -316,7 +318,6 @@ enum UserStatus {
 enum ZoneStatus {
   OPEN
   FULL
-  CLOSED
 }
 
 enum JoinRequestStatus {

@@ -131,7 +131,7 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 - [x] Filter theo game (tên, ID)
 - [x] Filter theo rank level (min-max logic validation)
 - [x] Filter theo tags
-- [x] Filter theo status (OPEN/FULL/CLOSED)
+- [x] Filter theo status (OPEN/FULL)
 - [x] Search theo title/description/username (Search API)
 - [x] Sort theo newest, oldest, players count
 
@@ -155,7 +155,7 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 
 - [x] `GET /zones/admin` - Danh sách tất cả zones (Admin, bypass ownership, pagination)
 - [x] `DELETE /zones/admin/:id` - Force delete zone (Admin)
-- [x] `PATCH /zones/admin/:id/close` - Force close zone (Admin)
+
 
 ---
 
@@ -218,7 +218,7 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 
 - [x] `GET /messages/admin` - Danh sách tất cả messages (Admin)
 - [x] `DELETE /messages/admin/:id` - Force delete message (Admin)
-- [ ] `GET /admin/messages/flagged` - Messages vi phạm (Auto-flagged, Admin)
+- [ ] `GET /admin/messages/flagged` - Messages vi phạm (Auto-flagged, Admin) — *đã xoá, không cần thiết*
 
 ### 6.5 Storage Optimization ✅ COMPLETED
 
@@ -276,7 +276,7 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 > **Note:** Các action đã có sẵn trong các phase trước.
 
 - [x] Ban user — `PATCH /users/:id/ban` (Phase 2.4)
-- [x] Close zone — `PATCH /zones/admin/:id/close` (Phase 4.5)
+
 - [x] Delete group — `DELETE /groups/admin/:id` (Phase 5.4)
 - [x] View report history — `GET /reports` (Admin list)
 
@@ -357,7 +357,7 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 
 - [x] `GET /zones/suggested` - Danh sách zone gợi ý cho user hiện tại
 - [x] Logic gợi ý: Dựa trên UserGameProfile (game + rank ±1 bậc), zone mới nhất
-- [x] Loại trừ: Zone user đã join/có request, zone FULL/CLOSED, zone của chính mình
+- [x] Loại trừ: Zone user đã join/có request, zone của chính mình
 - [x] Fallback: Nếu chưa có game profile → trả về zones OPEN mới nhất
 
 ### 9.5 Top User (User Like / Leaderboard) ✅ COMPLETED
@@ -416,20 +416,20 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 - [x] XSS prevention
 - [x] CORS configuration
 
-### 10.4 Professional UI & Animations (Aesthetics Pro Max)
+### 10.4 Professional UI & Animations (Aesthetics Pro Max) ✅ COMPLETED
 
 > [!IMPORTANT]
 > Mục tiêu: Nâng tầm UX/UI của ứng dụng Mobile lên mức "Premium" bằng cách áp dụng các micro-animations, layout transitions và hiệu ứng mượt mà (60FPS).
 
-- [ ] **Library Setup**: Cài đặt `react-native-reanimated`, `moti`, `react-native-gesture-handler`.
-- [ ] **Entrance Animations**: Áp dụng hiệu ứng Staggered Fade-in cho các form đăng nhập, đăng ký và danh sách Game.
-- [ ] **Layout Transitions**: Sử dụng `Layout Animations` của Reanimated để các phần tử di chuyển mượt mà khi lọc (Filter) hoặc xóa item.
-- [ ] **Micro-interactions**: 
-  - Hiệu ứng "Like" (Heart burst) sinh động.
-  - Hiệu ứng bấm nút (Haptic-like scaling).
-  - Shimmer Loading thay thế cho ActivityIndicator truyền thống.
-- [ ] **Chat Animations**: Tin nhắn mới bay vào mượt mà, bong bóng chat co giãn nhẹ.
-- [ ] **Lottie Integration**: Thêm các animation vector cho màn hình thành công (Success checkmark) hoặc khi không có dữ liệu (Empty states).
+- [x] **Library Setup**: Cài đặt `react-native-reanimated`, `moti`, `react-native-gesture-handler`.
+- [x] **Entrance Animations**: Áp dụng hiệu ứng Staggered Fade-in cho các form đăng nhập, đăng ký và danh sách Game.
+- [x] **Layout Transitions**: Sử dụng `Layout Animations` của Reanimated để các phần tử di chuyển mượt mà khi lọc (Filter) hoặc xóa item.
+- [x] **Micro-interactions**: 
+  - [x] Hiệu ứng "Like" (Heart burst) sinh động.
+  - [x] Hiệu ứng bấm nút (Haptic-like scaling) — dùng `react-native-reanimated` `withSpring`.
+  - [x] Shimmer Loading thay thế cho ActivityIndicator truyền thống.
+- [x] **Chat Animations**: Tin nhắn mới bay vào mượt mà, bong bóng chat co giãn nhẹ.
+- [x] **Lottie Integration**: Thêm các animation vector cho màn hình thành công (Success checkmark) hoặc khi không có dữ liệu (Empty states).
 
 ---
 
@@ -595,7 +595,7 @@ src/
 
 - ✅ View all zones (bypass ownership) — `GET /zones/admin`
 - ✅ Force delete zones — `DELETE /zones/admin/:id`
-- ✅ Force close zones — `PATCH /zones/admin/:id/close`
+
 
 ### Group Management (Phase 5.4)
 
@@ -647,5 +647,28 @@ src/
 | 5   | `CreateTagDto` thiếu validation (`@IsString`, `@IsNotEmpty`)                                               | `create-tag.dto.ts` | 🟡 Medium   | ✅ Đã sửa       |
 | 6   | `TagsService.getAllTags` throw Error khi không có tags — nên return `[]`                                   | `tags.service.ts`   | 🟠 Low      | ✅ Đã sửa       |
 | 7   | Duplicate methods: `findAllByAdmin` và `findAllForAdmin` gần giống nhau                                    | `zones.service.ts`  | 🟠 Low      | ✅ Đã xóa trùng |
+
+## Lịch sử thay đổi (12/05/2026)
+
+### Backend
+
+| Thay đổi | Mô tả |
+|----------|-------|
+| **Xoá CLOSED status** | Xoá `CLOSED` khỏi enum `ZoneStatus`. Migration xoá toàn bộ zone CLOSED trong DB. Xoá endpoint `PATCH /zones/admin/:id/close` và method `adminCloseZone`. |
+| **Fix `syncGroupFromZone`** | Group được tạo **ngay khi có người thứ 2** (chỉ cần ≥ 1 approved request). Dù chưa đủ người, zone vẫn OPEN (phòng chờ) nhưng đã có group để chat. Khi đủ `requiredPlayers + 1` → tự động set FULL. |
+| **Auto-calc status khi edit** | Khi update `requiredPlayers`, backend tự tính lại status: so sánh `currentMembers` (group hoặc approved requests + owner) với `requiredPlayers + 1`. |
+| **Thêm group vào API response** | `findOneByPublic`: include `group.members` để detail page hiển thị thành viên. `findAllByOwner`: include `group._count.members`. `getSuggestedZones`: bỏ filter `status: OPEN`, thêm include `group`. |
+| **Dashboard stats** | Xoá `closedZones` khỏi dashboard overview. Xoá `AND status != 'CLOSED'` khỏi raw SQL chart. |
+| **Seed data** | Set status `FULL` cho zone "Leo Rank Ascendant/Immortal" sau khi tạo group (đủ 3/3 thành viên). |
+
+### Frontend
+
+| Thay đổi | Mô tả |
+|----------|-------|
+| **HomeScreen** | Luôn gọi `/zones/search` thay vì `/zones/suggested` → hiện tất cả zones. `currentPlayers` ưu tiên `group._count.members`. "Cần thêm" hiển thị `remainingSlots` thay vì `requiredPlayers`. |
+| **ZoneDetailsScreen** | Hiển thị đúng số thành viên hiện tại (từ group members). Avatar stack: owner + members + slot trống. Stats: `currentPlayers/maxPlayers`, "Cần thêm X" hoặc "Đã đầy". |
+| **MyZonesScreen** | "Phòng chờ" (embedded) filter `status !== 'FULL'`. `currentPlayers` ưu tiên `group._count.members`. |
+| **TeamZoneVNsScreen** | `currentPlayers` ưu tiên `group._count.members`. |
+| **types/index.ts** | Xoá `CLOSED` khỏi `ZoneStatus`. Thêm `members` vào `group` field trong `Zone` interface. |
 
 

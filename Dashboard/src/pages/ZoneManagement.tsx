@@ -6,7 +6,6 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
-  Lock,
   Gamepad2,
   PieChart as PieChartIcon,
   TrendingUp,
@@ -26,7 +25,7 @@ interface Zone {
   id: string;
   title: string;
   description: string;
-  status: 'OPEN' | 'FULL' | 'CLOSED';
+  status: 'OPEN' | 'FULL';
   requiredPlayers: number;
   createdAt: string;
   owner: {
@@ -70,9 +69,8 @@ export default function ZoneManagement() {
   
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
-    action: 'close' | 'delete' | null;
     zoneId: string | null;
-  }>({ open: false, action: null, zoneId: null });
+  }>({ open: false, zoneId: null });
 
   const COLORS = ['#3b82f6', '#ec4899', '#eab308', '#10b981', '#8b5cf6', '#f97316'];
   
@@ -133,22 +131,12 @@ export default function ZoneManagement() {
     refetchInterval: isLive ? 3000 : false,
   });
 
-  const closeMutation = useMutation({
-    mutationFn: (id: string) => zoneApi.close(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['zones'] });
-      toast.success('Đã đóng Zone thành công');
-      setConfirmDialog({ open: false, action: null, zoneId: null });
-    },
-    onError: () => toast.error('Không thể đóng Zone'),
-  });
-
   const deleteMutation = useMutation({
     mutationFn: (id: string) => zoneApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['zones'] });
       toast.success('Đã xóa Zone rác thành công');
-      setConfirmDialog({ open: false, action: null, zoneId: null });
+      setConfirmDialog({ open: false, zoneId: null });
     },
     onError: () => toast.error('Không thể xóa Zone'),
   });
@@ -208,8 +196,7 @@ export default function ZoneManagement() {
 
   const confirmAction = () => {
     if (!confirmDialog.zoneId) return;
-    if (confirmDialog.action === 'close') closeMutation.mutate(confirmDialog.zoneId);
-    if (confirmDialog.action === 'delete') deleteMutation.mutate(confirmDialog.zoneId);
+    deleteMutation.mutate(confirmDialog.zoneId);
   };
 
   const handleExport = () => {
@@ -539,13 +526,8 @@ export default function ZoneManagement() {
                         </td>
                         <td className="px-6 py-5 text-right">
                           <div className="flex items-center justify-end gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
-                             {zone.status !== 'CLOSED' && (
-                               <button onClick={() => setConfirmDialog({ open: true, action: 'close', zoneId: zone.id })} className="p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-50/80 rounded-[10px] transition-all active:scale-95" title="Khóa Zone">
-                                 <Lock className="w-4 h-4" />
-                               </button>
-                             )}
-                             <button onClick={() => setConfirmDialog({ open: true, action: 'delete', zoneId: zone.id })} className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50/80 rounded-[10px] transition-all active:scale-95" title="Xóa Vĩnh Viễn">
-                                 <Trash2 className="w-4 h-4" />
+                             <button onClick={() => setConfirmDialog({ open: true, zoneId: zone.id })} className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50/80 rounded-[10px] transition-all active:scale-95" title="Xóa Vĩnh Viễn">
+                                <Trash2 className="w-4 h-4" />
                              </button>
                           </div>
                         </td>
@@ -678,22 +660,22 @@ export default function ZoneManagement() {
 
       <AppleModal
          isOpen={confirmDialog.open}
-         onClose={() => setConfirmDialog({ open: false, action: null, zoneId: null })}
+         onClose={() => setConfirmDialog({ open: false, zoneId: null })}
          width="sm"
       >
-        <div className={`h-1.5 ${confirmDialog.action === 'delete' ? 'bg-gradient-to-r from-red-500 to-rose-400' : 'bg-gradient-to-r from-amber-500 to-orange-400'}`} />
+        <div className="h-1.5 bg-gradient-to-r from-red-500 to-rose-400" />
         <div className="p-8">
-          <div className={`mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-6 ${confirmDialog.action === 'delete' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-500'}`}>
-             {confirmDialog.action === 'delete' ? <Trash2 className="w-7 h-7" /> : <Lock className="w-7 h-7" />}
+          <div className="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-red-50 text-red-500">
+             <Trash2 className="w-7 h-7" />
           </div>
           <div className="text-center space-y-2 mb-8">
-            <h3 className="text-xl font-black text-gray-900 tracking-tight">Xác nhận {confirmDialog.action === 'delete' ? 'Xóa' : 'Đóng'} Zone</h3>
-            <p className="text-sm font-medium text-gray-500 leading-relaxed">Bạn có chắc chắn muốn thực hiện hành động này? Điều này không thể hoàn tác.</p>
+            <h3 className="text-xl font-black text-gray-900 tracking-tight">Xác nhận Xóa Zone</h3>
+            <p className="text-sm font-medium text-gray-500 leading-relaxed">Bạn có chắc chắn muốn xóa Zone này? Điều này không thể hoàn tác.</p>
           </div>
           
           <div className="flex gap-3">
-             <button onClick={() => setConfirmDialog({ open: false, action: null, zoneId: null })} className="flex-1 px-4 py-3.5 font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-[18px] transition-all active:scale-95">Hủy</button>
-             <button onClick={confirmAction} className={`flex-1 px-4 py-3.5 font-bold text-white shadow-xl rounded-[18px] transition-all active:scale-95 ${confirmDialog.action === 'delete' ? 'bg-red-500 hover:bg-red-600 shadow-red-500/25' : 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/25'}`}>Xác nhận</button>
+             <button onClick={() => setConfirmDialog({ open: false, zoneId: null })} className="flex-1 px-4 py-3.5 font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-[18px] transition-all active:scale-95">Hủy</button>
+             <button onClick={confirmAction} className="flex-1 px-4 py-3.5 font-bold text-white shadow-xl rounded-[18px] transition-all active:scale-95 bg-red-500 hover:bg-red-600 shadow-red-500/25">Xác nhận</button>
           </div>
         </div>
       </AppleModal>

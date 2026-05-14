@@ -1493,7 +1493,7 @@ curl -s http://localhost:3000/zones/my \
 
 ### GET `/zones/suggested`
 
-Lấy danh sách zones gợi ý cho user hiện tại (Dựa trên Game Profiles, Rank phù hợp, và loại trừ các zone đã tham gia).
+Lấy danh sách zones gợi ý cho user hiện tại (dựa trên Game Profiles, ưu tiên game cùng sở thích, loại trừ zone đã request và zone của chính user).
 
 **Auth Required:** Yes
 
@@ -1552,10 +1552,12 @@ curl -s -X PATCH http://localhost:3000/zones/e9593755-8bb5-4747-a4a2-e669e457c01
 | description | string | No | Mô tả mới |
 | minRankLevel | enum | No | Rank tối thiểu |
 | maxRankLevel | enum | No | Rank tối đa |
-| requiredPlayers | number | No | Số người cần tìm |
-| status | enum | No | OPEN, FULL, CLOSED |
+| requiredPlayers | number | No | Số người cần tìm (không tính owner). Nếu thay đổi, hệ thống tự động tính lại status FULL/OPEN dựa trên số thành viên hiện tại. |
+| status | enum | No | OPEN, FULL |
 | tagIds | string[] | No | Cập nhật tags (replace all) |
 | contacts | object[] | No | Cập nhật contacts (replace all, cùng format như create) |
+
+> **Lưu ý:** Khi thay đổi `requiredPlayers`, backend tự động so sánh `số thành viên hiện tại (group members hoặc approved requests + owner)` với `requiredPlayers + 1`. Nếu đủ hoặc vượt → status tự set `FULL`, ngược lại → `OPEN`.
 
 **Response:**
 
@@ -1822,46 +1824,17 @@ curl -s -X DELETE http://localhost:3000/zones/admin/zone-uuid \
 }
 ```
 
-### PATCH `/zones/admin/:id/close`
-
-Force close zone (Admin only).
-
-**Auth Required:** Yes (Admin)
-
-**Path Parameters:**
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| id | string (UUID) | Yes | Zone ID |
-
-```bash
-curl -s -X PATCH http://localhost:3000/zones/admin/zone-uuid/close \
-  -H "Authorization: Bearer <admin_token>"
-```
-
-**Response:**
-
-```json
-{
-  "message": "Zone đã được đóng bởi admin",
-  "data": {
-    "id": "zone-uuid",
-    "status": "CLOSED",
-    "owner": {
-      "id": "user-uuid",
-      "username": "owner_user",
-      "email": "owner@example.com"
-    }
-  }
-}
-```
-
 ---
 
 ## 10. Join Requests
 
 ### POST `/zones/:id/join`
 
-Gửi yêu cầu tham gia một zone. Nếu zone có `autoApprove = true`, request sẽ được tự động chấp nhận và group sẽ tự tạo khi đủ người.
+Gửi yêu cầu tham gia một zone. Khi request được **approve** (thủ công hoặc autoApprove), hệ thống tự động:
+
+1. **Tạo group ngay** nếu chưa có (owner LEADER + member) — dù chưa đủ người, zone vẫn ở trạng thái OPEN (phòng chờ)
+2. **Thêm member vào group hiện tại** nếu đã có group
+3. **Tự động set status = FULL** khi số thành viên đạt `requiredPlayers + 1`
 
 **Auth Required:** Yes
 
@@ -3272,7 +3245,7 @@ curl -s http://localhost:3000/dashboard/charts/zones \
 {
   "success": true,
   "data": {
-    "label": "Phân bố Zones theo Game (không tính CLOSED)",
+    "label": "Phân bố Zones theo Game",
     "data": [
       { "gameId": "uuid-1", "gameName": "Liên Quân Mobile", "count": 45 },
       { "gameId": "uuid-2", "gameName": "PUBG Mobile", "count": 30 }
@@ -3730,7 +3703,6 @@ PRO
 ```
 OPEN
 FULL
-CLOSED
 ```
 
 ### UserRole

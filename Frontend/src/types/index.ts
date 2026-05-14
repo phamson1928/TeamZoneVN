@@ -1,6 +1,6 @@
 export type UserRole = 'USER' | 'ADMIN';
 export type UserStatus = 'ACTIVE' | 'BANNED';
-export type ZoneStatus = 'OPEN' | 'FULL' | 'CLOSED';
+export type ZoneStatus = 'OPEN' | 'FULL';
 export type Platform = 'PC' | 'CONSOLE' | 'MOBILE';
 export type ContactMethodType = 'DISCORD' | 'INGAME' | 'OTHER';
 
@@ -21,6 +21,7 @@ export interface UserProfile {
   bio?: string | null;
   playStyle?: string | null;
   timezone?: string | null;
+  contactInfo?: string | null;
   lastActiveAt?: string | null;
 }
 
@@ -55,6 +56,7 @@ export interface Zone {
   ownerId: string;
   title: string;
   description: string;
+  contactInfo?: string | null;
   requiredPlayers: number;
   status: ZoneStatus;
   createdAt: string;
@@ -66,6 +68,14 @@ export interface Zone {
     avatarUrl?: string | null;
   };
   game?: Game;
+  group?: {
+    id: string;
+    leaderId: string;
+    _count: {
+      members: number;
+    };
+    members?: GroupMember[];
+  };
   joinRequests?: { status: string }[];
   _count?: {
     joinRequests: number;
@@ -198,13 +208,6 @@ export interface ZoneInvite {
   inviter?: User;
   invitee?: User;
   zone?: Zone;
-}
-
-export interface QuickMatchStatus {
-  inQueue: boolean;
-  gameId?: string;
-  gameName?: string;
-  queuedSince?: string;
 }
 
 export type FriendshipRelation =

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -25,6 +25,7 @@ import {
   Gamepad2,
   Tag,
   AlertCircle,
+  MessageCircle,
 } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { Game, Tag as TagType } from '../types';
@@ -40,12 +41,15 @@ export const CreateZoneScreen = () => {
   const route = useRoute<CreateZoneRouteProp>();
   const queryClient = useQueryClient();
   const initialGameId = route.params?.gameId ?? null;
+  const editZoneId = route.params?.zoneId ?? null;
+  const isEditMode = !!editZoneId;
 
   const [selectedGameId, setSelectedGameId] = useState<string | null>(
     initialGameId,
   );
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [contactInfo, setContactInfo] = useState('');
   const [requiredPlayers, setRequiredPlayers] = useState(2);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
@@ -100,6 +104,32 @@ export const CreateZoneScreen = () => {
     },
   });
 
+  // ── Edit mode: fetch existing zone ──
+  const { data: existingZone, isLoading: zoneLoading } = useQuery({
+    queryKey: ['zone', editZoneId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/zones/${editZoneId}`);
+      return response.data.data;
+    },
+    enabled: isEditMode,
+  });
+
+  // Pre-fill form when existing zone data is loaded (edit mode)
+  const prefilled = useRef(false);
+  useEffect(() => {
+    if (isEditMode && existingZone && !prefilled.current) {
+      prefilled.current = true;
+      setSelectedGameId(existingZone.gameId);
+      setTitle(existingZone.title || '');
+      setDescription(existingZone.description || '');
+      setContactInfo(existingZone.contactInfo || '');
+      setRequiredPlayers(existingZone.requiredPlayers || 2);
+      setSelectedTagIds(
+        existingZone.tags?.map((t: any) => t.tagId || t.id) || [],
+      );
+    }
+  }, [isEditMode, existingZone]);
+
   const { data: tags, isLoading: tagsLoading } = useQuery({
     queryKey: ['tags'],
     queryFn: async () => {
@@ -115,6 +145,7 @@ export const CreateZoneScreen = () => {
       description: string;
       requiredPlayers: number;
       tagIds: string[];
+      contactInfo?: string;
     }) => {
       const response = await apiClient.post('/zones', data);
       return response.data;
@@ -133,6 +164,31 @@ export const CreateZoneScreen = () => {
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Không thể tạo phòng';
+      showAlert('Lỗi', Array.isArray(message) ? message[0] : message, 'error');
+    },
+  });
+
+  const updateZoneMutation = useMutation({
+    mutationFn: async (data: {
+      gameId: string;
+      title: string;
+      description: string;
+      requiredPlayers: number;
+      tagIds: string[];
+      contactInfo?: string;
+    }) => {
+      const response = await apiClient.patch(`/zones/${editZoneId}`, data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['zones'] });
+      queryClient.invalidateQueries({ queryKey: ['myZones'] });
+      showAlert('Thành công', 'Đã cập nhật phòng!', 'success', () => {
+        (navigation as any).navigate('MainTabs');
+      });
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Không thể cập nhật';
       showAlert('Lỗi', Array.isArray(message) ? message[0] : message, 'error');
     },
   });
@@ -157,13 +213,20 @@ export const CreateZoneScreen = () => {
       return;
     }
 
-    createZoneMutation.mutate({
+    const payload = {
       gameId: selectedGameId,
       title: title.trim(),
       description: description.trim(),
       requiredPlayers: players,
       tagIds: selectedTagIds,
-    });
+      contactInfo: contactInfo.trim() || undefined,
+    };
+
+    if (isEditMode) {
+      updateZoneMutation.mutate(payload);
+    } else {
+      createZoneMutation.mutate(payload);
+    }
   };
 
   return (
@@ -190,8 +253,12 @@ export const CreateZoneScreen = () => {
       >
         {/* Page title inside scroll body */}
         <View style={styles.pageHeader}>
-          <Text style={styles.pageTitle}>Tạo phòng mới</Text>
-          <Text style={styles.pageSubtitle}>Tìm đồng đội ngay</Text>
+          <Text style={styles.pageTitle}>
+            {isEditMode ? 'Chỉnh sửa phòng' : 'Tạo phòng mới'}
+          </Text>
+          <Text style={styles.pageSubtitle}>
+            {isEditMode ? 'Cập nhật thông tin phòng' : 'Tìm đồng đội ngay'}
+          </Text>
         </View>
 
         {/* ── Game Selection ── */}
@@ -262,18 +329,36 @@ export const CreateZoneScreen = () => {
         <View style={styles.inputWrap}>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="Mô tả chi tiết về phòng của bạn..."
+            placeholder="Mô tả chi tiết yêu cầu, kỹ năng, hoặc phong cách chơi..."
             placeholderTextColor="#475569"
             value={description}
             onChangeText={setDescription}
             multiline
             numberOfLines={4}
-            maxLength={500}
+            textAlignVertical="top"
           />
-          <Text style={[styles.charCount, styles.charCountArea]}>
-            {description.length}/500
-          </Text>
         </View>
+
+        {/* ── Contact Info ── */}
+        <SectionLabel
+          title="Thông tin liên lạc (Tùy chọn)"
+          icon={<MessageCircle color="#2563FF" size={15} strokeWidth={2.5} />}
+        />
+        <View style={styles.inputWrap}>
+          <TextInput
+            style={styles.input}
+            placeholder="Discord: user#1234, In-game ID..."
+            placeholderTextColor="#475569"
+            value={contactInfo}
+            onChangeText={setContactInfo}
+            maxLength={200}
+          />
+          <Text style={styles.charCount}>{contactInfo.length}/200</Text>
+        </View>
+        <Text style={styles.helperText}>
+          Nếu bỏ trống, hệ thống sẽ sử dụng thông tin liên lạc mặc định trong hồ
+          sơ của bạn.
+        </Text>
 
         {/* ── Tags ── */}
         <SectionLabel
@@ -354,18 +439,20 @@ export const CreateZoneScreen = () => {
         <TouchableOpacity
           style={[
             styles.submitBtn,
-            createZoneMutation.isPending && styles.submitBtnDisabled,
+            (createZoneMutation.isPending || updateZoneMutation.isPending) && styles.submitBtnDisabled,
           ]}
           onPress={handleSubmit}
-          disabled={createZoneMutation.isPending}
+          disabled={createZoneMutation.isPending || updateZoneMutation.isPending}
           activeOpacity={0.85}
         >
-          {createZoneMutation.isPending ? (
+          {createZoneMutation.isPending || updateZoneMutation.isPending ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <>
               <Sparkles color="#FFFFFF" size={18} strokeWidth={2.5} />
-              <Text style={styles.submitText}>Tạo phòng ngay</Text>
+              <Text style={styles.submitText}>
+                {isEditMode ? 'Lưu thay đổi' : 'Tạo phòng ngay'}
+              </Text>
             </>
           )}
         </TouchableOpacity>
@@ -610,6 +697,13 @@ const styles = StyleSheet.create({
   charCountArea: {
     top: 'auto',
     bottom: 10,
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#475569',
+    marginTop: -16,
+    marginBottom: 24,
+    lineHeight: 18,
   },
 
   /* ─── tags ─── */

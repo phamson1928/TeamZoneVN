@@ -5,7 +5,6 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   Animated,
   Platform,
   Modal,
@@ -29,6 +28,7 @@ import {
 } from 'lucide-react-native';
 import { Container } from '../components/Container';
 import { Button } from '../components/Button';
+import { ShimmerLoading } from '../components/ShimmerLoading';
 import { apiClient } from '../api/client';
 import { theme } from '../theme';
 import { Zone } from '../types';
@@ -43,8 +43,6 @@ const getStatusColor = (status: string) => {
       return theme.colors.neonGreen;
     case 'FULL':
       return theme.colors.warning;
-    case 'CLOSED':
-      return theme.colors.error;
     default:
       return theme.colors.textSecondary;
   }
@@ -145,6 +143,15 @@ export const ZoneDetailsScreen = () => {
   });
 
   const isOwner = currentUser?.id === zone?.ownerId;
+
+  // Tính số người hiện tại: group members nếu có group, không thì approved requests + owner
+  const groupMembers = zone?.group?.members ?? [];
+  const approvedRequests = zone?.joinRequests ?? [];
+  const currentPlayers = groupMembers.length > 0
+    ? groupMembers.length
+    : approvedRequests.length + 1; // +1 cho owner
+  const maxPlayers = (zone?.requiredPlayers ?? 0) + 1;
+  const remainingSlots = Math.max(0, maxPlayers - currentPlayers);
 
   const { data: rawJoinRequests } = useQuery({
     queryKey: ['zone-requests', zoneId],
@@ -298,9 +305,62 @@ export const ZoneDetailsScreen = () => {
   if (isLoading) {
     return (
       <Container>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+        <View style={styles.header}>
+          <View style={styles.backButton}>
+            <ShimmerLoading width={24} height={24} borderRadius={12} />
+          </View>
+          <ShimmerLoading width={120} height={20} borderRadius={6} />
+          <View style={styles.headerSpacer} />
         </View>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Skeleton Status Badge */}
+          <View style={styles.statusContainer}>
+            <ShimmerLoading width={160} height={32} borderRadius={20} />
+          </View>
+
+          {/* Skeleton Title */}
+          <ShimmerLoading width="80%" height={32} borderRadius={8} style={{ marginBottom: 12 }} />
+          <ShimmerLoading width="60%" height={32} borderRadius={8} style={{ marginBottom: 16 }} />
+
+          {/* Skeleton Description */}
+          <ShimmerLoading width="100%" height={16} borderRadius={6} style={{ marginBottom: 8 }} />
+          <ShimmerLoading width="100%" height={16} borderRadius={6} style={{ marginBottom: 8 }} />
+          <ShimmerLoading width="70%" height={16} borderRadius={6} style={{ marginBottom: 24 }} />
+
+          {/* Skeleton Game Card */}
+          <View style={[styles.gameCard, { flexDirection: 'row', alignItems: 'center', gap: 16 }]}>
+            <ShimmerLoading width={56} height={56} borderRadius={16} />
+            <View style={{ flex: 1 }}>
+              <ShimmerLoading width={60} height={12} borderRadius={6} style={{ marginBottom: 6 }} />
+              <ShimmerLoading width={140} height={18} borderRadius={6} />
+            </View>
+          </View>
+
+          {/* Skeleton Info Grid */}
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 24 }}>
+            {[1, 2, 3].map(i => (
+              <View key={i} style={{ flex: 1, backgroundColor: 'rgba(30,41,59,0.7)', padding: 16, borderRadius: 16 }}>
+                <ShimmerLoading width={24} height={24} borderRadius={12} style={{ marginBottom: 8 }} />
+                <ShimmerLoading width={40} height={12} borderRadius={6} style={{ marginBottom: 4 }} />
+                <ShimmerLoading width={60} height={16} borderRadius={6} />
+              </View>
+            ))}
+          </View>
+
+          {/* Skeleton Tags */}
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 24 }}>
+            {[1, 2, 3, 4].map(i => (
+              <ShimmerLoading key={i} width={80} height={32} borderRadius={16} />
+            ))}
+          </View>
+
+          {/* Skeleton Buttons */}
+          <ShimmerLoading width="100%" height={50} borderRadius={14} style={{ marginTop: 32 }} />
+          <ShimmerLoading width="100%" height={50} borderRadius={14} style={{ marginTop: 12 }} />
+        </ScrollView>
       </Container>
     );
   }
@@ -395,7 +455,7 @@ export const ZoneDetailsScreen = () => {
           <View style={styles.gameCard}>
             <View style={styles.gameIconContainer}>
               <Image
-                source={{ uri: zone.game.iconUrl }}
+                source={{ uri: zone.game.iconUrl || 'https://via.placeholder.com/150' }}
                 style={styles.gameIcon}
                 contentFit="cover"
                 transition={500}
@@ -407,8 +467,8 @@ export const ZoneDetailsScreen = () => {
               <Text style={styles.gameName}>{zone.game.name}</Text>
               {zone.game.platforms && zone.game.platforms.length > 0 && (
                 <View style={styles.platformBadges}>
-                  {zone.game.platforms.map(platform => (
-                    <View key={platform} style={styles.platformBadge}>
+                  {zone.game.platforms.map((platform, index) => (
+                    <View key={`${platform}-${index}`} style={styles.platformBadge}>
                       {platform === 'PC' && (
                         <Monitor size={12} color={theme.colors.primary} />
                       )}
@@ -439,9 +499,11 @@ export const ZoneDetailsScreen = () => {
               <Users color={theme.colors.accent} size={20} />
             </View>
             <View style={styles.flexOne}>
-              <Text style={styles.statValue}>{zone.requiredPlayers}</Text>
+              <Text style={styles.statValue}>
+                {remainingSlots > 0 ? `${currentPlayers}/${maxPlayers}` : 'Đã đầy'}
+              </Text>
               <Text style={styles.statLabel} numberOfLines={1}>
-                Cần thêm
+                {remainingSlots > 0 ? `Cần thêm ${remainingSlots}` : 'Đủ người'}
               </Text>
             </View>
           </View>
@@ -506,8 +568,29 @@ export const ZoneDetailsScreen = () => {
                 </View>
               </View>
 
+              {/* Group/Approved Members */}
+              {groupMembers.filter(m => m.userId !== zone.ownerId).slice(0, 3).map((member) => (
+                <View key={member.userId} style={styles.participantAvatarWrapper}>
+                  {member.user?.avatarUrl ? (
+                    <Image
+                      source={{ uri: member.user.avatarUrl }}
+                      style={styles.participantAvatar}
+                      contentFit="cover"
+                      transition={500}
+                      cachePolicy="disk"
+                    />
+                  ) : (
+                    <View style={[styles.participantAvatar, styles.placeholderAvatar]}>
+                      <Text style={styles.avatarLetter}>
+                        {member.user?.username?.[0]?.toUpperCase() ?? '?'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+
               {/* Empty Slots */}
-              {Array.from({ length: Math.min(zone.requiredPlayers, 3) }).map(
+              {Array.from({ length: Math.min(remainingSlots, 3) }).map(
                 (_, i) => (
                   <View
                     key={`empty-slot-${i}`}
@@ -522,20 +605,20 @@ export const ZoneDetailsScreen = () => {
                 ),
               )}
 
-              {zone.requiredPlayers > 3 && (
+              {remainingSlots > 3 && (
                 <View style={[styles.participantAvatar, styles.moreSlots]}>
                   <Text style={styles.moreSlotsText}>
-                    +{zone.requiredPlayers - 3}
+                    +{remainingSlots - 3}
                   </Text>
                 </View>
               )}
             </View>
             <Text style={styles.slotCountText}>
-              Còn trống{' '}
-              <Text style={styles.slotCountHighlight}>
-                {zone.requiredPlayers}
-              </Text>{' '}
-              slot
+              {remainingSlots > 0 ? (
+                <>Còn trống <Text style={styles.slotCountHighlight}>{remainingSlots}</Text> slot</>
+              ) : (
+                <Text style={styles.slotCountHighlight}>Đã đầy</Text>
+              )}
             </Text>
           </View>
         </View>
@@ -543,9 +626,9 @@ export const ZoneDetailsScreen = () => {
         {/* Tags */}
         {zone.tags && zone.tags.length > 0 && (
           <View style={styles.tagsContainer}>
-            {zone.tags.map(tagRelation => (
+            {zone.tags.map((tagRelation, index) => (
               <View
-                key={`${tagRelation.zoneId}-${tagRelation.tagId}`}
+                key={`${tagRelation.zoneId}-${tagRelation.tagId}-${index}`}
                 style={styles.tag}
               >
                 <Text style={styles.tagText}>#{tagRelation.tag.name}</Text>
@@ -554,13 +637,24 @@ export const ZoneDetailsScreen = () => {
           </View>
         )}
 
+        {/* Custom Contact Info */}
+        {zone.contactInfo && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Thông tin liên lạc</Text>
+            <View style={styles.contactInfoCard}>
+              <MessageCircle size={18} color={theme.colors.primary} />
+              <Text style={styles.contactInfoText}>{zone.contactInfo}</Text>
+            </View>
+          </View>
+        )}
+
         {/* Contact Methods */}
         {zone.contacts && zone.contacts.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Liên hệ</Text>
             <View style={styles.contactsContainer}>
-              {zone.contacts.map(contact => (
-                <View key={contact.id} style={styles.contactCard}>
+              {zone.contacts.map((contact, index) => (
+                <View key={contact.id || `contact-${index}`} style={styles.contactCard}>
                   <View style={styles.contactIcon}>
                     {contact.type === 'DISCORD' && (
                       <MessageCircle size={16} color={theme.colors.primary} />
@@ -640,8 +734,8 @@ export const ZoneDetailsScreen = () => {
               </View>
             ) : (
               <View style={styles.requestsList}>
-                {pendingRequests.map(req => (
-                  <View key={req.id} style={styles.requestCard}>
+                {pendingRequests.map((req, index) => (
+                  <View key={req.id || `req-${index}`} style={styles.requestCard}>
                     <View style={styles.requestUserRow}>
                       {req.user.avatarUrl ? (
                         <Image
@@ -1014,6 +1108,22 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
     textTransform: 'uppercase',
     letterSpacing: 1.5,
+  },
+  contactInfoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(37,99,255,0.08)',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(37,99,255,0.15)',
+  },
+  contactInfoText: {
+    fontSize: 14,
+    color: theme.colors.primary,
+    fontWeight: '600',
+    flex: 1,
   },
   sectionHeaderRow: {
     flexDirection: 'row',

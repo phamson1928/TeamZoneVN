@@ -4,6 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CreateZoneDto } from './dto/create-zone.dto.js';
 import { UpdateZoneDto } from './dto/update-zone.dto.js';
 import { SearchZonesDto, ZoneSortBy } from './dto/search-zones.dto.js';
@@ -12,12 +13,45 @@ import { Prisma, ContactMethodType } from '@prisma/client';
 
 @Injectable()
 export class ZonesService {
-  constructor(private prisma: PrismaService) { }
+  private readonly storageBaseUrl: string;
+
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    this.storageBaseUrl = `${supabaseUrl}/storage/v1/object/public/game-assets`;
+  }
+
+  private transformGameUrls(game: any) {
+    if (!game) return game;
+
+    const transform = (path: string | null) => {
+      if (!path) return null;
+      if (path.startsWith('http')) return path;
+      return `${this.storageBaseUrl}/${path}`;
+    };
+
+    return {
+      ...game,
+      iconUrl: transform(game.iconUrl),
+    };
+  }
 
   async create(ownerId: string, createZoneDto: CreateZoneDto) {
     const { tagIds, contacts, ...zoneData } = createZoneDto;
 
-    // Kiểm tra giới hạn tạo zone – chỉ đếm zone đang OPEN hoặc FULL, không đếm zone đã CLOSED
+    // Fetch user profile to get default contactInfo if not provided
+    if (!zoneData.contactInfo) {
+      const userProfile = await this.prisma.userProfile.findUnique({
+        where: { userId: ownerId },
+      });
+      if (userProfile?.contactInfo) {
+        zoneData.contactInfo = userProfile.contactInfo;
+      }
+    }
+
+    // Kiểm tra giới hạn tạo zone – chỉ đếm zone đang OPEN hoặc FULL
     const zoneCount = await this.prisma.zone.count({
       where: { ownerId, status: { in: ['OPEN', 'FULL'] } },
     });
@@ -109,7 +143,7 @@ export class ZonesService {
     ]);
 
     return {
-      data,
+      data: data.map((z) => ({ ...z, game: this.transformGameUrls(z.game) })),
       meta: {
         page,
         limit,
@@ -163,7 +197,7 @@ export class ZonesService {
       this.prisma.zone.count({ where }),
     ]);
     return {
-      data,
+      data: data.map((z) => ({ ...z, game: this.transformGameUrls(z.game) })),
       meta: {
         page,
         limit,
@@ -174,7 +208,7 @@ export class ZonesService {
   }
 
   async findAllByOwner(ownerId: string) {
-    return this.prisma.zone.findMany({
+    const zones = await this.prisma.zone.findMany({
       where: { ownerId },
       orderBy: { createdAt: 'desc' },
       include: {
@@ -184,6 +218,11 @@ export class ZonesService {
             id: true,
             name: true,
             iconUrl: true,
+          },
+        },
+        group: {
+          select: {
+            _count: { select: { members: true } },
           },
         },
         joinRequests: {
@@ -198,6 +237,8 @@ export class ZonesService {
         },
       },
     });
+
+    return zones.map((z) => ({ ...z, game: this.transformGameUrls(z.game) }));
   }
 
   async search(dto: SearchZonesDto) {
@@ -259,6 +300,11 @@ export class ZonesService {
               name: true,
             },
           },
+          group: {
+            select: {
+              _count: { select: { members: true } },
+            },
+          },
           _count: {
             select: {
               joinRequests: { where: { status: 'APPROVED' } },
@@ -307,6 +353,21 @@ export class ZonesService {
             iconUrl: true,
           },
         },
+        group: {
+          include: {
+            members: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    avatarUrl: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         joinRequests: {
           where: { status: 'APPROVED' },
           include: {
@@ -326,7 +387,10 @@ export class ZonesService {
       throw new NotFoundException('Zone không tồn tại');
     }
 
-    return zone;
+    return {
+      ...zone,
+      game: this.transformGameUrls(zone.game),
+    };
   }
 
   async findOneByOwner(id: string, ownerId: string) {
@@ -361,7 +425,10 @@ export class ZonesService {
       );
     }
 
-    return zone;
+    return {
+      ...zone,
+      game: this.transformGameUrls(zone.game),
+    };
   }
 
   async update(id: string, ownerId: string, updateZoneDto: UpdateZoneDto) {
@@ -381,11 +448,6 @@ export class ZonesService {
       throw new ForbiddenException('Bạn không có quyền sửa zone này');
     }
 
-    // Không cho phép sửa zone đã đóng
-    if (zone.status === 'CLOSED') {
-      throw new BadRequestException('Không thể chỉnh sửa zone đã đóng');
-    }
-
     // Cập nhật zone + tags + contacts trong transaction để tránh partial data
     await this.prisma.$transaction(async (tx) => {
       // Bước 1: Cập nhật zone info nếu có
@@ -394,6 +456,32 @@ export class ZonesService {
           where: { id },
           data: zoneData,
         });
+      }
+
+      // Nếu requiredPlayers thay đổi, tính lại status FULL/OPEN dựa trên số thành viên hiện tại
+      if (zoneData.requiredPlayers !== undefined) {
+        const updatedZone = await tx.zone.findUnique({
+          where: { id },
+          include: {
+            group: { include: { members: true } },
+            joinRequests: { where: { status: 'APPROVED' } },
+          },
+        });
+
+        if (updatedZone) {
+          const currentMembers = updatedZone.group
+            ? updatedZone.group.members.length
+            : updatedZone.joinRequests.length + 1; // +1 cho owner
+          const maxPlayers = updatedZone.requiredPlayers + 1;
+
+          const newStatus = currentMembers >= maxPlayers ? 'FULL' : 'OPEN';
+          if (newStatus !== updatedZone.status) {
+            await tx.zone.update({
+              where: { id },
+              data: { status: newStatus },
+            });
+          }
+        }
       }
 
       // Bước 2: Nếu có tagIds thì cập nhật tags
@@ -469,32 +557,6 @@ export class ZonesService {
     return { message: 'Zone đã được xóa bởi admin' };
   }
 
-  async adminCloseZone(id: string) {
-    const zone = await this.prisma.zone.findUnique({ where: { id } });
-    if (!zone) {
-      throw new NotFoundException('Zone không tồn tại');
-    }
-
-    const updatedZone = await this.prisma.zone.update({
-      where: { id },
-      data: { status: 'CLOSED' },
-      include: {
-        owner: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-          },
-        },
-      },
-    });
-
-    return {
-      message: 'Zone đã được đóng bởi admin',
-      data: updatedZone,
-    };
-  }
-
   async getSuggestedZones(userId: string, limit = 10) {
     // Lấy danh sách game profile của user để biết game yêu thích
     const userGameProfiles = await this.prisma.userGameProfile.findMany({
@@ -510,14 +572,13 @@ export class ZonesService {
     const excludeZoneIds = userRequests.map((r) => r.zoneId);
 
     const baseWhere = {
-      status: 'OPEN' as const,
       id: { notIn: excludeZoneIds },
       ownerId: { not: userId },
     };
 
     if (userGameProfiles.length === 0) {
-      // Fallback: trả về zones mới nhất đang OPEN
-      return this.prisma.zone.findMany({
+      // Fallback: trả về zones mới nhất
+      const fallback = await this.prisma.zone.findMany({
         where: baseWhere,
         orderBy: { createdAt: 'desc' },
         take: limit,
@@ -525,15 +586,21 @@ export class ZonesService {
           tags: { include: { tag: true } },
           owner: { select: { id: true, username: true, avatarUrl: true } },
           game: { select: { id: true, name: true, iconUrl: true } },
+          group: {
+            select: {
+              _count: { select: { members: true } },
+            },
+          },
           _count: { select: { joinRequests: { where: { status: 'APPROVED' } } } },
         },
       });
+      return fallback.map((z) => ({ ...z, game: this.transformGameUrls(z.game) }));
     }
 
     // Ưu tiên zones cùng game với user, không lọc theo trình độ
     const preferredGameIds = userGameProfiles.map((p) => p.gameId);
 
-    return this.prisma.zone.findMany({
+    const preferred = await this.prisma.zone.findMany({
       where: {
         ...baseWhere,
         gameId: { in: preferredGameIds },
@@ -544,8 +611,14 @@ export class ZonesService {
         tags: { include: { tag: true } },
         owner: { select: { id: true, username: true, avatarUrl: true } },
         game: { select: { id: true, name: true, iconUrl: true } },
+        group: {
+          select: {
+            _count: { select: { members: true } },
+          },
+        },
         _count: { select: { joinRequests: { where: { status: 'APPROVED' } } } },
       },
     });
+    return preferred.map((z) => ({ ...z, game: this.transformGameUrls(z.game) }));
   }
 }

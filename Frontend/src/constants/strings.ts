@@ -52,8 +52,6 @@ export const STRINGS = {
   PLAYERS_NEEDED: 'người nữa',
   STATUS_OPEN: 'ĐANG MỞ',
   STATUS_FULL: 'ĐÃ ĐẦY',
-  STATUS_CLOSED: 'ĐÃ ĐÓNG',
-
   // Discover
   DISCOVER_TITLE: 'KHÁM PHÁ',
   DISCOVER_SUBTITLE: 'CHỌN TỰA GAME YÊU THÍCH',

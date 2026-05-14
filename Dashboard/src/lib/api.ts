@@ -23,7 +23,6 @@ export const zoneApi = {
     const queryString = params ? `?${new URLSearchParams(params).toString()}` : '';
     return apiClient.get(`/zones/admin${queryString}`) as any;
   },
-  close: (id: string) => apiClient.patch(`/zones/admin/${id}/close`) as any,
   delete: (id: string) => apiClient.delete(`/zones/admin/${id}`) as any,
 };
 
