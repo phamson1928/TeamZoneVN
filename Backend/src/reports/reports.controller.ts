@@ -30,14 +30,16 @@ import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 @UseGuards(JwtAuthGuard)
 @Controller('reports')
 export class ReportsController {
-  constructor(private readonly reportsService: ReportsService) { }
+  constructor(private readonly reportsService: ReportsService) {}
 
   // ─── Admin Routes (trước :id để tránh conflict) ───────────────────────────
 
   @Get()
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
-  @ApiOperation({ summary: '[Admin] Danh sách tất cả reports (pagination + filter)' })
+  @ApiOperation({
+    summary: '[Admin] Danh sách tất cả reports (pagination + filter)',
+  })
   @ApiResponse({ status: 200, description: 'Danh sách reports' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })

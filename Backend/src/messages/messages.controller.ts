@@ -25,7 +25,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 @Controller()
 @UseGuards(RolesGuard, JwtAuthGuard)
 export class MessagesController {
-  constructor(private readonly messagesService: MessagesService) { }
+  constructor(private readonly messagesService: MessagesService) {}
 
   @Get('groups/:groupId/messages')
   @ApiOperation({ summary: 'Lấy lịch sử tin nhắn của group' })
@@ -60,8 +60,13 @@ export class MessagesController {
 
   @Roles('ADMIN')
   @Get('messages/admin')
-  @ApiOperation({ summary: 'Lấy danh sách tất cả tin nhắn hệ thống [ADMIN ONLY]' })
-  @ApiResponse({ status: 200, description: 'Lấy danh sách messages thành công' })
+  @ApiOperation({
+    summary: 'Lấy danh sách tất cả tin nhắn hệ thống [ADMIN ONLY]',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lấy danh sách messages thành công',
+  })
   @ApiResponse({ status: 403, description: 'Không có quyền (Cần Admin)' })
   adminGetMessages(@Query() query: MessageQueryDto) {
     return this.messagesService.adminGetMessages(query.page, query.limit);
@@ -69,7 +74,9 @@ export class MessagesController {
 
   @Roles('ADMIN')
   @Delete('messages/admin/:id')
-  @ApiOperation({ summary: 'Admin xóa cưỡng chế bất kỳ tin nhắn nào [ADMIN ONLY]' })
+  @ApiOperation({
+    summary: 'Admin xóa cưỡng chế bất kỳ tin nhắn nào [ADMIN ONLY]',
+  })
   @ApiParam({ name: 'id', description: 'Message ID (UUID)' })
   @ApiResponse({ status: 200, description: 'Xóa tin nhắn thành công' })
   @ApiResponse({ status: 403, description: 'Không có quyền (Cần Admin)' })
@@ -77,5 +84,4 @@ export class MessagesController {
   adminDeleteMessage(@Param('id') id: string) {
     return this.messagesService.adminDeleteMessage(id);
   }
-
 }

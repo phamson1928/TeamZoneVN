@@ -15,9 +15,11 @@ import { FriendStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-  async getUserDetailsForAdmin(userId: string): Promise<UserResponseDto & { likeCount: number }> {
+  async getUserDetailsForAdmin(
+    userId: string,
+  ): Promise<UserResponseDto & { likeCount: number }> {
     const uid = userId.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({
       where: { id: uid },
@@ -89,7 +91,11 @@ export class UsersService {
     PublicUserResponseDto & {
       likeCount: number;
       isLikedByMe: boolean;
-      friendshipRelation: 'NONE' | 'FRIENDS' | 'PENDING_SENT' | 'PENDING_RECEIVED';
+      friendshipRelation:
+        | 'NONE'
+        | 'FRIENDS'
+        | 'PENDING_SENT'
+        | 'PENDING_RECEIVED';
       pendingFriendshipId: string | null;
     }
   > {
@@ -116,12 +122,15 @@ export class UsersService {
 
     const isLikedByMe = rid
       ? !!(await this.prisma.userLike.findUnique({
-        where: { userId_likerId: { userId: uid, likerId: rid } },
-      }))
+          where: { userId_likerId: { userId: uid, likerId: rid } },
+        }))
       : false;
 
-    let friendshipRelation: 'NONE' | 'FRIENDS' | 'PENDING_SENT' | 'PENDING_RECEIVED' =
-      'NONE';
+    let friendshipRelation:
+      | 'NONE'
+      | 'FRIENDS'
+      | 'PENDING_SENT'
+      | 'PENDING_RECEIVED' = 'NONE';
     let pendingFriendshipId: string | null = null;
 
     if (rid && rid !== uid) {
@@ -155,11 +164,11 @@ export class UsersService {
       pendingFriendshipId,
       profile: user.profile
         ? {
-          bio: user.profile.bio,
-          playStyle: user.profile.playStyle,
-          timezone: user.profile.timezone,
-          lastActiveAt: user.profile.lastActiveAt,
-        }
+            bio: user.profile.bio,
+            playStyle: user.profile.playStyle,
+            timezone: user.profile.timezone,
+            lastActiveAt: user.profile.lastActiveAt,
+          }
         : null,
     };
   }
@@ -403,11 +412,11 @@ export class UsersService {
       likesReceived: user._count?.likesReceived ?? 0,
       profile: user.profile
         ? {
-          bio: user.profile.bio,
-          playStyle: user.profile.playStyle,
-          timezone: user.profile.timezone,
-          lastActiveAt: user.profile.lastActiveAt,
-        }
+            bio: user.profile.bio,
+            playStyle: user.profile.playStyle,
+            timezone: user.profile.timezone,
+            lastActiveAt: user.profile.lastActiveAt,
+          }
         : null,
     };
   }
@@ -429,11 +438,11 @@ export class UsersService {
       avatarUrl: user.avatarUrl,
       profile: user.profile
         ? {
-          bio: user.profile.bio,
-          playStyle: user.profile.playStyle,
-          timezone: user.profile.timezone,
-          lastActiveAt: user.profile.lastActiveAt,
-        }
+            bio: user.profile.bio,
+            playStyle: user.profile.playStyle,
+            timezone: user.profile.timezone,
+            lastActiveAt: user.profile.lastActiveAt,
+          }
         : null,
     };
   }

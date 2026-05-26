@@ -25,7 +25,7 @@ import { CurrentUser, JwtAuthGuard } from '../common/index.js';
 export class UserGameProfilesController {
   constructor(
     private readonly userGameProfilesService: UserGameProfilesService,
-  ) { }
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Thêm hồ sơ game mới cho người dùng' })

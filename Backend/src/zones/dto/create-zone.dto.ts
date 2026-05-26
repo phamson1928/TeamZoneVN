@@ -38,7 +38,10 @@ export class CreateZoneDto {
   @IsString()
   title: string = '';
 
-  @ApiPropertyOptional({ type: [String], example: ['tag-uuid-1', 'tag-uuid-2'] })
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['tag-uuid-1', 'tag-uuid-2'],
+  })
   @IsOptional()
   @IsUUID(4, { each: true })
   tagIds?: string[];

@@ -34,7 +34,7 @@ import {
 @Controller('zones')
 @UseGuards(JwtAuthGuard)
 export class ZonesController {
-  constructor(private readonly zonesService: ZonesService) { }
+  constructor(private readonly zonesService: ZonesService) {}
 
   @Post()
   @ApiOperation({ summary: 'Tạo zone mới (tối đa 4 zone)' })
@@ -70,12 +70,17 @@ export class ZonesController {
   }
 
   @Get('suggested')
-  @ApiOperation({ summary: 'Gợi ý zones phù hợp với user (theo game đã thêm vào hồ sơ)' })
+  @ApiOperation({
+    summary: 'Gợi ý zones phù hợp với user (theo game đã thêm vào hồ sơ)',
+  })
   findSuggested(
     @CurrentUser('sub') userId: string,
     @Query('limit') limit?: number,
   ) {
-    return this.zonesService.getSuggestedZones(userId, limit ? Number(limit) : 10);
+    return this.zonesService.getSuggestedZones(
+      userId,
+      limit ? Number(limit) : 10,
+    );
   }
 
   @Get('admin')
@@ -84,7 +89,10 @@ export class ZonesController {
   @ApiOperation({ summary: 'Lấy danh sách tất cả zones [ADMIN ONLY]' })
   @ApiResponse({ status: 200, description: 'Success' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  findAllByAdmin(@Query() pagination: PaginationDto, @Query('query') query?: string) {
+  findAllByAdmin(
+    @Query() pagination: PaginationDto,
+    @Query('query') query?: string,
+  ) {
     const { page, limit } = pagination;
     return this.zonesService.findAllByAdmin(Number(page), Number(limit), query);
   }

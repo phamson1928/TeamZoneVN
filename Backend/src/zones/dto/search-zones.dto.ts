@@ -30,7 +30,7 @@ export class SearchZonesDto {
   @ApiPropertyOptional({
     enum: ZoneSortBy,
     default: ZoneSortBy.NEWEST,
-    description: 'Sắp xếp'
+    description: 'Sắp xếp',
   })
   @IsOptional()
   @IsEnum(ZoneSortBy)

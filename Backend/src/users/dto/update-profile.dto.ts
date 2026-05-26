@@ -27,6 +27,8 @@ export class UpdateProfileDto {
     description: 'Contact information',
   })
   @IsOptional()
-  @MaxLength(500, { message: 'Thông tin liên lạc không được vượt quá 500 ký tự' })
+  @MaxLength(500, {
+    message: 'Thông tin liên lạc không được vượt quá 500 ký tự',
+  })
   contactInfo?: string;
 }

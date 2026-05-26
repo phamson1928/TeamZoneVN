@@ -81,4 +81,4 @@ import { BlocksModule } from './blocks/blocks.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

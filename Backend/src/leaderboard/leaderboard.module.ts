@@ -3,8 +3,8 @@ import { LeaderboardService } from './leaderboard.service';
 import { LeaderboardController } from './leaderboard.controller';
 
 @Module({
-    controllers: [LeaderboardController],
-    providers: [LeaderboardService],
-    exports: [LeaderboardService],
+  controllers: [LeaderboardController],
+  providers: [LeaderboardService],
+  exports: [LeaderboardService],
 })
-export class LeaderboardModule { }
+export class LeaderboardModule {}

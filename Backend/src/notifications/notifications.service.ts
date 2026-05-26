@@ -24,11 +24,17 @@ export class NotificationsService {
       },
     });
     const unreadCount = await this.getUnreadCount(userId);
-    this.chatGateway.emitNotificationToUser(userId, { notification, unreadCount });
+    this.chatGateway.emitNotificationToUser(userId, {
+      notification,
+      unreadCount,
+    });
     return notification;
   }
 
-  async createMany(userIds: string[], createNotificationDto: CreateNotificationDto) {
+  async createMany(
+    userIds: string[],
+    createNotificationDto: CreateNotificationDto,
+  ) {
     // 1 query duy nhất thay vì N queries tuần tự
     const notifications = await this.prisma.notification.createManyAndReturn({
       data: userIds.map((userId) => ({ ...createNotificationDto, userId })),

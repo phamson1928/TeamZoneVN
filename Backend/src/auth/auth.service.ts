@@ -173,7 +173,9 @@ export class AuthService {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
     } catch {
-      throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã hết hạn');
+      throw new UnauthorizedException(
+        'Refresh token không hợp lệ hoặc đã hết hạn',
+      );
     }
 
     // Find the refresh token in database
@@ -188,7 +190,9 @@ export class AuthService {
     });
 
     if (!storedToken) {
-      throw new UnauthorizedException('Refresh token không tồn tại hoặc đã hết hạn');
+      throw new UnauthorizedException(
+        'Refresh token không tồn tại hoặc đã hết hạn',
+      );
     }
 
     // Check if user is still active
@@ -245,8 +249,7 @@ export class AuthService {
     if (!user || !user.passwordHash) {
       // Return generic message for security (don't reveal if email exists or is Google-only)
       return {
-        message:
-          'Nếu email tồn tại, link đặt lại mật khẩu đã được gửi.',
+        message: 'Nếu email tồn tại, link đặt lại mật khẩu đã được gửi.',
       };
     }
 
@@ -296,8 +299,7 @@ export class AuthService {
       });
 
     return {
-      message:
-        'Nếu email tồn tại, link đặt lại mật khẩu đã được gửi.',
+      message: 'Nếu email tồn tại, link đặt lại mật khẩu đã được gửi.',
     };
   }
 
@@ -308,10 +310,7 @@ export class AuthService {
     const { token, newPassword } = dto;
 
     // Hash the incoming raw token to compare with DB
-    const tokenHash = crypto
-      .createHash('sha256')
-      .update(token)
-      .digest('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
     const resetRecord = await this.prisma.passwordResetToken.findUnique({
       where: { token: tokenHash },
@@ -319,15 +318,21 @@ export class AuthService {
     });
 
     if (!resetRecord) {
-      throw new NotFoundException('Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn');
+      throw new NotFoundException(
+        'Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn',
+      );
     }
 
     if (resetRecord.used) {
-      throw new BadRequestException('Link đặt lại mật khẩu này đã được sử dụng');
+      throw new BadRequestException(
+        'Link đặt lại mật khẩu này đã được sử dụng',
+      );
     }
 
     if (resetRecord.expiresAt < new Date()) {
-      throw new BadRequestException('Link đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu link mới.');
+      throw new BadRequestException(
+        'Link đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu link mới.',
+      );
     }
 
     if (resetRecord.user.status === 'BANNED') {
@@ -354,7 +359,10 @@ export class AuthService {
       }),
     ]);
 
-    return { message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.' };
+    return {
+      message:
+        'Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.',
+    };
   }
 
   /**
@@ -459,9 +467,7 @@ export class AuthService {
     const { googleId, email, displayName, avatarUrl } = googleProfile;
 
     if (!email) {
-      throw new BadRequestException(
-        'Tài khoản Google phải có địa chỉ email',
-      );
+      throw new BadRequestException('Tài khoản Google phải có địa chỉ email');
     }
 
     const user = await this.findOrCreateGoogleUser(

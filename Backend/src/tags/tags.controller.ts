@@ -25,7 +25,7 @@ import { JwtAuthGuard, Public, Roles, RolesGuard } from 'src/common';
 @Controller('tags')
 @UseGuards(JwtAuthGuard)
 export class TagsController {
-  constructor(private readonly tagsService: TagsService) { }
+  constructor(private readonly tagsService: TagsService) {}
 
   @Post()
   @UseGuards(RolesGuard)

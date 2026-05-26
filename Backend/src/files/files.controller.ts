@@ -3,7 +3,7 @@ import {
   Post,
   UseInterceptors,
   UploadedFile,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FilesService } from './files.service';
@@ -14,7 +14,7 @@ import { Public, JwtAuthGuard, RolesGuard, Roles } from '../common/index.js';
 @Controller('files')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class FilesController {
-  constructor(private readonly filesService: FilesService) { }
+  constructor(private readonly filesService: FilesService) {}
 
   @Post('upload/game-icon')
   @Roles('ADMIN')

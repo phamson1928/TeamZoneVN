@@ -25,7 +25,7 @@ import { Public, Roles, RolesGuard, JwtAuthGuard } from '../common/index.js';
 @Controller('games')
 @UseGuards(JwtAuthGuard)
 export class GamesController {
-  constructor(private readonly gamesService: GamesService) { }
+  constructor(private readonly gamesService: GamesService) {}
 
   @Post()
   @ApiBearerAuth('access-token')

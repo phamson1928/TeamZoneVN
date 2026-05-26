@@ -14,7 +14,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
 export class UsersJoinRequestsController {
-  constructor(private readonly joinRequestsService: JoinRequestsService) { }
+  constructor(private readonly joinRequestsService: JoinRequestsService) {}
 
   @Get('me/join-requests')
   @ApiOperation({ summary: 'Lấy danh sách yêu cầu tham gia của bản thân' })

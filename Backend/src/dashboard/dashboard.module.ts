@@ -4,8 +4,8 @@ import { DashboardController } from './dashboard.controller.js';
 import { PrismaModule } from '../prisma/prisma.module.js';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [DashboardController],
-    providers: [DashboardService],
+  imports: [PrismaModule],
+  controllers: [DashboardController],
+  providers: [DashboardService],
 })
-export class DashboardModule { }
+export class DashboardModule {}

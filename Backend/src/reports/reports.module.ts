@@ -11,4 +11,4 @@ import { UsersModule } from '../users/users.module.js';
   providers: [ReportsService],
   exports: [ReportsService],
 })
-export class ReportsModule { }
+export class ReportsModule {}

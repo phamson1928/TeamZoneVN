@@ -37,7 +37,7 @@ import type { JwtPayload } from '../common/interfaces/request.interface';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('register')
   @Public()
@@ -155,7 +155,10 @@ export class AuthController {
     description: 'Làm mới token thành công',
     type: TokensResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Refresh token không hợp lệ hoặc hết hạn' })
+  @ApiResponse({
+    status: 401,
+    description: 'Refresh token không hợp lệ hoặc hết hạn',
+  })
   async refresh(
     @Body() refreshTokenDto: RefreshTokenDto,
   ): Promise<TokensResponseDto> {
@@ -240,7 +243,10 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 400, description: 'Token không hợp lệ hoặc đã hết hạn' })
+  @ApiResponse({
+    status: 400,
+    description: 'Token không hợp lệ hoặc đã hết hạn',
+  })
   @ApiResponse({ status: 404, description: 'Token không tồn tại' })
   async resetPassword(
     @Body() dto: ResetPasswordDto,

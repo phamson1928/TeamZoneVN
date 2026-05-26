@@ -152,9 +152,7 @@ export class JoinRequestsService {
 
     let groupId: string | undefined;
     if (action === 'APPROVED') {
-      const group = await this.groupsService.syncGroupFromZone(
-        request.zoneId,
-      );
+      const group = await this.groupsService.syncGroupFromZone(request.zoneId);
       groupId = group?.id;
     }
 

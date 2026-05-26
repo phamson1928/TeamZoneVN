@@ -69,8 +69,6 @@ export class ZonesService {
       throw new BadRequestException('Game không tồn tại');
     }
 
-
-
     // Tạo zone + tags + contacts trong transaction để tránh partial data
     const zone = await this.prisma.$transaction(async (tx) => {
       // Bước 1: Tạo zone
@@ -591,10 +589,15 @@ export class ZonesService {
               _count: { select: { members: true } },
             },
           },
-          _count: { select: { joinRequests: { where: { status: 'APPROVED' } } } },
+          _count: {
+            select: { joinRequests: { where: { status: 'APPROVED' } } },
+          },
         },
       });
-      return fallback.map((z) => ({ ...z, game: this.transformGameUrls(z.game) }));
+      return fallback.map((z) => ({
+        ...z,
+        game: this.transformGameUrls(z.game),
+      }));
     }
 
     // Ưu tiên zones cùng game với user, không lọc theo trình độ
@@ -619,6 +622,9 @@ export class ZonesService {
         _count: { select: { joinRequests: { where: { status: 'APPROVED' } } } },
       },
     });
-    return preferred.map((z) => ({ ...z, game: this.transformGameUrls(z.game) }));
+    return preferred.map((z) => ({
+      ...z,
+      game: this.transformGameUrls(z.game),
+    }));
   }
 }

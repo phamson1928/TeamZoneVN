@@ -4,9 +4,9 @@ import { FilesController } from './files.controller';
 import { SupabaseModule } from '../common/supabase/supabase.module';
 
 @Module({
-    imports: [SupabaseModule],
-    controllers: [FilesController],
-    providers: [FilesService],
-    exports: [FilesService],
+  imports: [SupabaseModule],
+  controllers: [FilesController],
+  providers: [FilesService],
+  exports: [FilesService],
 })
-export class FilesModule { }
+export class FilesModule {}

@@ -49,10 +49,7 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Đánh dấu 1 thông báo đã đọc' })
   @ApiResponse({ status: 200, description: 'Success' })
   @ApiParam({ name: 'id', description: 'ID thông báo' })
-  markRead(
-    @Param('id') id: string,
-    @CurrentUser('sub') userId: string,
-  ) {
+  markRead(@Param('id') id: string, @CurrentUser('sub') userId: string) {
     return this.notificationsService.markRead(userId, id);
   }
 

@@ -38,9 +38,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
 
     if (user.tempBannedUntil && user.tempBannedUntil > new Date()) {
-      const timeLeft = Math.ceil((user.tempBannedUntil.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      const timeLeft = Math.ceil(
+        (user.tempBannedUntil.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+      );
       throw new UnauthorizedException(
-        `Tài khoản của bạn đang bị khóa tạm thời. Còn lại ${timeLeft} ngày.`
+        `Tài khoản của bạn đang bị khóa tạm thời. Còn lại ${timeLeft} ngày.`,
       );
     }
 

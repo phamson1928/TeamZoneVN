@@ -42,9 +42,9 @@ export class GroupsService {
 
       if (!zone) return null;
 
-      const currentMemberIds = zone.group?.members.map(m => m.userId) ?? [];
+      const currentMemberIds = zone.group?.members.map((m) => m.userId) ?? [];
       const currentMemberCount = currentMemberIds.length;
-      const approvedUserIds = zone.joinRequests.map(r => r.userId);
+      const approvedUserIds = zone.joinRequests.map((r) => r.userId);
       const ownerId = zone.ownerId;
       const maxPlayers = zone.requiredPlayers + 1; // requiredPlayers = số người cần thêm (không tính owner)
 
@@ -65,7 +65,7 @@ export class GroupsService {
               createMany: {
                 data: [
                   { userId: ownerId, role: 'LEADER' },
-                  ...membersToAdd.map(r => ({
+                  ...membersToAdd.map((r) => ({
                     userId: r.userId,
                     role: 'MEMBER' as const,
                   })),
@@ -100,13 +100,13 @@ export class GroupsService {
 
       const slotsRemaining = maxPlayers - currentMemberCount;
       const toAdd = zone.joinRequests
-        .filter(r => !currentMemberIds.includes(r.userId))
+        .filter((r) => !currentMemberIds.includes(r.userId))
         .slice(0, slotsRemaining);
 
       if (toAdd.length === 0) return zone.group;
 
       await tx.groupMember.createMany({
-        data: toAdd.map(r => ({
+        data: toAdd.map((r) => ({
           groupId: zone.group!.id,
           userId: r.userId,
           role: 'MEMBER' as const,
@@ -175,10 +175,10 @@ export class GroupsService {
       },
       orderBy: { createdAt: 'desc' },
     });
-    
-    return groups.map(group => ({
+
+    return groups.map((group) => ({
       ...group,
-      game: this.transformGameUrls(group.game)
+      game: this.transformGameUrls(group.game),
     }));
   }
 

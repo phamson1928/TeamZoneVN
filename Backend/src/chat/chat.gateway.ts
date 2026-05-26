@@ -38,7 +38,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private messagesService: MessagesService,
     private prisma: PrismaService,
-  ) { }
+  ) {}
 
   // ==========================
   // Lifecycle hooks
@@ -195,7 +195,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * Gọi từ NotificationsService khi tạo notification mới.
    * Emit tới đúng user (room `user:${userId}`).
    */
-  emitNotificationToUser(userId: string, payload: { notification: unknown; unreadCount: number }) {
+  emitNotificationToUser(
+    userId: string,
+    payload: { notification: unknown; unreadCount: number },
+  ) {
     this.server.to(`user:${userId}`).emit('notification:new', payload);
   }
 }

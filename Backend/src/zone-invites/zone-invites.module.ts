@@ -5,8 +5,8 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
 import { GroupsModule } from 'src/groups/groups.module';
 
 @Module({
-    imports: [NotificationsModule, GroupsModule],
-    controllers: [ZoneInvitesController],
-    providers: [ZoneInvitesService],
+  imports: [NotificationsModule, GroupsModule],
+  controllers: [ZoneInvitesController],
+  providers: [ZoneInvitesService],
 })
-export class ZoneInvitesModule { }
+export class ZoneInvitesModule {}
