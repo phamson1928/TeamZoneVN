@@ -59,6 +59,7 @@ export const FadeInView: React.FC<FadeInViewProps> = ({
         useNativeDriver: true,
       }),
     ]).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -135,6 +136,7 @@ export const ScaleInView: React.FC<ScaleInViewProps> = ({
         useNativeDriver: true,
       }),
     ]).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

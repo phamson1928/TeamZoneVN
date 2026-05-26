@@ -13,7 +13,6 @@ import { Container } from '../components/Container';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { FadeInView } from '../components/AnimatedTransition';
-import { theme } from '../theme';
 import { apiClient } from '../api/client';
 import { STRINGS } from '../constants/strings';
 import { RootStackParamList } from '../navigation';

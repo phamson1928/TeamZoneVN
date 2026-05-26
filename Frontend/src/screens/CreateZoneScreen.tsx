@@ -105,7 +105,7 @@ export const CreateZoneScreen = () => {
   });
 
   // ── Edit mode: fetch existing zone ──
-  const { data: existingZone, isLoading: zoneLoading } = useQuery({
+  const { data: existingZone } = useQuery({
     queryKey: ['zone', editZoneId],
     queryFn: async () => {
       const response = await apiClient.get(`/zones/${editZoneId}`);
@@ -439,10 +439,13 @@ export const CreateZoneScreen = () => {
         <TouchableOpacity
           style={[
             styles.submitBtn,
-            (createZoneMutation.isPending || updateZoneMutation.isPending) && styles.submitBtnDisabled,
+            (createZoneMutation.isPending || updateZoneMutation.isPending) &&
+              styles.submitBtnDisabled,
           ]}
           onPress={handleSubmit}
-          disabled={createZoneMutation.isPending || updateZoneMutation.isPending}
+          disabled={
+            createZoneMutation.isPending || updateZoneMutation.isPending
+          }
           activeOpacity={0.85}
         >
           {createZoneMutation.isPending || updateZoneMutation.isPending ? (

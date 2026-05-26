@@ -34,6 +34,7 @@ export const ShimmerLoading: React.FC<ShimmerLoadingProps> = ({
     );
     animation.start();
     return () => animation.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

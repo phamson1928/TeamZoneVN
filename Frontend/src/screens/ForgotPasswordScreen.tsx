@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useMemo, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useState, useRef, useEffect } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -7,9 +7,11 @@ import {
   StyleSheet,
   Text,
   View,
+  Animated,
 } from 'react-native';
-import { KeyRound } from 'lucide-react-native';
+import { KeyRound, Mail, ArrowLeft, Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Svg, Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
 
 import { Container } from '../components/Container';
 import { Input } from '../components/Input';
@@ -23,6 +25,73 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ForgotPassword'>;
+
+/** Floating gradient orbs for background depth */
+const FloatingOrbs = () => {
+  const orb1Anim = useRef(new Animated.Value(0)).current;
+  const orb2Anim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const createLoop = (anim: Animated.Value, duration: number) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, {
+            toValue: 1,
+            duration,
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim, {
+            toValue: 0,
+            duration,
+            useNativeDriver: true,
+          }),
+        ]),
+      );
+
+    createLoop(orb1Anim, 6000).start();
+    createLoop(orb2Anim, 8000).start();
+  }, [orb1Anim, orb2Anim]);
+
+  const orb1Translate = orb1Anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 30],
+  });
+  const orb2Translate = orb2Anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -25],
+  });
+
+  return (
+    <View style={styles.orbsContainer} pointerEvents="none">
+      <Animated.View
+        style={[styles.orb, styles.orb1, { transform: [{ translateY: orb1Translate }] }]}
+      >
+        <Svg width={220} height={220}>
+          <Defs>
+            <RadialGradient id="forb1" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor="#7C3AED" stopOpacity={0.25} />
+              <Stop offset="100%" stopColor="#7C3AED" stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Circle cx={110} cy={110} r={110} fill="url(#forb1)" />
+        </Svg>
+      </Animated.View>
+      <Animated.View
+        style={[styles.orb, styles.orb2, { transform: [{ translateY: orb2Translate }] }]}
+      >
+        <Svg width={180} height={180}>
+          <Defs>
+            <RadialGradient id="forb2" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor="#2563FF" stopOpacity={0.2} />
+              <Stop offset="100%" stopColor="#2563FF" stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Circle cx={90} cy={90} r={90} fill="url(#forb2)" />
+        </Svg>
+      </Animated.View>
+    </View>
+  );
+};
 
 export function ForgotPasswordScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
@@ -102,6 +171,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
 
   return (
     <Container>
+      <FloatingOrbs />
       <View style={styles.screen}>
         <KeyboardAvoidingView
           style={styles.keyboard}
@@ -113,84 +183,100 @@ export function ForgotPasswordScreen({ navigation }: Props) {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
+            {/* Hero Section */}
             <FadeInView direction="down" duration={600}>
-              <View style={styles.card}>
+              <View style={styles.hero}>
+                <View style={styles.logoGlowWrap}>
+                  <LinearGradient
+                    colors={['rgba(124,58,237,0.3)', 'rgba(37,99,255,0)']}
+                    style={styles.logoGlow}
+                  />
+                </View>
+                <View style={styles.logoIconBg}>
+                  <LinearGradient
+                    colors={['#7C3AED', '#2563FF']}
+                    style={styles.logoGradientBg}
+                  >
+                    <KeyRound size={36} color="#FFF" strokeWidth={1.5} />
+                  </LinearGradient>
+                </View>
+                <Text style={styles.logoText}>Quên mật khẩu</Text>
+                <LinearGradient
+                  colors={['#7C3AED', '#A78BFA']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.taglineGradientWrap}
+                >
+                  <Text style={styles.tagline}>KHÔI PHỤC TÀI KHOẢN</Text>
+                </LinearGradient>
+              </View>
+            </FadeInView>
+
+            {/* Form / Success Card */}
+            <FadeInView direction="up" duration={500} delay={200}>
+              <View style={styles.formCard}>
                 {!isSuccess ? (
                   <>
-                    {/* Icon */}
-                    <View style={styles.iconRing}>
-                      <LinearGradient
-                        colors={['#7C3AED', '#2563FF']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.iconGradient}
-                      >
-                        <KeyRound size={28} color="#FFF" strokeWidth={1.8} />
-                      </LinearGradient>
-                    </View>
-
-                    <Text style={styles.title}>{STRINGS.FORGOT_PASSWORD_TITLE}</Text>
+                    <Text style={styles.title}>Quên mật khẩu</Text>
                     <Text style={styles.subtitle}>
-                      {STRINGS.FORGOT_PASSWORD_SUBTITLE}
+                      Nhập email của bạn, chúng tôi sẽ gửi link khôi phục mật khẩu.
                     </Text>
 
-                    <View style={styles.form}>
-                      <Input
-                        label={STRINGS.EMAIL_LABEL}
-                        placeholder={STRINGS.EMAIL_PLACEHOLDER}
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        returnKeyType="send"
-                        onSubmitEditing={handleSubmit}
-                      />
+                    <Input
+                      label={STRINGS.EMAIL_LABEL}
+                      placeholder={STRINGS.EMAIL_PLACEHOLDER}
+                      value={email}
+                      onChangeText={setEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      returnKeyType="send"
+                      onSubmitEditing={handleSubmit}
+                      leftIcon={<Mail size={16} color="#64748B" />}
+                    />
 
-                      <Button
-                        title={STRINGS.SEND_RESET_LINK}
-                        onPress={handleSubmit}
-                        loading={isLoading}
-                      />
+                    <Button
+                      title={STRINGS.SEND_RESET_LINK}
+                      onPress={handleSubmit}
+                      loading={isLoading}
+                      variant="primary"
+                      size="lg"
+                      style={styles.submitButton}
+                    />
 
+                    <View style={styles.footer}>
+                      <ArrowLeft size={14} color="#A78BFA" />
                       <Pressable
                         onPress={handleBackToLogin}
                         disabled={isLoading}
-                        style={({ pressed }) => [
-                          styles.linkWrap,
-                          pressed && styles.linkPressed,
-                        ]}
-                        accessibilityRole="button"
                       >
-                        <Text style={styles.link}>{STRINGS.BACK_TO_LOGIN}</Text>
+                        <Text style={styles.signUpText}> Quay lại đăng nhập</Text>
                       </Pressable>
                     </View>
                   </>
                 ) : (
                   <>
-                    {/* Success icon */}
-                    <View style={styles.iconRing}>
+                    {/* Success State */}
+                    <View style={styles.successIconWrap}>
                       <LinearGradient
                         colors={['#22C55E', '#10B981']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.iconGradient}
+                        style={styles.successIconBg}
                       >
-                        <Text style={styles.checkmark}>✓</Text>
+                        <Check size={32} color="#FFF" strokeWidth={3} />
                       </LinearGradient>
                     </View>
-
-                    <Text style={styles.successTitle}>{STRINGS.RESET_LINK_SENT}</Text>
-                    <Text style={styles.successMessage}>
-                      {STRINGS.RESET_LINK_SENT_MESSAGE}
+                    <Text style={styles.title}>Đã gửi!</Text>
+                    <Text style={styles.subtitle}>
+                      Vui lòng kiểm tra hộp thư email của bạn
                     </Text>
 
-                    <View style={styles.successActions}>
-                      <Button
-                        title={STRINGS.BACK_TO_LOGIN}
-                        onPress={handleBackToLogin}
-                      />
-                    </View>
+                    <Button
+                      title="Quay lại đăng nhập"
+                      onPress={handleBackToLogin}
+                      variant="primary"
+                      size="lg"
+                      style={styles.submitButton}
+                    />
                   </>
                 )}
               </View>
@@ -203,103 +289,154 @@ export function ForgotPasswordScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  // ─── Orbs ─────────────────────────────
+  orbsContainer: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
+  },
+  orb: {
+    position: 'absolute',
+  },
+  orb1: {
+    top: -40,
+    right: -60,
+  },
+  orb2: {
+    bottom: -30,
+    left: -50,
+  },
+
+  // ─── Screen ───────────────────────────
   screen: {
     flex: 1,
-    backgroundColor: '#0F172A',
   },
   keyboard: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: 28,
-    paddingBottom: 32,
+    padding: 24,
     justifyContent: 'center',
   },
-  card: {
-    backgroundColor: '#1E293B',
-    borderRadius: 20,
-    padding: 28,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+
+  // ─── Hero ─────────────────────────────
+  hero: {
     alignItems: 'center',
+    marginBottom: 36,
+    paddingTop: 20,
+  },
+  logoGlowWrap: {
+    position: 'absolute',
+    top: -10,
+    width: 160,
+    height: 160,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoGlow: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+  },
+  logoIconBg: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginBottom: 16,
     shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  logoGradientBg: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoText: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: theme.colors.text,
+    letterSpacing: 1.5,
+    marginBottom: 8,
+    textShadowColor: 'rgba(124,58,237,0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
+  },
+  taglineGradientWrap: {
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  tagline: {
+    fontSize: 11,
+    color: '#FFF',
+    textTransform: 'uppercase',
+    letterSpacing: 3,
+    fontWeight: '700',
+  },
+
+  // ─── Form Card ────────────────────────
+  formCard: {
+    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    padding: 24,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.3,
     shadowRadius: 24,
     elevation: 10,
   },
-  iconRing: {
-    marginBottom: 20,
-    borderRadius: 32,
-    overflow: 'hidden',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
+  title: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: theme.colors.text,
+    marginBottom: 4,
   },
-  iconGradient: {
+  subtitle: {
+    fontSize: 14,
+    color: '#94A3B8',
+    marginBottom: 24,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  submitButton: {
+    marginTop: 8,
+  },
+
+  // ─── Success ──────────────────────────
+  successIconWrap: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  successIconBg: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#22C55E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  checkmark: {
-    fontSize: 30,
-    color: '#FFF',
-    fontWeight: '800',
+
+  // ─── Footer ───────────────────────────
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 28,
   },
-  title: {
-    color: '#F1F5F9',
-    fontSize: 24,
+  signUpText: {
+    color: '#A78BFA',
     fontWeight: '700',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    color: '#64748B',
     fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 24,
-    textAlign: 'center',
-    paddingHorizontal: 8,
-  },
-  form: {
-    width: '100%',
-    gap: 14,
-  },
-  linkWrap: {
-    alignSelf: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  linkPressed: {
-    opacity: 0.85,
-  },
-  link: {
-    color: '#7C3AED',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  successTitle: {
-    color: '#F1F5F9',
-    fontSize: 24,
-    fontWeight: '800',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  successMessage: {
-    color: '#64748B',
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
-    paddingHorizontal: 8,
-  },
-  successActions: {
-    width: '100%',
-    marginTop: 22,
   },
 });

@@ -211,8 +211,6 @@ async function main() {
 
   // 2. Create Games
   console.log('🎮 Creating games...');
-  const STORAGE_BASE_URL =
-    'https://jgdnolcmyvpcsaphxtwm.supabase.co/storage/v1/object/public/game-assets';
 
   const gameData: SeedGame[] = [
     { name: 'Valorant', slug: 'valorant', platforms: [Platform.PC] },
@@ -416,7 +414,10 @@ async function main() {
       },
     },
   });
-  await prisma.zone.update({ where: { id: createdZones[0].id }, data: { status: 'FULL' } });
+  await prisma.zone.update({
+    where: { id: createdZones[0].id },
+    data: { status: 'FULL' },
+  });
 
   await prisma.message.createMany({
     data: [
