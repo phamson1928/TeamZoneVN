@@ -41,6 +41,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+# Install curl for healthcheck (tiny, ~200KB)
+RUN apk add --no-cache curl
+
 # Copy only necessary files
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
@@ -48,4 +51,6 @@ COPY --from=build /app/generated ./generated
 COPY --from=build /app/package.json ./
 
 EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
 CMD ["node", "dist/main.js"]

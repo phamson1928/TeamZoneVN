@@ -422,7 +422,7 @@ Client (Mobile/Web)
 - [x] **Hard delete**: messages và groups xóa thật, không soft delete → tiết kiệm storage
 - [x] **Cascade delete**: Zone → Group → GroupMember + Message (tự dọn khi giải tán)
 - [x] **Content limit**: Message giới hạn 2000 ký tự (VarChar + gateway validation)
-- [ ] Caching với Redis (Đã dời sang Phase 11)
+- [x] Caching với Redis (Đã triển khai ở Phase 13)
 - [x] Rate limiting (Global: 100 req/min, Auth: 5-10 req/min)
 
 ### 10.3 Security
@@ -465,29 +465,45 @@ Stage 2 (build)    → npx prisma generate + nest build
 Stage 3 (runtime)  → Copy dist/, node_modules/, package.json → image ~150MB
 ```
 
-- [ ] **Tối ưu Dockerfile**: Sử dụng multi-stage build với Node Alpine image, tận dụng Docker layer caching cho `npm ci`.
-- [ ] **.dockerignore**: Loại bỏ `node_modules`, `dist`, `.git`, `.env` khỏi build context.
-- [ ] **Prisma Client**: Generate Prisma Client trong build stage — không cần runtime dependencies.
-- [ ] **Healthcheck**: Thêm `HEALTHCHECK` instruction để Docker kiểm tra backend còn sống.
+- [x] **Tối ưu Dockerfile**: Multi-stage build với Node Alpine (stage: deps → build → runtime ~150MB), thêm `apk add curl` cho HEALTHCHECK.
+- [x] **.dockerignore**: Loại bỏ `node_modules`, `dist`, `.git`, `.env`, `docs/`, `.sisyphus/`, test files khỏi build context.
+- [x] **Prisma Client**: Generate trong build stage — runtime chỉ copy `generated/`.
+- [x] **Healthcheck**: `HEALTHCHECK --interval=30s --timeout=10s --start-period=40s` dùng `curl -f http://localhost:3000/health`.
 
 **docker-compose.prod.yml:**
 
 ```yaml
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: TeamZoneVN_Redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: teamzonevn-backend
+    container_name: TeamZoneVN_Backend
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"   # chỉ Nginx mới gọi được
+    env_file:
+      - .env                    # Supabase URL, JWT secret, ...
     environment:
-      - DATABASE_URL=${DATABASE_URL}       # Supabase PostgreSQL
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-      - JWT_SECRET=${JWT_SECRET}
-      - CORS_ORIGIN=${CORS_ORIGIN}         # Vercel domain
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - NODE_ENV=production
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
     logging:
       driver: "json-file"
       options:
@@ -495,44 +511,41 @@ services:
         max-file: "3"
 ```
 
-> Vì database và storage đã dùng Supabase (managed service), Docker chỉ cần chạy NestJS. Không cần PostgreSQL container, giúp giảm tài nguyên VPS và đơn giản hóa operation.
+> Vì database và storage đã dùng Supabase (managed service), Docker chỉ cần chạy NestJS + Redis. Không cần PostgreSQL container — giúp giảm tài nguyên VPS và đơn giản hóa operation.
 
-### 11.2 VPS Setup & Deployment
+### 11.2 VPS Setup & Deployment (Manual Steps)
+
+> Các bước này cần thao tác tay trên VPS. Tôi đã chuẩn bị sẵn `docker-compose.prod.yml` — chỉ cần clone code, copy `.env`, và chạy.
 
 - [ ] **Server Init**: Cài đặt Docker Engine + Docker Compose V2 trên VPS.
-- [ ] **Clone & Build**: Clone source code, tạo `.env` từ mẫu, chạy `docker compose up -d --build`.
+- [ ] **Clone & Build**: `git clone`, tạo `.env` từ `.env.example`, chạy `docker compose -f docker-compose.prod.yml up -d --build`.
 - [ ] **Nginx Reverse Proxy**:
       - Reverse proxy từ domain/subdomain đến `localhost:3000`
       - WebSocket support: `proxy_set_header Upgrade $http_upgrade` + `Connection "upgrade"`
-      - Rate limiting, request body size limits (phòng spam)
-      - Proxy timeout phù hợp cho WebSocket long-polling
-- [ ] **SSL (Certbot + Let's Encrypt)**: HTTPS tự động gia hạn — bắt buộc cho Google OAuth và mobile app.
-- [ ] **Firewall**: Chỉ mở port 80 (HTTP), 443 (HTTPS), 22 (SSH). Port 3000 không expose ra ngoài.
+      - Port 3000 không expose ra ngoài (chỉ Nginx gọi internal)
+- [ ] **SSL (Certbot + Let's Encrypt)**: HTTPS tự động gia hạn.
+- [ ] **Firewall**: Chỉ mở port 80, 443, 22.
 
 ### 11.3 CI/CD Pipeline (GitHub Actions)
 
-> Xây dựng pipeline tự động hoá — push code → build image → push registry → deploy lên VPS. Dùng GitHub Container Registry (ghcr.io) để lưu trữ image.
+> Pipeline SSH-based đơn giản: push code → SSH vào VPS → git pull → docker compose up -d --build.
+> Không dùng image registry (ghcr.io) vì VPS tự build image tại chỗ — nhanh hơn cho project quy mô nhỏ.
 
-- [ ] **CI — Build & Test**: Workflow chạy trên mỗi pull request:
-      - `npm ci` + `npx prisma generate`
-      - `npm run lint` (ESLint + Prettier)
-      - `npm run test` (Jest unit tests)
-      - `docker build` (kiểm tra Dockerfile không lỗi)
-- [ ] **CD — Build & Push Image**: Khi merge vào `main`:
-      - Build Docker image với tag `ghcr.io/teamzonevn/backend:latest` và `git-sha`
-      - Push lên GitHub Container Registry
-- [ ] **CD — Deploy to VPS**: Sau khi push image thành công:
-      - SSH vào VPS bằng deploy key
-      - Pull image mới: `docker compose pull`
-      - Graceful restart: `docker compose up -d --force-recreate`
-      - Rollback script: giữ 3 versions gần nhất, deploy có flag `--rollback`
-- [ ] **Environment Secrets**: Lưu `.env` và SSH private key trong GitHub Secrets.
-- [ ] **Slack/Telegram Notification**: Gửi thông báo khi deploy thành công/thất bại (optional).
+- [x] **CD — Auto Deploy on Push**: Workflow `.github/workflows/deploy-backend.yml`:
+      - Trigger: push vào `main` có thay đổi trong `Backend/**`
+      - Action: SSH vào VPS → `git pull` → `docker compose -f docker-compose.prod.yml up -d --build` → `docker image prune -f`
+      - Có thể deploy thủ công qua GitHub UI (workflow_dispatch)
+- [ ] **Setup GitHub Secrets**: Cần 4 secrets trên GitHub repo:
+      - `VPS_HOST` — IP VPS
+      - `VPS_USERNAME` — user SSH (thường `root`)
+      - `VPS_SSH_KEY` — private key SSH
+      - `VPS_PATH` — đường dẫn project trên VPS (ví dụ `/root/GameZone`)
+- [ ] **CI — Build & Test** (optional): Chạy lint + test trên PR trước khi merge.
 
 ### 11.4 Monitoring & Database Connection
 
-- [ ] **Container Restart Policy**: `unless-stopped` + Docker tự động restart nếu crash.
-- [ ] **Log Rotation**: `json-file` driver với max-size 10m, max-file 3 — tránh đầy disk.
+- [x] **Container Restart Policy**: `unless-stopped` trong docker-compose.prod.yml — Docker tự restart nếu crash.
+- [x] **Log Rotation**: `json-file` driver với max-size 10m, max-file 3 — tránh đầy disk.
 - [ ] **Prisma Connection Pool**: Cấu hình pool size phù hợp với Supabase free tier (15 connections).
 - [ ] **Uptime Monitoring**: Dùng uptimerobot.com hoặc checklyhq.com để ping healthcheck mỗi 5 phút.
 - [ ] **Supabase Keep-Alive**: Script cron nhẹ ping database mỗi giờ — tránh Supabase free tier suspend (optional).
@@ -566,16 +579,18 @@ services:
 
 ### 13.1 Redis Module & Infrastructure
 
-- [ ] **Cấu trúc RedisModule**: Tạo `common/redis/` riêng:
+- [x] **Cấu trúc RedisModule**: Tạo `common/redis/` riêng:
       ```
       common/redis/
-      ├── redis.module.ts        # Global module, exports RedisService
-      ├── redis.service.ts       # Wrapper ioredis, quản lý connection pool
-      └── redis.constant.ts      # Cache key prefixes, TTL constants
+      ├── redis.module.ts           # Global module, exports REDIS_CLIENT + services
+      ├── redis-client.provider.ts  # REDIS_CLIENT token + ioredis instance
+      ├── redis-throttler-storage.ts# Distributed rate limiting storage
+      ├── leaderboard.service.ts    # Redis Sorted Sets cho Leaderboard
+      └── index.ts                  # Barrel exports
       ```
-- [ ] **Setup Redis**: Thêm service vào `docker-compose.prod.yml` (Docker Redis 7-Alpine, port 6379, persistence AOF).
-- [ ] **Tích hợp packages**: `ioredis` (Redis client), `@nestjs/cache-manager` + `cache-manager-ioredis-yet` (abstraction cho caching), `@socket.io/redis-adapter` (cho WebSocket).
-- [ ] **Config & env**: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` trong `.env`, load qua `ConfigModule`.
+- [x] **Setup Redis**: Thêm service `redis:7-alpine` vào `docker-compose.yml` (port 6379, volume, healthcheck).
+- [x] **Tích hợp packages**: `ioredis`, `@nestjs/cache-manager` + `cache-manager-ioredis-yet`, `@socket.io/redis-adapter`.
+- [x] **Config & env**: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` trong `.env` + `.env.example`, load qua `ConfigModule`.
 
 ### 13.2 Performance Caching (Cache-Aside Pattern)
 
@@ -590,39 +605,37 @@ services:
 | Zone detail | `cache:zone:{zoneId}` | 5 minutes | Zone bị update/delete |
 | Leaderboard | `cache:leaderboard` | 5 minutes | Có lượt like mới |
 
-- [ ] **Cache Games + Tags**: danh sách ít thay đổi, cache 1 giờ. Invalidate khi admin CRUD.
-- [ ] **Cache Public Profile**: cache 5 phút theo `userId`. Invalidate khi user gọi `PATCH /users/me`.
-- [ ] **Cache Zone list (public + search)**: query thường xuyên, cache ngắn 2 phút. Invalidate khi zone được tạo.
-- [ ] **Cache Leaderboard dùng Redis Sorted Sets**: `ZADD cache:leaderboard {likeCount} {userId}`, `ZREVRANGE` lấy top N — O(log N), thể hiện kỹ thuật sử dụng đúng cấu trúc dữ liệu Redis.
-- [ ] **Cache Invalidation cụ thể**: Sau mỗi mutation (create/update/delete), gọi `this.cacheManager.del(key)` tương ứng — không dùng TTL chờ hết hạn.
+- [x] **Cache Games + Tags**: danh sách ít thay đổi, cache 1 giờ dùng CacheInterceptor. Invalidate khi admin CRUD.
+- [x] **Cache Public Profile**: cache 5 phút theo `userId` dùng CacheManager. Invalidate khi user gọi `PATCH /users/me`.
+- [x] **Cache Zone list (public + search)**: query thường xuyên, cache 2 phút dùng CacheManager + Redis keys pattern invalidation.
+- [x] **Cache Leaderboard dùng Redis Sorted Sets**: `ZADD lb:all {likeCount} {userId}`, `ZREVRANGE` lấy top N — O(log N).
+- [x] **Cache Invalidation cụ thể**: Sau mỗi mutation (create/update/delete), gọi `this.cacheManager.del(key)` hoặc `redis.del(pattern)` tương ứng.
 
 ### 13.3 Real-time & WebSocket Optimization
 
-- [ ] **Socket.IO Redis Adapter**: Cài `@socket.io/redis-adapter`, cấu hình trong `ChatGateway`:
+- [ ] **Socket.IO Redis Adapter**: Đã cài `@socket.io/redis-adapter` nhưng chưa cấu hình — chỉ cần thiết khi scale nhiều NestJS instance.
       ```typescript
       const pubClient = new Redis(redisConfig);
       const subClient = pubClient.duplicate();
       createAdapter(pubClient, subClient);
       ```
-      Cho phép scale nhiều server — tất cả instance nhận được sự kiện qua Redis Pub/Sub.
-- [ ] **Online/Offline Presence**: Dùng Redis key với TTL 60s:
+- [x] **Online/Offline Presence**: Dùng Redis key với TTL 60s:
       - Key: `presence:{userId}` → value: `socketId`
-      - Refresh mỗi 30s từ client (heartbeat)
-      - Khi disconnect → key tự hết hạn (hoặc xoá thủ công)
-      - API `GET /users/presence?userIds=...` để check ai đang online
-- [ ] **User online status broadcast**: Khi user online/offline, emit sự kiện qua WebSocket để các client khác cập nhật real-time.
+      - `chat.gateway.ts`: `setex` khi connect, `del` khi disconnect
+      - API `GET /users/presence?userIds=...` — check ai đang online
+- [x] **User online status broadcast**: Khi user online/offline, emit `user:online` / `user:offline` qua WebSocket.
 
 ### 13.4 Distributed Rate Limiting
 
-- [ ] **Redis-based Throttler**: Cấu hình `@nestjs/throttler` dùng Redis store thay vì in-memory:
+- [x] **Redis-based Throttler**: Custom `RedisThrottlerStorage` implements `ThrottlerStorage`, dùng `@nestjs/throttler` với Redis store thay vì in-memory — INCR + PEXPIRE atomic, block key khi vượt limit.
       ```typescript
-      ThrottlerModule.forRoot({
-        throttlers: [{ name: 'default', ttl: 60000, limit: 100 }],
-        storage: new ThrottlerStorageRedisService(new Redis(redisConfig)),
+      ThrottlerModule.forRootAsync({
+        imports: [RedisModule],
+        inject: [RedisThrottlerStorage],
+        useFactory: (storage) => ({ throttlers: [...], storage }),
       });
       ```
-      Hữu ích khi scale lên nhiều instance — rate limit được tính chung, không bị reset theo từng server.
-- [ ] **Preserve cấu hình rate limit hiện tại**: Auth (5-10 req/min), Global (100 req/min) — chỉ chuyển storage từ memory → Redis, không thay đổi logic.
+- [x] **Preserve cấu hình rate limit hiện tại**: Giữ nguyên Global 100 req/min — chỉ chuyển storage từ memory → Redis, không thay đổi logic.
 
 
 ---
