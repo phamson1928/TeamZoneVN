@@ -1,0 +1,2 @@
+This is a placeholder for the TeamZoneVN Android App (APK). 
+Please compile the React Native app to an APK file (using EAS Build or locally via gradlew assembleRelease) and replace this file with the actual teamzonevn.apk.

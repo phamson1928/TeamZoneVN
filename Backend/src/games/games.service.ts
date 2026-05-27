@@ -1,8 +1,10 @@
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class GamesService {
@@ -11,6 +13,7 @@ export class GamesService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    @Inject(CACHE_MANAGER) private cache: Cache,
   ) {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
     this.storageBaseUrl = `${supabaseUrl}/storage/v1/object/public/game-assets`;
@@ -36,6 +39,7 @@ export class GamesService {
     const game = await this.prisma.game.create({
       data: dto,
     });
+    await this.cache.del('games');
     return this.transformGameUrls(game);
   }
 
@@ -110,13 +114,15 @@ export class GamesService {
       where: { id },
       data: dto,
     });
+    await this.cache.del('games');
     return this.transformGameUrls(updated);
   }
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.game.delete({
+    await this.prisma.game.delete({
       where: { id },
     });
+    await this.cache.del('games');
   }
 }

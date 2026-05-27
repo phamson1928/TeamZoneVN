@@ -1,15 +1,20 @@
 import {
+  Inject,
   Injectable,
   ForbiddenException,
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
+import Redis from 'ioredis';
 import { CreateZoneDto } from './dto/create-zone.dto.js';
 import { UpdateZoneDto } from './dto/update-zone.dto.js';
 import { SearchZonesDto, ZoneSortBy } from './dto/search-zones.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma, ContactMethodType } from '@prisma/client';
+import { REDIS_CLIENT } from '../common/redis/redis-client.provider';
 
 @Injectable()
 export class ZonesService {
@@ -18,6 +23,8 @@ export class ZonesService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    @Inject(CACHE_MANAGER) private cache: Cache,
+    @Inject(REDIS_CLIENT) private redis: Redis,
   ) {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
     this.storageBaseUrl = `${supabaseUrl}/storage/v1/object/public/game-assets`;
@@ -104,10 +111,18 @@ export class ZonesService {
     });
 
     // Trả về zone đầy đủ
+    await this.resetZoneListCache();
     return this.findOneByOwner(zone.id, ownerId);
   }
 
   async findAllByUser(page: number, limit: number) {
+    const cacheKey = `zones:${page}:${limit}`;
+    const cached = await this.cache.get<{
+      data: unknown[];
+      meta: { page: number; limit: number; total: number; totalPages: number };
+    }>(cacheKey);
+    if (cached) return cached;
+
     const skip = (page - 1) * limit;
     const [data, total] = await Promise.all([
       this.prisma.zone.findMany({
@@ -140,7 +155,7 @@ export class ZonesService {
       this.prisma.zone.count(),
     ]);
 
-    return {
+    const result = {
       data: data.map((z) => ({ ...z, game: this.transformGameUrls(z.game) })),
       meta: {
         page,
@@ -149,6 +164,16 @@ export class ZonesService {
         totalPages: Math.ceil(total / limit),
       },
     };
+
+    await this.cache.set(cacheKey, result, 120); // 2 phút
+    return result;
+  }
+
+  private async resetZoneListCache(): Promise<void> {
+    const keys = await this.redis.keys('zones:*');
+    if (keys.length > 0) {
+      await this.redis.del(...keys);
+    }
   }
 
   async findAllByAdmin(page: number, limit: number, query?: string) {
@@ -521,6 +546,7 @@ export class ZonesService {
     });
 
     // Trả về zone đã cập nhật với đầy đủ relations
+    await this.resetZoneListCache();
     return this.findOneByOwner(id, ownerId);
   }
 
@@ -538,6 +564,7 @@ export class ZonesService {
       where: { id },
     });
 
+    await this.resetZoneListCache();
     return { message: 'Zone đã được xóa thành công' };
   }
 
@@ -552,6 +579,7 @@ export class ZonesService {
       where: { id },
     });
 
+    await this.resetZoneListCache();
     return { message: 'Zone đã được xóa bởi admin' };
   }
 

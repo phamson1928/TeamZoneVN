@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { CacheModule } from '@nestjs/cache-manager';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -24,6 +25,8 @@ import { FriendsModule } from './friends/friends.module';
 import { ZoneInvitesModule } from './zone-invites/zone-invites.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { BlocksModule } from './blocks/blocks.module';
+import { RedisModule } from './common/redis/redis.module';
+import { RedisThrottlerStorage } from './common/redis/redis-throttler-storage';
 
 @Module({
   imports: [
@@ -33,14 +36,38 @@ import { BlocksModule } from './blocks/blocks.module';
       envFilePath: '.env',
     }),
 
-    // Rate limiting - 100 requests per minute by default
-    ThrottlerModule.forRoot([
-      {
-        name: 'default',
-        ttl: 60000, // 1 minute
-        limit: 100,
-      },
-    ]),
+    // Rate limiting - 100 requests per minute by default (Redis-backed)
+    ThrottlerModule.forRootAsync({
+      imports: [RedisModule],
+      inject: [RedisThrottlerStorage],
+      useFactory: (storage: RedisThrottlerStorage) => ({
+        throttlers: [
+          {
+            name: 'default',
+            ttl: 60000, // 1 minute
+            limit: 100,
+          },
+        ],
+        storage,
+      }),
+    }),
+
+    // Cache - Redis store (cache-manager-ioredis-yet)
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        store: require('cache-manager-ioredis-yet'),
+        host: config.get<string>('REDIS_HOST', 'localhost'),
+        port: config.get<number>('REDIS_PORT', 6379),
+        password: config.get<string>('REDIS_PASSWORD', ''),
+        ttl: 60, // default TTL in seconds
+      }),
+    }),
+
+    // Redis - raw client for Presence & Leaderboard
+    RedisModule,
 
     // Database
     PrismaModule,

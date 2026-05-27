@@ -8,11 +8,13 @@ import {
   OnGatewayDisconnect,
   WsException,
 } from '@nestjs/websockets';
-import { UseGuards } from '@nestjs/common';
+import { Inject, UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
+import Redis from 'ioredis';
 import { MessagesService } from '../messages/messages.service';
 import { WsJwtGuard } from './ws-jwt.guard';
 import { PrismaService } from '../prisma/prisma.service';
+import { REDIS_CLIENT } from '../common/redis/redis-client.provider';
 
 /**
  * ChatGateway — "Controller" cho WebSocket.
@@ -38,18 +40,35 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private messagesService: MessagesService,
     private prisma: PrismaService,
+    @Inject(REDIS_CLIENT) private redis: Redis,
   ) {}
 
   // ==========================
   // Lifecycle hooks
   // ==========================
 
-  handleConnection(client: Socket) {
+  async handleConnection(client: Socket) {
     console.log(`[Chat] Client connected: ${client.id}`);
+
+    // Set presence if user is authenticated
+    if (client.data.user?.sub) {
+      await this.redis.setex(`presence:${client.data.user.sub}`, 60, client.id);
+      client.broadcast.emit('user:online', {
+        userId: client.data.user.sub,
+      });
+    }
   }
 
-  handleDisconnect(client: Socket) {
+  async handleDisconnect(client: Socket) {
     console.log(`[Chat] Client disconnected: ${client.id}`);
+
+    // Remove presence
+    if (client.data.user?.sub) {
+      await this.redis.del(`presence:${client.data.user.sub}`);
+      client.broadcast.emit('user:offline', {
+        userId: client.data.user.sub,
+      });
+    }
   }
 
   // ==========================

@@ -8,14 +8,30 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 
 ## Tech Stack
 
-| Layer     | Technology                   |
-| --------- | ---------------------------- |
-| Framework | NestJS                       |
-| Database  | PostgreSQL                   |
-| ORM       | Prisma                       |
-| Auth      | JWT (Access + Refresh Token) + Google OAuth2 |
-| Real-time | WebSocket (Socket.io)        |
-| Container | Docker                       |
+| Layer            | Technology                          |
+| ---------------- | ----------------------------------- |
+| Framework        | NestJS 11                           |
+| Database         | PostgreSQL 16 (Supabase)            |
+| ORM              | Prisma 6                            |
+| Auth             | JWT (Access + Refresh) + Google OAuth2 |
+| Real-time        | WebSocket (Socket.IO)               |
+| File Storage     | Supabase Storage                    |
+| Containerization | Docker (Multi-stage Alpine Build)   |
+| CI/CD            | GitHub Actions (Auto-deploy)        |
+| Frontend Hosting | Vercel                              |
+| Backend Hosting  | VPS (Docker + Nginx Reverse Proxy)  |
+
+### Architecture
+
+```
+Client (Mobile/Web)
+    │
+    ├── Vercel ─── Frontend (Landing Page)
+    │
+    └── Backend (VPS) ─── Docker ─── NestJS API + WebSocket
+                                        │
+                                        └── Supabase ─── PostgreSQL + File Storage
+```
 
 ---
 
@@ -24,7 +40,7 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 ### 1.1 Project Setup
 
 - [x] Khởi tạo NestJS project
-- [x] Setup Docker + PostgreSQL
+- [x] Setup Docker cho local development (PostgreSQL container)
 - [x] Setup Prisma schema
 - [x] Cấu hình environment variables
 - [x] Setup validation (class-validator)
@@ -433,28 +449,93 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 
 ---
 
-## Phase 11: Professional Deployment & DevOps (Week 16-17)
+## Phase 11: Production Deployment & DevOps (Week 16-17)
 
-### 11.1 Containerization (Docker)
-- [ ] **Backend Dockerization**: Create multi-stage `Dockerfile` (Node Alpine) for NestJS to minimize image size (~150MB).
-- [ ] **Admin Dashboard Dockerization**: Create `Dockerfile` + `nginx.conf` for the React Dashboard.
-- [ ] **Docker Compose**: Orchestrate Backend, Admin Dashboard, and Nginx Reverse Proxy.
-- [ ] **Local Testing**: Run entire stack locally using `docker-compose up` to ensure consistency.
+> Mục tiêu: Đưa backend lên VPS bằng Docker, kết nối Supabase (PostgreSQL + Storage), phục vụ frontend trên Vercel. Toàn bộ kiến trúc containerized để dễ dàng scale và maintain.
 
-### 11.2 Infrastructure & Networking (VPS - MVD)
-- [ ] **Nginx Reverse Proxy**: Cấu hình Nginx cơ bản để trỏ domain vào container.
-- [ ] **SSL (Certbot)**: Thiết lập HTTPS (bắt buộc để login qua Mobile/Google).
-- [ ] **Supabase Keep-Alive**: Thiết lập một script/cron-job nhỏ để tự động "ping" database, đảm bảo gói FREE không bị tạm dừng.
-- [ ] **Security**: Mở port 80, 443 và cấu hình Firewall cơ bản.
+### 11.1 Docker Production Build
+
+> Docker là công nghệ containerization cốt lõi, được dùng để đóng gói NestJS backend thành image độc lập. Image được build theo multi-stage, tối ưu để chỉ chứa đúng những gì cần để chạy production.
+
+**Multi-stage Dockerfile (Node Alpine):**
+
+```
+Stage 1 (deps)     → npm ci (cài đúng dependencies)
+Stage 2 (build)    → npx prisma generate + nest build
+Stage 3 (runtime)  → Copy dist/, node_modules/, package.json → image ~150MB
+```
+
+- [ ] **Tối ưu Dockerfile**: Sử dụng multi-stage build với Node Alpine image, tận dụng Docker layer caching cho `npm ci`.
+- [ ] **.dockerignore**: Loại bỏ `node_modules`, `dist`, `.git`, `.env` khỏi build context.
+- [ ] **Prisma Client**: Generate Prisma Client trong build stage — không cần runtime dependencies.
+- [ ] **Healthcheck**: Thêm `HEALTHCHECK` instruction để Docker kiểm tra backend còn sống.
+
+**docker-compose.prod.yml:**
+
+```yaml
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: teamzonevn-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}       # Supabase PostgreSQL
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGIN=${CORS_ORIGIN}         # Vercel domain
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+```
+
+> Vì database và storage đã dùng Supabase (managed service), Docker chỉ cần chạy NestJS. Không cần PostgreSQL container, giúp giảm tài nguyên VPS và đơn giản hóa operation.
+
+### 11.2 VPS Setup & Deployment
+
+- [ ] **Server Init**: Cài đặt Docker Engine + Docker Compose V2 trên VPS.
+- [ ] **Clone & Build**: Clone source code, tạo `.env` từ mẫu, chạy `docker compose up -d --build`.
+- [ ] **Nginx Reverse Proxy**:
+      - Reverse proxy từ domain/subdomain đến `localhost:3000`
+      - WebSocket support: `proxy_set_header Upgrade $http_upgrade` + `Connection "upgrade"`
+      - Rate limiting, request body size limits (phòng spam)
+      - Proxy timeout phù hợp cho WebSocket long-polling
+- [ ] **SSL (Certbot + Let's Encrypt)**: HTTPS tự động gia hạn — bắt buộc cho Google OAuth và mobile app.
+- [ ] **Firewall**: Chỉ mở port 80 (HTTP), 443 (HTTPS), 22 (SSH). Port 3000 không expose ra ngoài.
 
 ### 11.3 CI/CD Pipeline (GitHub Actions)
-> [!NOTE]
-> Phần này sẽ thực hiện sau khi hệ thống đã chạy ổn định với Docker manual (Phase 11.1 & 11.2) để ưu tiên hoàn thiện sản phẩm trước.
 
-- [ ] **Automated Build**: Workflow to build Docker images on every push to `main`.
-- [ ] **Image Registry**: Push built images to Docker Hub or GitHub Packages.
-- [ ] **Auto-Deploy**: SSH into VPS, pull latest images, and restart containers automatically.
-- [ ] **Environment Secrets**: Securely manage `.env` using GitHub Secrets.
+> Xây dựng pipeline tự động hoá — push code → build image → push registry → deploy lên VPS. Dùng GitHub Container Registry (ghcr.io) để lưu trữ image.
+
+- [ ] **CI — Build & Test**: Workflow chạy trên mỗi pull request:
+      - `npm ci` + `npx prisma generate`
+      - `npm run lint` (ESLint + Prettier)
+      - `npm run test` (Jest unit tests)
+      - `docker build` (kiểm tra Dockerfile không lỗi)
+- [ ] **CD — Build & Push Image**: Khi merge vào `main`:
+      - Build Docker image với tag `ghcr.io/teamzonevn/backend:latest` và `git-sha`
+      - Push lên GitHub Container Registry
+- [ ] **CD — Deploy to VPS**: Sau khi push image thành công:
+      - SSH vào VPS bằng deploy key
+      - Pull image mới: `docker compose pull`
+      - Graceful restart: `docker compose up -d --force-recreate`
+      - Rollback script: giữ 3 versions gần nhất, deploy có flag `--rollback`
+- [ ] **Environment Secrets**: Lưu `.env` và SSH private key trong GitHub Secrets.
+- [ ] **Slack/Telegram Notification**: Gửi thông báo khi deploy thành công/thất bại (optional).
+
+### 11.4 Monitoring & Database Connection
+
+- [ ] **Container Restart Policy**: `unless-stopped` + Docker tự động restart nếu crash.
+- [ ] **Log Rotation**: `json-file` driver với max-size 10m, max-file 3 — tránh đầy disk.
+- [ ] **Prisma Connection Pool**: Cấu hình pool size phù hợp với Supabase free tier (15 connections).
+- [ ] **Uptime Monitoring**: Dùng uptimerobot.com hoặc checklyhq.com để ping healthcheck mỗi 5 phút.
+- [ ] **Supabase Keep-Alive**: Script cron nhẹ ping database mỗi giờ — tránh Supabase free tier suspend (optional).
 
 ---
 
@@ -467,7 +548,7 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 
 ### 12.2 Deployment & SEO
 - [ ] **Vercel Deployment**: Cấu hình auto-deploy tới Vercel cho Landing Page.
-- [ ] **Domain Mapping**: Trỏ `gamezone.vn` về Vercel.
+- [ ] **Domain Mapping**: Trỏ `gamezone.vn` về Vercel (Landing Page), trỏ `api.gamezone.vn` về VPS (Backend API).
 - [ ] **SEO Optimization**: Meta tags, OpenGraph images, and Sitemap.
 
 ### 12.3 App Store Readiness & Final Polish
@@ -479,27 +560,69 @@ TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạ
 
 ---
 
-## Phase 13: Scaling & Redis Integration (Future)
+## Phase 13: Redis Integration — Performance & Real-time Optimization
 
-*(Thực hiện khi hệ thống đạt khoảng 5,000 - 10,000 Active Users)*
+> *Phase này triển khai ngay để làm nền tảng cho việc scale và tối ưu hiệu năng. Redis được dùng ở 4 mảng: cache dữ liệu, real-time presence, rate limiting phân tán, và WebSocket scaling.*
 
-### 12.1 Setup & Infrastructure
-- [ ] Setup Redis server (Docker hoặc Managed Service)
-- [ ] Tích hợp `ioredis` và `@nestjs/cache-manager` vào NestJS
+### 13.1 Redis Module & Infrastructure
 
-### 12.2 Performance Caching
-- [ ] Cache danh sách tĩnh ít thay đổi (Games, Tags) để giảm tải truy vấn DB.
-- [ ] Cấu hình cơ chế Cache Invalidation khi Admin cập nhật Games/Tags.
-- [ ] Cache Public Profile của User.
+- [ ] **Cấu trúc RedisModule**: Tạo `common/redis/` riêng:
+      ```
+      common/redis/
+      ├── redis.module.ts        # Global module, exports RedisService
+      ├── redis.service.ts       # Wrapper ioredis, quản lý connection pool
+      └── redis.constant.ts      # Cache key prefixes, TTL constants
+      ```
+- [ ] **Setup Redis**: Thêm service vào `docker-compose.prod.yml` (Docker Redis 7-Alpine, port 6379, persistence AOF).
+- [ ] **Tích hợp packages**: `ioredis` (Redis client), `@nestjs/cache-manager` + `cache-manager-ioredis-yet` (abstraction cho caching), `@socket.io/redis-adapter` (cho WebSocket).
+- [ ] **Config & env**: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` trong `.env`, load qua `ConfigModule`.
 
-### 12.3 Real-time & Socket Optimization
-- [ ] Tích hợp Redis Adapter cho Socket.IO để hỗ trợ scale đa server (Load Balancing).
-- [ ] Lưu trạng thái Online/Offline (Presence) của User trên Redis.
-- [ ] [Optional] Dùng Redis Pub/Sub hoặc Queue để xử lý lượng tin nhắn lớn.
+### 13.2 Performance Caching (Cache-Aside Pattern)
 
-### 12.4 Security & Session
-- [ ] Lưu trữ và quản lý Rate Limiting (`ThrottlerModule`) tập trung bằng Redis.
-- [ ] Lưu trữ ngắn hạn OTP / mã xác nhận cấp lại mật khẩu kèm cơ chế TTL tự hủy.
+> Chiến lược: Cache-aside — đọc từ cache trước, miss thì query DB rồi ghi vào cache với TTL. Khi data thay đổi, chủ động xoá cache key tương ứng.
+
+| Cache Target | Key Pattern | TTL | Invalidation Trigger |
+|---|---|---|---|
+| Games list | `cache:games` | 1 hour | Admin tạo/sửa/xoá game |
+| Tags list | `cache:tags` | 1 hour | Admin tạo/sửa/xoá tag |
+| Public Profile | `cache:profile:{userId}` | 5 minutes | User update profile |
+| Zone list (public) | `cache:zones:page:{page}` | 2 minutes | Zone mới được tạo |
+| Zone detail | `cache:zone:{zoneId}` | 5 minutes | Zone bị update/delete |
+| Leaderboard | `cache:leaderboard` | 5 minutes | Có lượt like mới |
+
+- [ ] **Cache Games + Tags**: danh sách ít thay đổi, cache 1 giờ. Invalidate khi admin CRUD.
+- [ ] **Cache Public Profile**: cache 5 phút theo `userId`. Invalidate khi user gọi `PATCH /users/me`.
+- [ ] **Cache Zone list (public + search)**: query thường xuyên, cache ngắn 2 phút. Invalidate khi zone được tạo.
+- [ ] **Cache Leaderboard dùng Redis Sorted Sets**: `ZADD cache:leaderboard {likeCount} {userId}`, `ZREVRANGE` lấy top N — O(log N), thể hiện kỹ thuật sử dụng đúng cấu trúc dữ liệu Redis.
+- [ ] **Cache Invalidation cụ thể**: Sau mỗi mutation (create/update/delete), gọi `this.cacheManager.del(key)` tương ứng — không dùng TTL chờ hết hạn.
+
+### 13.3 Real-time & WebSocket Optimization
+
+- [ ] **Socket.IO Redis Adapter**: Cài `@socket.io/redis-adapter`, cấu hình trong `ChatGateway`:
+      ```typescript
+      const pubClient = new Redis(redisConfig);
+      const subClient = pubClient.duplicate();
+      createAdapter(pubClient, subClient);
+      ```
+      Cho phép scale nhiều server — tất cả instance nhận được sự kiện qua Redis Pub/Sub.
+- [ ] **Online/Offline Presence**: Dùng Redis key với TTL 60s:
+      - Key: `presence:{userId}` → value: `socketId`
+      - Refresh mỗi 30s từ client (heartbeat)
+      - Khi disconnect → key tự hết hạn (hoặc xoá thủ công)
+      - API `GET /users/presence?userIds=...` để check ai đang online
+- [ ] **User online status broadcast**: Khi user online/offline, emit sự kiện qua WebSocket để các client khác cập nhật real-time.
+
+### 13.4 Distributed Rate Limiting
+
+- [ ] **Redis-based Throttler**: Cấu hình `@nestjs/throttler` dùng Redis store thay vì in-memory:
+      ```typescript
+      ThrottlerModule.forRoot({
+        throttlers: [{ name: 'default', ttl: 60000, limit: 100 }],
+        storage: new ThrottlerStorageRedisService(new Redis(redisConfig)),
+      });
+      ```
+      Hữu ích khi scale lên nhiều instance — rate limit được tính chung, không bị reset theo từng server.
+- [ ] **Preserve cấu hình rate limit hiện tại**: Auth (5-10 req/min), Global (100 req/min) — chỉ chuyển storage từ memory → Redis, không thay đổi logic.
 
 
 ---

@@ -1,11 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { PrismaService } from 'src/prisma';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class TagsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cache: Cache,
+  ) {}
 
   async getAllTags() {
     const tags = await this.prisma.zoneTag.findMany({
@@ -19,6 +24,7 @@ export class TagsService {
     const newTag = await this.prisma.zoneTag.create({
       data: { ...createTagDto },
     });
+    await this.cache.del('tags');
     return newTag;
   }
 
@@ -27,6 +33,7 @@ export class TagsService {
       where: { id },
       data: { ...updateTagDto },
     });
+    await this.cache.del('tags');
     return updatedTag;
   }
 
@@ -34,6 +41,7 @@ export class TagsService {
     await this.prisma.zoneTag.delete({
       where: { id },
     });
+    await this.cache.del('tags');
     return { message: 'Tag deleted successfully' };
   }
 }

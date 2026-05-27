@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,6 +20,7 @@ import { TagsService } from './tags.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { JwtAuthGuard, Public, Roles, RolesGuard } from 'src/common';
+import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 
 @ApiTags('Tags')
 @ApiBearerAuth('access-token')
@@ -37,6 +39,9 @@ export class TagsController {
     return this.tagsService.createTag(createTagDto);
   }
 
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('tags')
+  @CacheTTL(3600)
   @Get()
   @Public()
   @ApiOperation({ summary: 'Lấy danh sách tất cả tags (public)' })

@@ -1,162 +1,156 @@
-
 import { motion } from 'framer-motion';
-import { Gamepad2, Users, MessageSquare, Download, Star } from 'lucide-react';
+import { Gamepad2, Users, MessageSquare, Download, Star, ShieldCheck } from 'lucide-react';
+import mainUI from '../assets/giaodienchinh.png';
 
 const Hero = () => {
   return (
-    <section className="relative pt-32 pb-20 overflow-hidden bg-slate-900 text-white min-h-screen flex items-center">
-      {/* Background Grid */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950"></div>
-      
-      {/* Grid Pattern */}
-      <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(14, 165, 233, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(14, 165, 233, 0.1) 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+    <section id="hero" className="relative pt-36 pb-20 overflow-hidden bg-slate-950 text-white min-h-screen flex items-center">
+      {/* Background Gradients & Effects */}
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-15 pointer-events-none"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900"></div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-16">
+      {/* Grid Pattern with fading edges */}
+      <div 
+        className="absolute inset-0 mask-image-[radial-gradient(ellipse_at_center,transparent_20%,black)]" 
+        style={{ 
+          backgroundImage: 'linear-gradient(rgba(37, 99, 255, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(37, 99, 255, 0.04) 1px, transparent 1px)', 
+          backgroundSize: '45px 45px' 
+        }}
+      ></div>
+
+      {/* Glowing Neon Lights */}
+      <div className="absolute top-[20%] left-[-10%] w-[400px] h-[400px] bg-primary/20 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[10%] right-[-10%] w-[500px] h-[500px] bg-secondary/15 rounded-full blur-[140px] pointer-events-none"></div>
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10 w-full">
+        <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-8">
           
-          {/* Text Content */}
+          {/* Left Side: Text Content */}
           <div className="w-full lg:w-1/2 text-center lg:text-left">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <h1 className="text-5xl lg:text-7xl font-heading mb-6 leading-tight">
-                TÌM KIẾM ĐỒNG ĐỘI <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">HOÀN HẢO</span>
+              {/* Feature Badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs font-body text-slate-300 mb-6">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                Phiên bản Beta 2.0 đã sẵn sàng
+              </div>
+
+              <h1 className="text-5xl lg:text-7xl font-heading mb-6 leading-none tracking-tight">
+                TÌM ĐỒNG ĐỘI <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-cyan-400 to-secondary text-glow">
+                  CHIẾN GAME
+                </span>
               </h1>
               
-              <p className="text-slate-300 text-lg lg:text-xl font-body mb-8 max-w-2xl mx-auto lg:mx-0">
-                TeamZoneVN kết nối bạn với những game thủ cùng chí hướng. Tạo phòng, ghép trận dựa trên rank, và giao tiếp mượt mà. Đừng chơi solo nữa, hãy bắt đầu chiến thắng cùng nhau.
+              <p className="text-slate-300 text-base lg:text-lg font-body mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                TeamZoneVN kết nối bạn với những game thủ có cùng trình độ và phong cách chơi. Tạo phòng chờ ghép đội, trò chuyện thời gian thực và leo rank kịch tính. Đừng đi solo nữa!
               </p>
 
+              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                <button className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-cta to-orange-400 text-white rounded-xl font-heading text-lg hover:scale-105 transition-transform shadow-lg shadow-cta/30">
-                  <Download className="w-6 h-6" />
+                <a
+                  href="#cta"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-primary via-blue-600 to-secondary text-white rounded-xl font-heading text-sm hover:scale-[1.03] transition-all shadow-lg shadow-primary/20 border border-primary/20"
+                >
+                  <Download className="w-5 h-5" />
                   Tải Ứng Dụng
-                </button>
-                <button className="flex items-center gap-2 px-8 py-4 bg-slate-800 text-white rounded-xl font-heading text-lg hover:bg-slate-700 transition-colors border border-slate-700">
-                  <Gamepad2 className="w-6 h-6 text-primary" />
-                  Khám Phá Game
-                </button>
+                </a>
+                <a
+                  href="#showcase"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-slate-900/60 hover:bg-slate-900 text-slate-300 hover:text-white rounded-xl font-heading text-sm transition-all border border-slate-800/80 backdrop-blur-sm"
+                >
+                  <Gamepad2 className="w-5 h-5 text-secondary" />
+                  Xem Giao Diện
+                </a>
               </div>
               
-              {/* Ratings */}
-              <div className="mt-10 flex items-center justify-center lg:justify-start gap-4 text-slate-400 font-body">
+              {/* Trust Indicators */}
+              <div className="mt-12 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-6 text-slate-400 font-body">
                 <div className="flex -space-x-3">
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className={`w-10 h-10 rounded-full bg-slate-700 border-2 border-slate-900 flex items-center justify-center`}>
-                      <Users className="w-5 h-5 text-slate-300" />
+                    <div key={i} className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-950 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-slate-400" />
                     </div>
                   ))}
                 </div>
-                <div>
-                  <div className="flex items-center gap-1 text-yellow-500">
+                <div className="text-center sm:text-left">
+                  <div className="flex items-center justify-center sm:justify-start gap-1 text-yellow-500">
                     <Star className="w-4 h-4 fill-yellow-500" />
                     <Star className="w-4 h-4 fill-yellow-500" />
                     <Star className="w-4 h-4 fill-yellow-500" />
                     <Star className="w-4 h-4 fill-yellow-500" />
                     <Star className="w-4 h-4 fill-yellow-500" />
                   </div>
-                  <span className="text-sm">Được tin dùng bởi 10k+ game thủ</span>
+                  <span className="text-xs tracking-wider text-slate-400">Kết nối hơn 10,000+ game thủ Việt Nam</span>
                 </div>
               </div>
             </motion.div>
           </div>
 
-          {/* App Mockup */}
-          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end relative">
-            {/* Decorative blurs */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/30 rounded-full blur-[100px] pointer-events-none"></div>
-            
+          {/* Right Side: Smartphone Mockup & Floating Cards */}
+          <div className="w-full lg:w-1/2 flex justify-center relative">
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative z-10"
+              className="relative z-10 group"
             >
               {/* Phone Frame */}
-              <div className="w-[320px] h-[650px] bg-slate-950 rounded-[40px] border-[8px] border-slate-800 shadow-2xl overflow-hidden relative shadow-primary/20">
+              <div className="w-[300px] h-[610px] sm:w-[320px] sm:h-[650px] bg-slate-950 rounded-[40px] border-[8px] border-slate-900 shadow-2xl overflow-hidden relative shadow-primary/10">
                 {/* Notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-2xl z-20"></div>
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-900 rounded-b-2xl z-20"></div>
                 
-                {/* App Content Fake */}
-                <div className="h-full w-full bg-slate-900 text-white font-body p-4 pt-10 flex flex-col">
-                  {/* Header */}
-                  <div className="flex justify-between items-center mb-6">
-                    <div>
-                      <h3 className="font-heading text-xl text-primary">TeamZoneVN</h3>
-                      <p className="text-xs text-slate-400">Chào mừng trở lại, Player1!</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border-2 border-primary">
-                      <Gamepad2 className="w-5 h-5 text-primary" />
-                    </div>
-                  </div>
-
-                  {/* Active Zone */}
-                  <div className="bg-slate-800 p-4 rounded-2xl mb-4 border border-slate-700">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs bg-cta/20 text-cta px-2 py-1 rounded">Ranked Duo</span>
-                      <span className="text-xs text-slate-400">1/2 Người</span>
-                    </div>
-                    <h4 className="font-heading text-lg mb-1">League of Legends</h4>
-                    <p className="text-sm text-slate-400 mb-3">Đang tìm Hỗ trợ rank Vàng/Bạch Kim!</p>
-                    <button className="w-full py-2 bg-primary/20 text-primary rounded-xl font-bold border border-primary/30">Vào Phòng</button>
-                  </div>
-
-                  {/* Recent Messages */}
-                  <h4 className="font-heading text-sm mb-3 text-slate-300">Tin nhắn gần đây</h4>
-                  <div className="space-y-3 flex-grow">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="flex items-center gap-3 bg-slate-800/50 p-3 rounded-xl">
-                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
-                          <Users className="w-5 h-5 text-slate-400" />
-                        </div>
-                        <div className="flex-grow">
-                          <h5 className="font-bold text-sm">Đội {i}</h5>
-                          <p className="text-xs text-slate-400 truncate">Tối nay 8 giờ chiến nhé...</p>
-                        </div>
-                        <MessageSquare className="w-4 h-4 text-slate-500" />
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Tab Bar */}
-                  <div className="mt-auto h-16 bg-slate-800 rounded-2xl flex justify-around items-center px-6">
-                    <Gamepad2 className="w-6 h-6 text-primary" />
-                    <Users className="w-6 h-6 text-slate-500" />
-                    <MessageSquare className="w-6 h-6 text-slate-500" />
-                  </div>
-                </div>
+                {/* Real App Screen Screenshot */}
+                <img 
+                  src={mainUI} 
+                  alt="TeamZoneVN App Main Interface" 
+                  className="w-full h-full object-cover" 
+                />
               </div>
 
-              {/* Floating Elements */}
+              {/* Floating Element 1: Match Found */}
               <motion.div
-                animate={{ y: [-10, 10, -10] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -right-8 md:-right-12 top-20 bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-xl flex items-center gap-3 hidden sm:flex"
+                animate={{ y: [-8, 8, -8] }}
+                transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -right-10 top-24 bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-xl flex items-center gap-3 backdrop-blur-md hidden sm:flex pointer-events-none"
               >
-                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-green-500/10 flex items-center justify-center border border-green-500/20">
                   <Gamepad2 className="w-5 h-5 text-green-500" />
                 </div>
                 <div>
-                  <h5 className="font-bold text-sm">Tìm Thấy Trận!</h5>
-                  <p className="text-xs text-slate-400">Valorant - Rank Flex</p>
+                  <h5 className="font-heading text-xs text-white">Tìm Thấy Đội!</h5>
+                  <p className="text-[10px] font-body text-slate-400">Valorant - Rank Bạch Kim</p>
                 </div>
               </motion.div>
 
+              {/* Floating Element 2: New Message */}
               <motion.div
-                animate={{ y: [10, -10, 10] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -left-8 md:-left-12 bottom-32 bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-xl flex items-center gap-3 hidden sm:flex"
+                animate={{ y: [8, -8, 8] }}
+                transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -left-12 bottom-36 bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-xl flex items-center gap-3 backdrop-blur-md hidden sm:flex pointer-events-none"
               >
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
                   <MessageSquare className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h5 className="font-bold text-sm">Tin Nhắn Mới</h5>
-                  <p className="text-xs text-slate-400">Sẵn sàng cho giải đấu chưa?</p>
+                  <h5 className="font-heading text-xs text-white">Tin Nhắn Mới</h5>
+                  <p className="text-[10px] font-body text-slate-400">Lên đồ đi, tối nay chiến LoL...</p>
                 </div>
+              </motion.div>
+
+              {/* Floating Element 3: Security Badge */}
+              <motion.div
+                animate={{ scale: [0.97, 1.03, 0.97] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute left-1/2 -translate-x-1/2 -bottom-6 bg-slate-900/90 border border-secondary/30 px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 backdrop-blur-md pointer-events-none"
+              >
+                <ShieldCheck className="w-4 h-4 text-secondary" />
+                <span className="text-[11px] font-body font-semibold text-slate-200 uppercase tracking-wider">
+                  Chống Toxic & Bảo mật 100%
+                </span>
               </motion.div>
             </motion.div>
           </div>

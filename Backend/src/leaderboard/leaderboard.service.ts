@@ -6,10 +6,14 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LeaderboardQueryDto } from './dto/leaderboard-query.dto';
 import { Prisma } from '@prisma/client';
+import { LeaderboardRedisService } from '../common/redis/leaderboard.service';
 
 @Injectable()
 export class LeaderboardService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly leaderboardRedis: LeaderboardRedisService,
+  ) {}
 
   async likeUser(likerId: string, userId: string) {
     if (likerId === userId) {
@@ -32,6 +36,7 @@ export class LeaderboardService {
     });
 
     const likeCount = await this.prisma.userLike.count({ where: { userId } });
+    await this.leaderboardRedis.addScore(userId, likeCount);
     return { message: 'Đã like thành công', likeCount };
   }
 
@@ -47,13 +52,54 @@ export class LeaderboardService {
     });
 
     const likeCount = await this.prisma.userLike.count({ where: { userId } });
+    if (likeCount > 0) {
+      await this.leaderboardRedis.addScore(userId, likeCount);
+    } else {
+      await this.leaderboardRedis.removeMember(userId);
+    }
     return { message: 'Đã bỏ like thành công', likeCount };
   }
 
   async getLeaderboard(query: LeaderboardQueryDto) {
     const { period = 'all', gameId } = query;
 
-    // Xác định mốc thời gian
+    // period=all, không filter gameId → dùng Redis Sorted Sets
+    if (period === 'all' && !gameId) {
+      const entries = await this.leaderboardRedis.getTop();
+      if (entries.length === 0) {
+        return { period: 'all', gameId: null, data: [] };
+      }
+
+      const userIds = entries.map((e) => e.userId);
+      const users = await this.prisma.user.findMany({
+        where: { id: { in: userIds }, status: 'ACTIVE' },
+        select: { id: true, username: true, avatarUrl: true },
+      });
+      const userMap = new Map(users.map((u) => [u.id, u]));
+
+      return {
+        period: 'all',
+        gameId: null,
+        data: entries
+          .filter((e) => userMap.has(e.userId))
+          .map((e, i) => ({
+            rank: i + 1,
+            userId: e.userId,
+            username: userMap.get(e.userId)!.username,
+            avatarUrl: userMap.get(e.userId)!.avatarUrl,
+            likeCount: e.score,
+          })),
+      };
+    }
+
+    // Fallback: query SQL cho period=week/month hoặc có gameId filter
+    return this.queryLeaderboardFromDb(period, gameId);
+  }
+
+  private async queryLeaderboardFromDb(
+    period: string,
+    gameId?: string,
+  ) {
     let dateFilter: Date | undefined;
     if (period === 'week') {
       dateFilter = new Date();
@@ -67,7 +113,6 @@ export class LeaderboardService {
       ? Prisma.sql`WHERE ul."createdAt" >= ${dateFilter}`
       : Prisma.empty;
 
-    // Lấy top 50 users theo số like trong period
     const rawLikes: { userId: string; likeCount: bigint }[] = await this.prisma
       .$queryRaw`
         SELECT ul."userId", COUNT(*) AS "likeCount"
@@ -78,7 +123,6 @@ export class LeaderboardService {
         LIMIT 50
       `;
 
-    // Nếu có filter game: lọc thêm theo game profile
     let filteredUserIds = rawLikes.map((r) => r.userId);
     if (gameId) {
       const gameProfiles = await this.prisma.userGameProfile.findMany({
@@ -93,7 +137,6 @@ export class LeaderboardService {
       rawLikes.map((r) => [r.userId, Number(r.likeCount)]),
     );
 
-    // Lấy thông tin users
     const users = await this.prisma.user.findMany({
       where: { id: { in: filteredUserIds }, status: 'ACTIVE' },
       select: {
@@ -109,7 +152,6 @@ export class LeaderboardService {
       },
     });
 
-    // Sắp xếp lại theo like count
     const ranked = users
       .map((u) => ({
         rank: 0,

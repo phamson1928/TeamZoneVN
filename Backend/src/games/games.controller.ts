@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  UseInterceptors,
   Query,
 } from '@nestjs/common';
 import {
@@ -16,6 +17,7 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
+import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { GamesService } from './games.service';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
@@ -53,6 +55,9 @@ export class GamesController {
     );
   }
 
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('games')
+  @CacheTTL(3600)
   @Get('mobile')
   @Public()
   @ApiOperation({ summary: 'Lấy danh sách games cho người dùng' })

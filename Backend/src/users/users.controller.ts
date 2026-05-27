@@ -8,6 +8,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
   Query,
+  Inject,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -15,7 +16,9 @@ import {
   ApiResponse,
   ApiParam,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
+import Redis from 'ioredis';
 import { UsersService } from './users.service';
 import {
   UpdateProfileDto,
@@ -29,13 +32,17 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/interfaces/request.interface';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { Roles } from '../common/index.js';
+import { REDIS_CLIENT } from '../common/redis/redis-client.provider';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+  ) {}
 
   @Get('me')
   @ApiOperation({ summary: 'Lấy thông tin profile cá nhân' })
@@ -100,6 +107,41 @@ export class UsersController {
       Number(page),
       Number(limit),
     );
+  }
+
+  @Get('presence')
+  @ApiOperation({ summary: 'Kiểm tra trạng thái online của danh sách user' })
+  @ApiQuery({
+    name: 'userIds',
+    required: true,
+    description: 'Danh sách user ID, phân cách bằng dấu phẩy',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Map userId → online status',
+    schema: {
+      type: 'object',
+      additionalProperties: { type: 'boolean' },
+      example: { 'uuid-1': true, 'uuid-2': false },
+    },
+  })
+  async getPresence(
+    @Query('userIds') userIds: string,
+  ): Promise<Record<string, boolean>> {
+    if (!userIds) return {};
+    const ids = userIds
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean);
+    if (ids.length === 0) return {};
+
+    const keys = ids.map((id) => `presence:${id}`);
+    const results = await this.redis.mget(...keys);
+    const presence: Record<string, boolean> = {};
+    ids.forEach((id, i) => {
+      presence[id] = results[i] !== null;
+    });
+    return presence;
   }
 
   @Get('admin/:id')

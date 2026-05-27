@@ -1,9 +1,12 @@
 import {
+  Inject,
   Injectable,
   NotFoundException,
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   UpdateProfileDto,
@@ -15,7 +18,10 @@ import { FriendStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cache: Cache,
+  ) {}
 
   async getUserDetailsForAdmin(
     userId: string,
@@ -81,6 +87,7 @@ export class UsersService {
       },
     });
 
+    await this.cache.del(`profile:${userId}`);
     return this.getMe(userId);
   }
 
@@ -100,6 +107,13 @@ export class UsersService {
     }
   > {
     const uid = userId.trim().toLowerCase();
+
+    // Cache only when no requesterId (public anonymous view)
+    if (!requesterId) {
+      const cacheKey = `profile:${uid}`;
+      const cached = await this.cache.get(cacheKey);
+      if (cached) return cached as any;
+    }
     const user = await this.prisma.user.findUnique({
       where: { id: uid },
       include: {
@@ -154,7 +168,7 @@ export class UsersService {
       }
     }
 
-    return {
+    const result = {
       id: user.id,
       username: user.username,
       avatarUrl: user.avatarUrl,
@@ -171,6 +185,13 @@ export class UsersService {
           }
         : null,
     };
+
+    // Cache public profile snapshot (anonymous view only)
+    if (!requesterId) {
+      await this.cache.set(`profile:${uid}`, result, 300); // 5 phút
+    }
+
+    return result;
   }
 
   async updateAvatar(
@@ -183,6 +204,7 @@ export class UsersService {
       include: { profile: true },
     });
 
+    await this.cache.del(`profile:${userId}`);
     return this.toUserResponse(user);
   }
 
