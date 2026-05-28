@@ -517,13 +517,13 @@ services:
 
 > Các bước này cần thao tác tay trên VPS. Tôi đã chuẩn bị sẵn `docker-compose.prod.yml` — chỉ cần clone code, copy `.env`, và chạy.
 
-- [ ] **Server Init**: Cài đặt Docker Engine + Docker Compose V2 trên VPS.
-- [ ] **Clone & Build**: `git clone`, tạo `.env` từ `.env.example`, chạy `docker compose -f docker-compose.prod.yml up -d --build`.
-- [ ] **Nginx Reverse Proxy**:
-      - Reverse proxy từ domain/subdomain đến `localhost:3000`
+- [x] **Server Init**: Docker Engine + Docker Compose đã có sẵn trên VPS.
+- [x] **Clone & Build**: `git clone`, tạo `.env` từ `.env.example`, chạy `docker compose -f docker-compose.prod.yml up -d --build`.
+- [x] **Nginx Reverse Proxy**:
+      - Reverse proxy từ domain `152-42-163-30.sslip.io` đến `localhost:3000`
       - WebSocket support: `proxy_set_header Upgrade $http_upgrade` + `Connection "upgrade"`
       - Port 3000 không expose ra ngoài (chỉ Nginx gọi internal)
-- [ ] **SSL (Certbot + Let's Encrypt)**: HTTPS tự động gia hạn.
+- [x] **SSL (Certbot + Let's Encrypt)**: HTTPS cho `152-42-163-30.sslip.io`, cert hạn đến Aug 2026.
 - [ ] **Firewall**: Chỉ mở port 80, 443, 22.
 
 ### 11.3 CI/CD Pipeline (GitHub Actions)
@@ -535,11 +535,11 @@ services:
       - Trigger: push vào `main` có thay đổi trong `Backend/**`
       - Action: SSH vào VPS → `git pull` → `docker compose -f docker-compose.prod.yml up -d --build` → `docker image prune -f`
       - Có thể deploy thủ công qua GitHub UI (workflow_dispatch)
-- [ ] **Setup GitHub Secrets**: Cần 4 secrets trên GitHub repo:
-      - `VPS_HOST` — IP VPS
-      - `VPS_USERNAME` — user SSH (thường `root`)
-      - `VPS_SSH_KEY` — private key SSH
-      - `VPS_PATH` — đường dẫn project trên VPS (ví dụ `/root/GameZone`)
+- [x] **Setup GitHub Secrets**: Đã cấu hình 4 secrets trên GitHub repo:
+      - `VPS_HOST` — `152.42.163.30`
+      - `VPS_USERNAME` — `root`
+      - `VPS_SSH_KEY` — Private key (PEM format)
+      - `VPS_PATH` — `/root/TeamZoneVN/Backend`
 - [ ] **CI — Build & Test** (optional): Chạy lint + test trên PR trước khi merge.
 
 ### 11.4 Monitoring & Database Connection
