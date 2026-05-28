@@ -47,7 +47,6 @@ RUN apk add --no-cache curl
 # Copy only necessary files
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/generated ./generated
 COPY --from=build /app/package.json ./
 
 EXPOSE 3000
