@@ -20,19 +20,28 @@ export class BlocksController {
 
   @Post(':id')
   @ApiOperation({ summary: 'Block a user' })
-  block(@Request() req, @Param('id') blockedId: string) {
-    return this.blocksService.blockUser(req.user.sub, blockedId);
+  block(
+    @Request() req: { user: { sub: string } },
+    @Param('id') blockedId: string,
+  ) {
+    const blockerId: string = req.user.sub;
+    return this.blocksService.blockUser(blockerId, blockedId);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Unblock a user' })
-  unblock(@Request() req, @Param('id') blockedId: string) {
-    return this.blocksService.unblockUser(req.user.sub, blockedId);
+  unblock(
+    @Request() req: { user: { sub: string } },
+    @Param('id') blockedId: string,
+  ) {
+    const blockerId: string = req.user.sub;
+    return this.blocksService.unblockUser(blockerId, blockedId);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get list of blocked users' })
-  getBlocks(@Request() req) {
-    return this.blocksService.getMyBlockedUsers(req.user.sub);
+  getBlocks(@Request() req: { user: { sub: string } }) {
+    const blockerId: string = req.user.sub;
+    return this.blocksService.getMyBlockedUsers(blockerId);
   }
 }

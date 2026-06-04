@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Socket } from 'socket.io';
 import { WsException } from '@nestjs/websockets';
+import { JwtPayload } from '../common/interfaces/request.interface';
 
 @Injectable()
 export class WsJwtGuard implements CanActivate {
@@ -23,7 +24,7 @@ export class WsJwtGuard implements CanActivate {
     }
 
     try {
-      const payload = this.jwtService.verify(token, {
+      const payload = this.jwtService.verify<JwtPayload>(token, {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
 

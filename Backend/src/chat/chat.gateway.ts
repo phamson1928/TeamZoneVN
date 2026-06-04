@@ -9,6 +9,8 @@ import {
   WsException,
 } from '@nestjs/websockets';
 import { Inject, UseGuards } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { Server, Socket } from 'socket.io';
 import Redis from 'ioredis';
 import { MessagesService } from '../messages/messages.service';
@@ -29,18 +31,31 @@ import { REDIS_CLIENT } from '../common/redis/redis-client.provider';
  *   - Khi có tin nhắn mới, server emit 'newMessage' vào đúng room đó
  *   - Chỉ những ai đang trong room mới nhận được tin
  */
+/** User payload decoded from JWT inside WebSocket */
+interface SocketUser {
+  sub: string;
+  [key: string]: unknown;
+}
+
+/** Typed socket data to avoid unsafe any access */
+interface SocketData {
+  user?: SocketUser;
+}
+
 @WebSocketGateway({
   namespace: '/chat',
   cors: { origin: '*' },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   constructor(
     private messagesService: MessagesService,
     private prisma: PrismaService,
     @Inject(REDIS_CLIENT) private redis: Redis,
+    private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   // ==========================
@@ -50,12 +65,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleConnection(client: Socket) {
     console.log(`[Chat] Client connected: ${client.id}`);
 
-    // Set presence if user is authenticated
-    if (client.data.user?.sub) {
-      await this.redis.setex(`presence:${client.data.user.sub}`, 60, client.id);
-      client.broadcast.emit('user:online', {
-        userId: client.data.user.sub,
-      });
+    // Verify JWT token ngay từ handshake để set presence
+    const rawToken: string = client.handshake.auth?.token || '';
+    const token = rawToken.replace('Bearer ', '').trim();
+    if (token) {
+      try {
+        const payload = this.jwtService.verify<SocketUser>(token, {
+          secret: this.configService.get<string>('JWT_SECRET'),
+        });
+        (client.data as SocketData).user = payload;
+
+        await this.redis.setex(`presence:${payload.sub}`, 60, client.id);
+        client.broadcast.emit('user:online', {
+          userId: payload.sub,
+        });
+      } catch {
+        // Token không hợp lệ — vẫn cho connect nhưng không set presence
+      }
     }
   }
 
@@ -63,10 +89,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(`[Chat] Client disconnected: ${client.id}`);
 
     // Remove presence
-    if (client.data.user?.sub) {
-      await this.redis.del(`presence:${client.data.user.sub}`);
+    const user = (client.data as SocketData).user;
+    if (user?.sub) {
+      await this.redis.del(`presence:${user.sub}`);
       client.broadcast.emit('user:offline', {
-        userId: client.data.user.sub,
+        userId: user.sub,
       });
     }
   }
@@ -89,7 +116,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { groupId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    const userId: string = client.data.user?.sub;
+    const { sub: userId } = (client.data as SocketData).user!;
 
     // Kiểm tra user có phải member của group không
     const member = await this.prisma.groupMember.findUnique({
@@ -151,7 +178,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { groupId: string; content: string },
     @ConnectedSocket() client: Socket,
   ) {
-    const userId: string = client.data.user?.sub;
+    const { sub: userId } = (client.data as SocketData).user!;
 
     if (!data.content?.trim()) {
       throw new WsException('Nội dung tin nhắn không được để trống');
@@ -159,6 +186,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (data.content.trim().length > 2000) {
       throw new WsException('Tin nhắn không được vượt quá 2000 ký tự');
+    }
+
+    // Kiểm tra quyền thành viên
+    const member = await this.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: { groupId: data.groupId, userId },
+      },
+    });
+    if (!member) {
+      throw new WsException('Bạn không phải thành viên của group này');
     }
 
     // Lưu vào DB thông qua MessagesService
@@ -199,13 +236,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { groupId: string; isTyping: boolean },
     @ConnectedSocket() client: Socket,
   ) {
-    const user = client.data.user;
+    const user = (client.data as SocketData).user!;
     const roomName = `group:${data.groupId}`;
 
     // broadcast = gửi cho TẤT CẢ người trong room NGOẠI TRỪ người gửi
     client.to(roomName).emit('userTyping', {
       userId: user.sub,
-      username: user.username,
+      username: user.username ?? user.email,
       isTyping: data.isTyping,
     });
   }
