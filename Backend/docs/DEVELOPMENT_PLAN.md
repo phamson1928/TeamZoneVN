@@ -524,7 +524,7 @@ services:
       - WebSocket support: `proxy_set_header Upgrade $http_upgrade` + `Connection "upgrade"`
       - Port 3000 không expose ra ngoài (chỉ Nginx gọi internal)
 - [x] **SSL (Certbot + Let's Encrypt)**: HTTPS cho `152-42-163-30.sslip.io`, cert hạn đến Aug 2026.
-- [ ] **Firewall**: Chỉ mở port 80, 443, 22.
+- [x] **Firewall**: UFW — chỉ mở port 22 (SSH), 80 (HTTP), 443 (HTTPS).
 
 ### 11.3 CI/CD Pipeline (GitHub Actions)
 
@@ -546,7 +546,7 @@ services:
 
 - [x] **Container Restart Policy**: `unless-stopped` trong docker-compose.prod.yml — Docker tự restart nếu crash.
 - [x] **Log Rotation**: `json-file` driver với max-size 10m, max-file 3 — tránh đầy disk.
-- [ ] **Prisma Connection Pool**: Cấu hình pool size phù hợp với Supabase free tier (15 connections).
+- [x] **Prisma Connection Pool**: Thêm `&connection_limit=10` vào DATABASE_URL — Supabase free tier (max 15 connections, dành 5 cho internal).
 - [ ] **Uptime Monitoring**: Dùng uptimerobot.com hoặc checklyhq.com để ping healthcheck mỗi 5 phút.
 - [ ] **Supabase Keep-Alive**: Script cron nhẹ ping database mỗi giờ — tránh Supabase free tier suspend (optional).
 
