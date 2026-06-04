@@ -27,7 +27,6 @@ const fetchStats = async () => await apiClient.get('/dashboard/stats') as any;
 const fetchUsersChart = async () => await apiClient.get('/dashboard/charts/users?period=7d') as any;
 const fetchActivityChart = async () => await apiClient.get('/dashboard/charts/activity?period=7d') as any;
 const fetchSocialChart = async () => await apiClient.get('/dashboard/charts/social-engagement?period=7d') as any;
-const fetchQuickMatchChart = async () => await apiClient.get('/dashboard/charts/quick-match?period=7d') as any;
 const fetchReportsChart = async () => await apiClient.get('/dashboard/charts/reports?period=7d') as any;
 const fetchEngagementChart = async () => await apiClient.get('/dashboard/charts/engagement?period=7d') as any;
 const fetchTopGamesChart = async () => await apiClient.get('/dashboard/charts/top-games') as any;
@@ -39,7 +38,6 @@ export const Overview = () => {
     const { data: usersChart, isLoading: isUsersChartLoading } = useQuery({ queryKey: ['dashboard-users-chart'], queryFn: fetchUsersChart });
     const { data: activityChart, isLoading: isActivityChartLoading } = useQuery({ queryKey: ['dashboard-activity-chart'], queryFn: fetchActivityChart });
     const { data: socialChart, isLoading: isSocialChartLoading } = useQuery({ queryKey: ['dashboard-social-chart'], queryFn: fetchSocialChart });
-    const { data: qmChart, isLoading: isQmChartLoading } = useQuery({ queryKey: ['dashboard-qm-chart'], queryFn: fetchQuickMatchChart });
     const { data: reportsChart, isLoading: isReportsChartLoading } = useQuery({ queryKey: ['dashboard-reports-chart'], queryFn: fetchReportsChart });
     const { data: engagementChart, isLoading: isEngagementChartLoading } = useQuery({ queryKey: ['dashboard-engagement-chart'], queryFn: fetchEngagementChart });
     const { data: topGamesChart, isLoading: isTopGamesChartLoading } = useQuery({ queryKey: ['dashboard-top-games-chart'], queryFn: fetchTopGamesChart });
@@ -342,35 +340,6 @@ export const Overview = () => {
                 </StaggerItem>
 
                 {/* Quick Match Efficiency Chart */}
-                <StaggerItem className="p-8 bg-white/80 backdrop-blur-xl rounded-[32px] border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col min-h-[400px]">
-                    <div className="mb-6">
-                        <h3 className="text-xl font-bold text-gray-900">Hiệu quả Ghép nhanh</h3>
-                        <p className="text-sm font-medium text-gray-500 mt-1">Số lượng ghép thành công theo từng Game</p>
-                    </div>
-                    <div className="flex-1 w-full relative">
-                        {isQmChartLoading ? (
-                            <div className="absolute inset-0 flex justify-center items-center"><Loader2 className="animate-spin h-6 w-6 text-gray-400" /></div>
-                        ) : qmChart?.matchedByGame?.length ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={qmChart.matchedByGame} layout="vertical" margin={{ top: 0, right: 30, left: 40, bottom: 0 }}>
-                                    <XAxis type="number" hide />
-                                    <YAxis dataKey="gameName" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#374151', fontWeight: 700 }} width={100} />
-                                    <Tooltip
-                                        cursor={{ fill: 'transparent' }}
-                                        contentStyle={{ borderRadius: '16px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontWeight: 600 }}
-                                    />
-                                    <Bar dataKey="successCount" name="Ghép thành công" fill="#10b981" radius={[0, 6, 6, 0]} barSize={20} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="h-full w-full flex flex-col items-center justify-center text-gray-400 opacity-60">
-                               <AlertTriangle className="w-10 h-10 mb-2 opacity-20" />
-                               <p className="text-sm font-bold">Chưa có dữ liệu ghép nhanh</p>
-                            </div>
-                        )}
-                    </div>
-                </StaggerItem>
-
             </StaggerContainer>
 
             {/* Content & Action Row */}

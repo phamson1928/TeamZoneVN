@@ -92,8 +92,7 @@ Giao diện danh sách dạng bảng (Table Component) kèm các nút Action ti�
 ## 7. Social & Engagement Analytics (Trang mới - Leaderboard/Social)
 - [x] **Thống kê tương tác:**
   - [x] Biểu đồ Social Engagement (Likes & Friendships): API `GET /dashboard/charts/social-engagement`.
-  - [x] Biểu đồ Hiệu quả Quick Match: API `GET /dashboard/charts/quick-match`.
-- [x] **Bảng xếp hạng (Leaderboard):**
+  - [x] **Bảng xếp hạng (Leaderboard):**
   - [x] Widget Top 10 Users theo số likes: API `GET /dashboard/charts/leaderboard-top`.
   - [x] Danh sách Leaderboard đầy đủ: `GET /leaderboard/users`. (Widget integrated in Overview).
 
