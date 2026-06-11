@@ -1,73 +1,81 @@
-# React + TypeScript + Vite
+# TeamZoneVN — Admin Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> Giao diện quản trị web cho nền tảng kết nối game thủ TeamZoneVN.
 
-Currently, two official plugins are available:
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
+![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript)
+![Shadcn UI](https://img.shields.io/badge/Shadcn_UI-latest-000000?logo=shadcnui)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Technology | Purpose |
+|------------|---------|
+| **React 19** | UI framework |
+| **Vite** | Build tool & dev server |
+| **TypeScript 5.7** | Strict type safety |
+| **TanStack Query** | Server state & caching |
+| **TanStack Table** | Data tables with sorting/filtering |
+| **Shadcn UI** | Component library |
+| **Framer Motion** | Animations & transitions |
+| **Recharts** | Analytics charts |
+| **Axios** | HTTP client |
+| **React Hook Form** | Form management |
+| **Lucide React** | Icons |
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Setup
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Prerequisites
+- Node.js 20+
+- Backend server running (see [Backend README](../Backend/README.md))
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Quick Start
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Install dependencies
+npm install
+
+# Configure API URL (edit .env)
+# VITE_API_URL=https://your-backend-url
+
+# Start development server
+npm run dev    # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Commands
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server |
+| `npm run build` | Production build |
+| `npm run preview` | Preview production build |
+| `npm run lint` | ESLint |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## Features
+
+- **User Management** — View, search, filter, ban/unban users
+- **Zone Moderation** — Monitor & manage gaming zones
+- **Game Management** — CRUD for supported games
+- **Analytics Dashboard** — Charts for user growth, active zones, engagement
+- **Admin Role Management** — Role-based access control
+- **System Settings** — Configure platform parameters
+
+## Project Structure
+
+```
+Dashboard/
+├── src/
+│   ├── components/     # Reusable UI components
+│   ├── pages/          # Route pages (Users, Zones, Games, Analytics...)
+│   ├── hooks/          # Custom hooks
+│   ├── lib/            # Utilities & API client
+│   └── styles/         # Global styles
+├── index.html
+└── vite.config.ts
 ```

@@ -1,98 +1,121 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# TeamZoneVN — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+> REST API + WebSocket server cho nền tảng kết nối game thủ TeamZoneVN.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs)
+![Node](https://img.shields.io/badge/Node-20-339933?logo=nodedotjs)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis)
+![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker)
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Tech Stack
 
-## Project setup
+| Technology | Purpose |
+|------------|---------|
+| **NestJS 11** | Framework (Modules / Controllers / Services / DI) |
+| **TypeScript 5.7** | Strict mode, ES2023 |
+| **PostgreSQL 16** (Supabase) | Primary database + connection pooling via PgBouncer |
+| **Prisma 6** | ORM — schema-first, migrations, type-safe queries, transactions |
+| **Redis 7** | Caching, distributed rate limiting, leaderboard, Socket.IO adapter |
+| **Socket.IO** | Real-time chat (namespace `/chat`, room-based) |
+| **Passport.js + JWT** | Access token (15m) + Refresh token (7d) |
+| **Google OAuth2** | Mobile (idToken) + Web (OAuth2 redirect) |
+| **Swagger** | API documentation at `/api/docs` |
+| **Docker** | Multi-stage Alpine build + Compose |
+| **Nginx** | Reverse proxy + SSL |
 
-```bash
-$ npm install
-```
+---
 
-## Compile and run the project
+## Features
 
-```bash
-# development
-$ npm run start
+- **REST API** — Full CRUD for users, zones, games, friendships, reports
+- **WebSocket Realtime Chat** — Room-based group chat via Socket.IO
+- **Authentication** — Register, login, refresh tokens, Google OAuth2
+- **Authorization** — RolesGuard (`@Roles('ADMIN')`), Global JWT guard with `@Public()` exceptions
+- **WebSocket Auth** — JWT-verified WebSocket handshake (`WsJwtGuard`)
+- **Rate Limiting** — Distributed via Redis INCR + TTL (custom `ThrottlerStorage`)
+- **Leaderboard** — Redis Sorted Sets (ZADD, ZREVRANGE, ZREVRANK)
+- **Caching** — API response caching via `@nestjs/cache-manager` + ioredis
+- **File Upload** — Avatar & game assets via Supabase Storage
+- **Zone Cleanup** — Automated cron job for expired/inactive zones
+- **Swagger Documentation** — Interactive API docs at `/api/docs`
 
-# watch mode
-$ npm run start:dev
+---
 
-# production mode
-$ npm run start:prod
-```
+## Prerequisites
 
-## Run tests
+- Node.js 20+
+- Docker Desktop (for local PostgreSQL + Redis)
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Setup
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.example .env
+# Edit .env: DATABASE_URL, REDIS_HOST, JWT_SECRET, etc.
+
+# Push schema & seed data
+npx prisma db push
+npx prisma db seed
+
+# Start development server
+npm run start:dev   # http://localhost:3000
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Commands
 
-## Resources
+| Command | Description |
+|---------|-------------|
+| `npm run start:dev` | Development with hot-reload |
+| `npm run build` | Production build |
+| `npm run start:prod` | Run production build |
+| `npm run test` | Unit tests |
+| `npm run test:e2e` | E2E tests |
+| `npm run lint` | ESLint |
+| `npm run format` | Prettier |
 
-Check out a few resources that may come in handy when working with NestJS:
+## Docker
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+# Development (PostgreSQL + Redis)
+docker compose up -d
 
-## Support
+# Production (full stack)
+docker compose -f docker-compose.prod.yml up -d
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## API Documentation
 
-## Stay in touch
+- **Swagger UI** (local): http://localhost:3000/api/docs
+- **Full endpoint reference**: [docs/API_ENDPOINTS.md](docs/API_ENDPOINTS.md)
+- **Development roadmap**: [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md)
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+---
 
-## License
+## Project Structure
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```
+Backend/
+├── src/
+│   ├── modules/         # Feature modules (auth, user, zone, chat, game...)
+│   ├── common/          # Guards, decorators, DTOs, filters, interceptors
+│   └── main.ts          # Entry point
+├── prisma/
+│   ├── schema.prisma    # Database schema (25 models, 17 enums)
+│   ├── migrations/      # Migration history
+│   └── seed.ts          # Sample data seeder
+├── docs/
+│   ├── API_ENDPOINTS.md # Full API reference
+│   └── DEVELOPMENT_PLAN.md
+├── scripts/             # Utility scripts
+├── test/                # E2E tests
+├── Dockerfile           # Multi-stage Alpine build
+├── docker-compose.yml   # Local dev services
+└── nginx.conf           # Reverse proxy config
+```
