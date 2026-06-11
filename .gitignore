@@ -1,4 +1,43 @@
+# Project-level ignore patterns
 /.opencode
+/.agent
 /.idea
 /.sisyphus
 /cv-information.md
+/accounts.md
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+tmp/
+temp/
+*.tmp
+*.log
+
+# Temp scripts & debug files
+Backend/tmp_tokens.js
+Backend/scripts/tmp_tokens.js
+Frontend/diff.txt
+Frontend/replaceImages.js
+Frontend/replaceImages2.js
+
+# IDE
+.vscode/
