@@ -3,13 +3,13 @@ import { ApiProperty } from '@nestjs/swagger';
 export class TokensResponseDto {
   @ApiProperty({
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    description: 'JWT access token',
+    description: 'Mã truy cập JWT',
   })
   accessToken!: string;
 
   @ApiProperty({
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    description: 'JWT refresh token',
+    description: 'Mã làm mới JWT',
   })
   refreshToken!: string;
 }
@@ -17,19 +17,19 @@ export class TokensResponseDto {
 export class AuthResponseDto {
   @ApiProperty({
     example: '550e8400-e29b-41d4-a716-446655440000',
-    description: 'User ID',
+    description: 'ID người dùng',
   })
   userId!: string;
 
   @ApiProperty({
     example: 'user@example.com',
-    description: 'User email',
+    description: 'Email người dùng',
   })
   email!: string;
 
   @ApiProperty({
     example: 'gamer123',
-    description: 'Username',
+    description: 'Tên đăng nhập',
   })
   username!: string;
 
