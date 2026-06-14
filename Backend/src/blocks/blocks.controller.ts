@@ -9,17 +9,19 @@ import {
 } from '@nestjs/common';
 import { BlocksService } from './blocks.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiResponse } from '@nestjs/swagger';
 
-@ApiTags('blocks')
-@ApiBearerAuth()
+@ApiTags('Blocks')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
 @Controller('blocks')
 export class BlocksController {
   constructor(private readonly blocksService: BlocksService) {}
 
   @Post(':id')
-  @ApiOperation({ summary: 'Block a user' })
+  @ApiOperation({ summary: 'Chặn người dùng' })
+  @ApiParam({ name: 'id', description: 'ID người dùng cần chặn/bỏ chặn' })
+  @ApiResponse({ status: 200, description: 'Chặn người dùng thành công' })
   block(
     @Request() req: { user: { sub: string } },
     @Param('id') blockedId: string,
@@ -29,7 +31,9 @@ export class BlocksController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Unblock a user' })
+  @ApiOperation({ summary: 'Bỏ chặn người dùng' })
+  @ApiParam({ name: 'id', description: 'ID người dùng cần chặn/bỏ chặn' })
+  @ApiResponse({ status: 200, description: 'Bỏ chặn người dùng thành công' })
   unblock(
     @Request() req: { user: { sub: string } },
     @Param('id') blockedId: string,
@@ -39,7 +43,8 @@ export class BlocksController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get list of blocked users' })
+  @ApiOperation({ summary: 'Danh sách người dùng đã chặn' })
+  @ApiResponse({ status: 200, description: 'Danh sách người dùng đã chặn' })
   getBlocks(@Request() req: { user: { sub: string } }) {
     const blockerId: string = req.user.sub;
     return this.blocksService.getMyBlockedUsers(blockerId);
