@@ -10,16 +10,16 @@ export class AppController {
 
   @Get()
   @Public()
-  @ApiOperation({ summary: 'Health check endpoint' })
-  @ApiResponse({ status: 200, description: 'API is healthy' })
+  @ApiOperation({ summary: 'Kiểm tra trạng thái API' })
+  @ApiResponse({ status: 200, description: 'API đang hoạt động' })
   getHello(): { status: string; message: string; timestamp: string } {
     return this.appService.getHealth();
   }
 
   @Get('health')
   @Public()
-  @ApiOperation({ summary: 'Detailed health check' })
-  @ApiResponse({ status: 200, description: 'API health details' })
+  @ApiOperation({ summary: 'Kiểm tra trạng thái chi tiết' })
+  @ApiResponse({ status: 200, description: 'Chi tiết trạng thái API' })
   getHealth(): { status: string; message: string; timestamp: string } {
     return this.appService.getHealth();
   }

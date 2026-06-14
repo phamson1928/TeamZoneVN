@@ -18,7 +18,7 @@ export class FilesController {
 
   @Post('upload/game-icon')
   @Roles('ADMIN')
-  @ApiOperation({ summary: 'Upload game icon' })
+  @ApiOperation({ summary: 'Tải lên biểu tượng game' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -38,7 +38,7 @@ export class FilesController {
 
   @Post('upload/game-banner')
   @Roles('ADMIN')
-  @ApiOperation({ summary: 'Upload game banner' })
+  @ApiOperation({ summary: 'Tải lên banner game' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -57,7 +57,7 @@ export class FilesController {
   }
 
   @Post('upload/avatar')
-  @ApiOperation({ summary: 'Upload user avatar' })
+  @ApiOperation({ summary: 'Tải lên ảnh đại diện' })
   @Roles('USER')
   @ApiConsumes('multipart/form-data')
   @ApiBody({

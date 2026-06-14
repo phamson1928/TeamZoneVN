@@ -19,7 +19,7 @@ import { CreateZoneInviteDto } from './dto/create-zone-invite.dto';
 import { HandleZoneInviteDto } from './dto/handle-zone-invite.dto';
 
 @ApiTags('Zone Invites')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller()
 export class ZoneInvitesController {
   constructor(private readonly zoneInvitesService: ZoneInvitesService) {}
