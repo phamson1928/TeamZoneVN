@@ -1,18 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UserActivityDto {
-  @ApiProperty({ description: 'Activity type' })
+  @ApiProperty({ example: 'LOGIN', description: 'Loại hoạt động' })
   type!: string;
 
-  @ApiProperty({ description: 'Activity description' })
+  @ApiProperty({
+    example: 'Người dùng đã đăng nhập hệ thống',
+    description: 'Mô tả hoạt động',
+  })
   description!: string;
 
-  @ApiProperty({ description: 'Activity timestamp' })
+  @ApiProperty({
+    example: '2024-01-01T00:00:00.000Z',
+    description: 'Thời gian hoạt động',
+  })
   createdAt!: Date;
 
-  @ApiProperty({ description: 'Related entity ID', required: false })
+  @ApiProperty({ description: 'ID đối tượng liên quan', required: false })
   relatedId?: string;
 
-  @ApiProperty({ description: 'Related entity type', required: false })
+  @ApiProperty({ description: 'Loại đối tượng liên quan', required: false })
   relatedType?: string;
 }

@@ -4,7 +4,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class UpdateProfileDto {
   @ApiPropertyOptional({
     example: 'I love playing FPS games!',
-    description: 'User bio',
+    description: 'Giới thiệu người dùng',
     maxLength: 500,
   })
   @IsOptional()
@@ -12,19 +12,19 @@ export class UpdateProfileDto {
   @MaxLength(500, { message: 'Giới thiệu không được vượt quá 500 ký tự' })
   bio?: string;
 
-  @ApiProperty({ example: 'Cạnh tranh', description: 'Play style' })
+  @ApiProperty({ example: 'Cạnh tranh', description: 'Phong cách chơi' })
   @IsOptional()
   @MaxLength(50, { message: 'Phong cách chơi không được vượt quá 50 ký tự' })
   playStyle?: string;
 
-  @ApiProperty({ example: 'GMT+7', description: 'Timezone' })
+  @ApiProperty({ example: 'GMT+7', description: 'Múi giờ' })
   @IsOptional()
   @MaxLength(50, { message: 'Múi giờ không được vượt quá 50 ký tự' })
   timezone?: string;
 
   @ApiProperty({
     example: 'Discord: username#1234',
-    description: 'Contact information',
+    description: 'Thông tin liên lạc',
   })
   @IsOptional()
   @MaxLength(500, {

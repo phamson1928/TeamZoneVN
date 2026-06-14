@@ -3,13 +3,13 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 
 export class SearchUsersDto extends PaginationDto {
-  @ApiPropertyOptional({ description: 'Search by email or username' })
+  @ApiPropertyOptional({ description: 'Tìm kiếm theo email hoặc tên đăng nhập' })
   @IsOptional()
   @IsString()
   query?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter by role',
+    description: 'Lọc theo vai trò',
     enum: ['ADMIN', 'USER'],
   })
   @IsOptional()
@@ -17,7 +17,7 @@ export class SearchUsersDto extends PaginationDto {
   role?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter by status',
+    description: 'Lọc theo trạng thái',
     enum: ['ACTIVE', 'BANNED'],
   })
   @IsOptional()
