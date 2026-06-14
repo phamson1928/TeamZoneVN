@@ -64,7 +64,7 @@ export class CreateZoneDto {
 
   @ApiPropertyOptional({
     example: 'Discord: user#1234',
-    description: 'Contact information for the zone',
+    description: 'Thông tin liên lạc của zone',
     maxLength: 500,
   })
   @IsOptional()

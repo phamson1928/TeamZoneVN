@@ -4,7 +4,7 @@ import { IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class PaginationDto {
   @ApiPropertyOptional({
-    description: 'Page number (1-based)',
+    description: 'Số trang (bắt đầu từ 1)',
     minimum: 1,
     default: 1,
   })
@@ -15,7 +15,7 @@ export class PaginationDto {
   page?: number = 1;
 
   @ApiPropertyOptional({
-    description: 'Number of items per page',
+    description: 'Số lượng mục mỗi trang',
     minimum: 1,
     maximum: 100,
     default: 10,
@@ -37,22 +37,22 @@ export class PaginationDto {
 }
 
 export class PaginationMetaDto {
-  @ApiPropertyOptional({ description: 'Current page number' })
+  @ApiPropertyOptional({ description: 'Số trang hiện tại' })
   page!: number;
 
-  @ApiPropertyOptional({ description: 'Number of items per page' })
+  @ApiPropertyOptional({ description: 'Số lượng mục mỗi trang' })
   limit!: number;
 
-  @ApiPropertyOptional({ description: 'Total number of items' })
+  @ApiPropertyOptional({ description: 'Tổng số mục' })
   total!: number;
 
-  @ApiPropertyOptional({ description: 'Total number of pages' })
+  @ApiPropertyOptional({ description: 'Tổng số trang' })
   totalPages!: number;
 
-  @ApiPropertyOptional({ description: 'Whether there is a next page' })
+  @ApiPropertyOptional({ description: 'Có trang tiếp theo không' })
   hasNextPage!: boolean;
 
-  @ApiPropertyOptional({ description: 'Whether there is a previous page' })
+  @ApiPropertyOptional({ description: 'Có trang trước không' })
   hasPreviousPage!: boolean;
 
   constructor(page: number, limit: number, total: number) {

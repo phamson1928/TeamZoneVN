@@ -3,7 +3,7 @@ import { IsOptional, IsString } from 'class-validator';
 
 export class LeaderboardQueryDto {
   @ApiPropertyOptional({
-    description: 'Period: week | month | all',
+    description: 'Khoảng thời gian: week (tuần) | month (tháng) | all (tất cả)',
     enum: ['week', 'month', 'all'],
     default: 'all',
   })

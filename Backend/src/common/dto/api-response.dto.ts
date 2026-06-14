@@ -1,19 +1,19 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ApiResponseDto<T> {
-  @ApiProperty({ description: 'Response status', example: true })
+  @ApiProperty({ description: 'Trạng thái phản hồi', example: true })
   success!: boolean;
 
-  @ApiPropertyOptional({ description: 'Response data' })
+  @ApiPropertyOptional({ description: 'Dữ liệu phản hồi' })
   data?: T;
 
-  @ApiPropertyOptional({ description: 'Response message' })
+  @ApiPropertyOptional({ description: 'Thông báo phản hồi' })
   message?: string;
 
-  @ApiPropertyOptional({ description: 'Error code for error responses' })
+  @ApiPropertyOptional({ description: 'Mã lỗi cho các phản hồi lỗi' })
   errorCode?: string;
 
-  @ApiPropertyOptional({ description: 'Timestamp of the response' })
+  @ApiPropertyOptional({ description: 'Thời gian phản hồi' })
   timestamp?: string;
 
   constructor(partial: Partial<ApiResponseDto<T>>) {
