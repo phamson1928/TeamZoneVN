@@ -8,7 +8,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FilesService } from './files.service';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { Public, JwtAuthGuard, RolesGuard, Roles } from '../common/index.js';
+import { JwtAuthGuard, RolesGuard, Roles } from '../common/index.js';
 
 @ApiTags('Files')
 @Controller('files')

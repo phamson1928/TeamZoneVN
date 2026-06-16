@@ -9,7 +9,13 @@ import {
 } from '@nestjs/common';
 import { BlocksService } from './blocks.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiParam,
+  ApiResponse,
+} from '@nestjs/swagger';
 
 @ApiTags('Blocks')
 @ApiBearerAuth('access-token')

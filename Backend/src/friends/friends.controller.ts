@@ -9,7 +9,14 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags, ApiParam, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+  ApiParam,
+  ApiResponse,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { FriendsService } from './friends.service.js';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
@@ -45,8 +52,18 @@ export class FriendsController {
 
   @Get()
   @ApiOperation({ summary: 'Danh sách bạn bè (pagination)' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Số trang' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Số lượng mỗi trang' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Số trang',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Số lượng mỗi trang',
+  })
   @ApiResponse({ status: 200, description: 'Danh sách bạn bè' })
   getFriends(
     @CurrentUser('sub') userId: string,
