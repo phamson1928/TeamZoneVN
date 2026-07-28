@@ -1,15 +1,18 @@
-import { motion } from 'framer-motion';
-import { Apple, PlayCircle, Download } from 'lucide-react';
-import logo from '../assets/logo.png';
+import { motion } from "framer-motion";
+import { Apple, PlayCircle, Download } from "lucide-react";
+import logo from "../assets/logo.png";
 
 const CTA = () => {
   return (
-    <section id="cta" className="py-28 relative overflow-hidden bg-slate-950 border-t border-slate-900">
+    <section
+      id="cta"
+      className="py-28 relative overflow-hidden bg-slate-950 border-t border-slate-900"
+    >
       {/* Background glow effects */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-gradient-to-r from-primary/10 to-secondary/10 rounded-full blur-[130px] pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
@@ -23,7 +26,7 @@ const CTA = () => {
           {/* App Logo Display */}
           <motion.div
             animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             className="inline-block mb-8"
           >
             <img
@@ -39,43 +42,46 @@ const CTA = () => {
               RANK CHƯA?
             </span>
           </h2>
-          
+
           <p className="text-slate-300 font-body text-base md:text-lg mb-12 max-w-2xl mx-auto leading-relaxed">
-            Gia nhập cộng đồng game thủ Việt Nam để kết bạn, ghép đội nhanh chóng và trò chuyện thời gian thực ngay hôm nay.
+            Gia nhập cộng đồng game thủ Việt Nam để kết bạn, ghép đội nhanh
+            chóng và trò chuyện thời gian thực ngay hôm nay.
           </p>
 
           <div className="flex flex-col lg:flex-row justify-center items-center gap-6 max-w-4xl mx-auto">
             {/* App Store Button */}
-            <a
-              href="#cta"
-              onClick={(e) => {
-                e.preventDefault();
-                alert('Tính năng tải trên App Store sẽ sớm khả dụng trong bản Beta công khai sắp tới!');
-              }}
-              className="w-full lg:w-auto flex items-center justify-center gap-3.5 px-6 py-3.5 bg-white hover:bg-slate-100 text-slate-950 rounded-2xl transition-all font-body font-bold text-base group shadow-lg hover:scale-[1.03] shrink-0"
+            <button
+              type="button"
+              disabled
+              className="w-full lg:w-auto flex items-center justify-center gap-3.5 px-6 py-3.5 bg-white/90 text-slate-950 rounded-2xl font-body font-bold text-base group shadow-lg shrink-0 opacity-80 cursor-not-allowed"
             >
               <Apple className="w-8 h-8 group-hover:scale-105 transition-transform" />
               <div className="text-left">
-                <div className="text-[10px] font-normal uppercase tracking-wider text-slate-500">Tải ứng dụng trên</div>
-                <div className="leading-none text-lg font-heading">App Store</div>
+                <div className="text-[10px] font-normal uppercase tracking-wider text-slate-500">
+                  Coming soon
+                </div>
+                <div className="leading-none text-lg font-heading">
+                  App Store
+                </div>
               </div>
-            </a>
+            </button>
 
             {/* Google Play Button */}
-            <a
-              href="#cta"
-              onClick={(e) => {
-                e.preventDefault();
-                alert('Tính năng tải trên Google Play sẽ sớm khả dụng trong bản Beta công khai sắp tới!');
-              }}
-              className="w-full lg:w-auto flex items-center justify-center gap-3.5 px-6 py-3.5 bg-gradient-to-r from-primary to-secondary text-white rounded-2xl transition-all font-body font-bold text-base group shadow-lg shadow-primary/20 hover:shadow-primary/40 border border-primary/20 hover:scale-[1.03] shrink-0"
+            <button
+              type="button"
+              disabled
+              className="w-full lg:w-auto flex items-center justify-center gap-3.5 px-6 py-3.5 bg-gradient-to-r from-primary to-secondary text-white rounded-2xl font-body font-bold text-base group shadow-lg shadow-primary/20 border border-primary/20 opacity-80 cursor-not-allowed shrink-0"
             >
               <PlayCircle className="w-8 h-8 group-hover:scale-105 transition-transform" />
               <div className="text-left">
-                <div className="text-[10px] font-normal uppercase tracking-wider text-blue-200">Tải ứng dụng trên</div>
-                <div className="leading-none text-lg font-heading">Google Play</div>
+                <div className="text-[10px] font-normal uppercase tracking-wider text-blue-200">
+                  Coming soon
+                </div>
+                <div className="leading-none text-lg font-heading">
+                  Google Play
+                </div>
               </div>
-            </a>
+            </button>
 
             {/* Direct APK Download Button */}
             <a
@@ -85,12 +91,16 @@ const CTA = () => {
             >
               <Download className="w-8 h-8 group-hover:scale-110 transition-transform text-primary" />
               <div className="text-left">
-                <div className="text-[10px] font-normal uppercase tracking-wider text-slate-400">Tải trực tiếp file</div>
-                <div className="leading-none text-lg font-heading">APK (Android)</div>
+                <div className="text-[10px] font-normal uppercase tracking-wider text-slate-400">
+                  Tải trực tiếp file
+                </div>
+                <div className="leading-none text-lg font-heading">
+                  APK (Android)
+                </div>
               </div>
             </a>
           </div>
-          
+
           <p className="mt-10 text-xs text-slate-500 font-body tracking-wide">
             Hoàn toàn miễn phí. Hỗ trợ đầy đủ iOS (iPhone) và Android.
           </p>
