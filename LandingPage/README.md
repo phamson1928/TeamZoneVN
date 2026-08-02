@@ -1,63 +1,38 @@
-# TeamZoneVN — Landing Page
+# TeamZoneVN Landing Page
 
-> Trang web giới thiệu cho nền tảng kết nối game thủ TeamZoneVN.
+Website giới thiệu TeamZoneVN, sử dụng React 19.2, Vite 8, TypeScript 6 và Tailwind CSS 4.
 
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
-![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript)
+## Nội dung hiện có
 
----
+- Navbar và Hero.
+- Thống kê, giới thiệu tính năng và ảnh giao diện ứng dụng.
+- FAQ và call-to-action.
+- Footer và trang chính sách riêng tư tại `/privacy` hoặc `#privacy`.
 
-## Tech Stack
-
-| Technology | Purpose |
-|------------|---------|
-| **React 19** | UI framework |
-| **Vite** | Build tool & dev server |
-| **TypeScript 5.7** | Type safety |
-| **Tailwind CSS** | Utility-first styling |
-
----
-
-## Setup
-
-### Quick Start
+## Cài đặt
 
 ```bash
-# Install dependencies
 npm install
-
-# Start development server
-npm run dev    # http://localhost:5173
+npm run dev
 ```
 
-### Commands
+## Lệnh
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start dev server |
-| `npm run build` | Production build |
-| `npm run preview` | Preview production build |
-| `npm run lint` | ESLint |
+| Lệnh | Mục đích |
+| --- | --- |
+| `npm run dev` | Chạy Vite dev server |
+| `npm run build` | Type-check và build production |
+| `npm run preview` | Xem bản build local |
+| `npm run lint` | Chạy ESLint |
 
----
+## Cấu trúc
 
-## Features
-
-- **Hero Section** — Platform introduction & value proposition
-- **Game Showcase** — Supported games grid
-- **Feature Highlights** — Zone system, matchmaking, chat, leaderboard
-- **Call-to-Action** — Download app / Sign up prompts
-- **Responsive Design** — Mobile-first, all screen sizes
-
-## Project Structure
-
-```
-LandingPage/
-├── src/
-│   ├── components/     # Sections (Hero, Features, Games, CTA, Footer)
-│   ├── assets/         # Images & icons
-│   └── App.tsx
-├── index.html
-└── vite.config.ts
+```text
+LandingPage/src/
+├── assets/          Logo và ảnh minh họa
+├── components/      Hero, Stats, Features, Showcase, FAQ, CTA
+├── pages/           PrivacyPolicy
+├── App.tsx          Bố cục và xử lý route privacy
+├── index.css        Tailwind và global styles
+└── main.tsx         Entry point
 ```

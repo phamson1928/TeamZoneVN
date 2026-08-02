@@ -1,5 +1,7 @@
 # TeamZoneVN Backend - Development Plan
 
+> **Phạm vi:** Đây là roadmap và nhật ký triển khai, không phải bản mô tả trạng thái runtime tuyệt đối. Đối chiếu `README.md`, Swagger `/api/docs`, `src/app.module.ts` và các controller khi cần biết chức năng hiện có. Đặc biệt, Quick Match có schema dữ liệu nhưng chưa có module/controller được đăng ký; tài liệu cron dọn Zone vẫn là proposal.
+
 ## Overview
 
 TeamZoneVN là nền tảng tìm bạn chơi game, cho phép người dùng tạo Zone để tìm đồng đội, ghép nhóm và chat với nhau.

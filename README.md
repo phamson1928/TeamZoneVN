@@ -1,189 +1,120 @@
 # TeamZoneVN
 
-> **Social Gaming Platform** — Kết nối game thủ tìm đồng đội, tạo phòng (Zone), chat realtime và xây dựng cộng đồng game.
+> Nền tảng kết nối game thủ: tìm đồng đội, tạo Zone, lập nhóm, chat thời gian thực và xây dựng cộng đồng chơi game.
 
-![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs)
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
-![React Native](https://img.shields.io/badge/React_Native-0.83-61DAFB?logo=react)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)
-![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis)
-![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker)
-![License](https://img.shields.io/badge/License-MIT-green)
+## Tổng quan kiến trúc
 
----
+TeamZoneVN gồm bốn ứng dụng độc lập dùng chung Backend:
 
-## 🏗️ Architecture Overview
+| Thành phần | Công nghệ chính | Vai trò |
+| --- | --- | --- |
+| `Backend` | NestJS 11, Prisma 6, PostgreSQL, Redis, Socket.IO | REST API, xác thực, dữ liệu và realtime |
+| `Frontend` | Expo 54, React Native 0.81, React 19 | Ứng dụng mobile Android/iOS |
+| `Dashboard` | React 19, Vite 7, Tailwind CSS 4 | Trang quản trị |
+| `LandingPage` | React 19, Vite 8, Tailwind CSS 4 | Trang giới thiệu và chính sách riêng tư |
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                     Frontend (Mobile)                      │
-│          React Native + Expo (iOS/Android)                │
-└────────────────────┬─────────────────────────────────────┘
-                     │ HTTPS / WebSocket
-┌────────────────────▼─────────────────────────────────────┐
-│                    Backend (VPS)                           │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │              Docker Container                        │  │
-│  │  ┌─────────┐  ┌──────────┐  ┌──────────────────┐   │  │
-│  │  │ NestJS  │  │ Socket.IO│  │   Redis 7        │   │  │
-│  │  │ REST API│  │ WebSocket│  │ (Cache/RT/Leader)│   │  │
-│  │  └────┬────┘  └────┬─────┘  └──────────────────┘   │  │
-│  └───────┼────────────┼────────────────────────────────┘  │
-│          │            │                                    │
-│  ┌───────▼────────────▼────────────────────────────────┐  │
-│  │          Supabase (PostgreSQL 16 + Storage)          │  │
-│  └─────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────┘
-│
-┌────────────────▼─────────────────────────────────────────┐
-│                 Web Clients                               │
-│  ┌─────────────┐  ┌────────────────────────────────┐    │
-│  │ Landing Page│  │  Admin Dashboard                │    │
-│  │ (React+Vite)│  │  (React+Vite + Shadcn UI)       │    │
-│  └─────────────┘  └────────────────────────────────┘    │
-└──────────────────────────────────────────────────────────┘
-```
+PostgreSQL hiện được cấu hình qua `DATABASE_URL`/`DIRECT_URL` (thường là Supabase). Docker Compose local của Backend cung cấp Redis và có profile để chạy ứng dụng; nó không khởi tạo PostgreSQL local.
 
----
+## Chức năng hiện có
 
-## 📦 Tech Stack
+- Đăng ký, đăng nhập, refresh token, quên mật khẩu và Google OAuth.
+- Hồ sơ người dùng, hồ sơ theo game, upload avatar và tài nguyên game.
+- Tạo, tìm kiếm, gợi ý và quản lý Zone; tag, yêu cầu tham gia và lời mời Zone.
+- Tự động tạo Group từ Zone, quản lý thành viên và vai trò trong nhóm.
+- Chat nhóm bằng Socket.IO, lịch sử tin nhắn và thông báo.
+- Bạn bè, chặn người dùng, lượt thích và bảng xếp hạng.
+- Report, moderation và Dashboard quản trị người dùng, game, Zone, Group.
+- Redis cho cache, rate limiting, presence, leaderboard và Socket.IO adapter.
+
+Quick Match có model dữ liệu trong Prisma nhưng chưa có module/controller được đăng ký trong Backend, vì vậy chưa được xem là tính năng API hoàn chỉnh.
+
+## Yêu cầu
+
+- Node.js 20+
+- npm
+- PostgreSQL có thể truy cập từ máy phát triển
+- Redis 7 (có thể chạy bằng Docker)
+- Android/iOS emulator hoặc thiết bị có Expo development build cho mobile
+
+## Khởi động nhanh
 
 ### Backend
-| Technology | Purpose |
-|------------|---------|
-| **NestJS 11** | REST API + WebSocket framework |
-| **PostgreSQL 16** (Supabase) | Primary database |
-| **Prisma 6** | ORM — schema-first, migrations, type-safe |
-| **Redis 7** | Caching, rate limiting, leaderboard, Socket.IO adapter |
-| **Socket.IO** | Real-time chat (room-based) |
-| **Passport.js + JWT** | Auth — access token (15m) + refresh token (7d) |
-| **Google OAuth2** | Social login (mobile + web) |
-| **Docker** | Multi-stage Alpine build + Docker Compose |
-| **Nginx** | Reverse proxy + SSL termination |
-| **GitHub Actions** | CI/CD auto-deploy to VPS |
 
-### Frontend (Mobile)
-| Technology | Purpose |
-|------------|---------|
-| **React Native 0.83** | Cross-platform mobile app |
-| **Expo** | Development & build toolchain |
-| **React Navigation** | Multi-tab navigation (Zone, Chat, Profile) |
-| **Socket.IO Client** | Real-time chat |
-
-### Dashboard (Admin Web)
-| Technology | Purpose |
-|------------|---------|
-| **React 19** + Vite | Admin SPA |
-| **TanStack Query** | Server state management |
-| **TanStack Table** | Data tables & filtering |
-| **Shadcn UI** | Component library |
-| **Framer Motion** | Animation |
-| **Recharts** | Analytics charts |
-
-### Landing Page
-| Technology | Purpose |
-|------------|---------|
-| **React 19** + Vite | Marketing page |
-| **Tailwind CSS** | Styling |
-
----
-
-## 🎯 Features
-
-- **Zone System** — Create & join gaming rooms by game title
-- **Real-time Chat** — WebSocket-based group chat with Socket.IO
-- **Matchmaking** — Smart player matching (rank, game, region)
-- **Leaderboard** — Redis Sorted Set based interaction ranking
-- **Friend System** — Add friends, block users, presence tracking
-- **Authentication** — JWT (access+refresh), Google OAuth2, RBAC
-- **Admin Dashboard** — User management, zone moderation, analytics
-- **Rate Limiting** — Distributed rate limiting via Redis INCR+TTL
-- **CI/CD** — Auto-deploy to VPS via GitHub Actions + Docker
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 20+
-- Docker Desktop (PostgreSQL + Redis)
-- Expo Go (mobile testing)
-
-### 1. Backend
 ```bash
 cd Backend
 npm install
-cp .env.example .env    # Configure your database & secrets
-npx prisma db push      # Push schema to database
-npx prisma db seed      # Seed sample data
-npm run start:dev       # http://localhost:3000
+copy .env.example .env
+npm run docker:up
+npm run db:generate
+npm run db:push
+npm run db:seed
+npm run start:dev
 ```
 
-### 2. Dashboard (Admin)
-```bash
-cd Dashboard
-npm install
-npm run dev             # http://localhost:5173
-```
+Backend mặc định chạy tại `http://localhost:3000`; Swagger UI tại `http://localhost:3000/api/docs`.
 
-### 3. Mobile App
+### Mobile
+
 ```bash
 cd Frontend
 npm install
-npm start               # Scan QR with Expo Go
+npm start
 ```
 
-### 4. Landing Page
+Tạo `Frontend/.env` khi cần trỏ tới Backend trên máy khác:
+
+```env
+EXPO_PUBLIC_API_URL=http://192.168.1.10:3000
+```
+
+### Dashboard
+
+```bash
+cd Dashboard
+npm install
+npm run dev
+```
+
+Biến môi trường tùy chọn: `VITE_API_URL=http://localhost:3000`.
+
+### Landing Page
+
 ```bash
 cd LandingPage
 npm install
 npm run dev
 ```
 
----
+## Cấu trúc repository
 
-## 📁 Project Structure
-
-```
+```text
 TeamZoneVN/
-├── Backend/           # NestJS API + WebSocket
-│   ├── src/           # Modules, controllers, services
-│   ├── prisma/        # Schema, migrations, seed
-│   ├── docs/          # API docs & dev plan
-│   ├── docker-compose.yml
-│   └── Dockerfile
-├── Frontend/          # React Native mobile app
-│   ├── src/           # Screens, components, navigation
-│   └── App.tsx
-├── Dashboard/         # React admin SPA
-│   ├── src/           # Admin pages & components
-│   └── index.html
-├── LandingPage/       # React marketing site
-│   └── src/
-└── .github/workflows/ # CI/CD pipelines
+├── Backend/           NestJS API, Socket.IO, Prisma và Docker
+├── Frontend/          Ứng dụng Expo/React Native
+├── Dashboard/         React SPA dành cho quản trị viên
+├── LandingPage/       Website giới thiệu
+└── .github/workflows/ CI/CD
 ```
 
----
+## Tài liệu
 
-## 📚 Documentation
+- [Backend README](Backend/README.md)
+- [API endpoints](Backend/docs/API_ENDPOINTS.md)
+- [Development plan](Backend/docs/DEVELOPMENT_PLAN.md) — lịch sử triển khai và backlog
+- [Command reference](Backend/docs/COMMANDS.md)
+- [Zone cleanup proposal](Backend/docs/CRONJOB_ZONE_CLEANUP.md) — thiết kế chưa được triển khai
 
-- [API Endpoints](Backend/docs/API_ENDPOINTS.md) — Full REST + WebSocket API reference
-- [Development Plan](Backend/docs/DEVELOPMENT_PLAN.md) — Technical roadmap & architecture decisions
-- [Swagger UI](http://localhost:3000/api/docs) (local) — Interactive API playground
+## Kiểm tra trước khi gửi thay đổi
 
----
-
-## 🐳 Docker Deployment
-
-Production deployment uses Docker multi-stage build with Nginx reverse proxy:
+Chạy lệnh tương ứng trong từng thư mục đã sửa:
 
 ```bash
-cd Backend
-docker compose -f docker-compose.prod.yml up -d
+npm run lint
+npm run build
 ```
 
----
+Mobile không có script `build`; dùng `npm test` và `npm run lint`.
 
-## 📄 License
+## License
 
 MIT © TeamZoneVN

@@ -1,5 +1,7 @@
 # TeamZoneVN API Endpoints Documentation
 
+> **Trạng thái tài liệu:** Tài liệu này được tích lũy theo các phase phát triển và có thể còn thứ tự mục hoặc ghi chú lịch sử chưa đồng nhất. Swagger tại `/api/docs` và các controller trong `src/` là nguồn chính xác cho API đang chạy. Quick Match hiện chỉ có model Prisma, chưa có module/controller; các endpoint Quick Match bên dưới là thiết kế dự kiến.
+
 ## Base URL
 
 ```

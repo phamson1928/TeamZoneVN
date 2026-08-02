@@ -1,5 +1,7 @@
 # Cronjob: Tự động dọn Zone chết
 
+> **Trạng thái: Chưa triển khai.** Đây là tài liệu đề xuất. Repository hiện chưa có `src/zones/zones-cleanup.service.ts` và chưa đăng ký cleanup service trong `ZonesModule`.
+
 > **Trạng thái**: Plan — chưa implement
 > **Ưu tiên**: Medium (khi rảnh thì làm)
 

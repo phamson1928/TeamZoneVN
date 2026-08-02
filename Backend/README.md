@@ -1,121 +1,115 @@
-# TeamZoneVN — Backend
+# TeamZoneVN Backend
 
-> REST API + WebSocket server cho nền tảng kết nối game thủ TeamZoneVN.
+REST API và WebSocket server cho nền tảng TeamZoneVN.
 
-![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs)
-![Node](https://img.shields.io/badge/Node-20-339933?logo=nodedotjs)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)
-![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis)
-![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma)
-![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker)
+## Công nghệ
 
----
+| Công nghệ | Phiên bản/vai trò |
+| --- | --- |
+| NestJS | 11, module/controller/service và dependency injection |
+| TypeScript | 5.7, target ES2023 |
+| Prisma | 6, truy cập PostgreSQL và quản lý schema |
+| PostgreSQL | Database chính; cấu hình qua `DATABASE_URL` và `DIRECT_URL` |
+| Redis | Cache, rate limiting, presence, leaderboard và Socket.IO adapter |
+| Socket.IO | Chat nhóm realtime |
+| Passport + JWT | Access token, refresh token và phân quyền |
+| Supabase SDK | Storage cho avatar và tài nguyên game |
+| Swagger | Tài liệu tương tác tại `/api/docs` |
 
-## Tech Stack
+Schema hiện có 23 model và 18 enum. Quick Match mới có model `QuickMatchQueue`; chưa có module/controller API được đăng ký.
 
-| Technology | Purpose |
-|------------|---------|
-| **NestJS 11** | Framework (Modules / Controllers / Services / DI) |
-| **TypeScript 5.7** | Strict mode, ES2023 |
-| **PostgreSQL 16** (Supabase) | Primary database + connection pooling via PgBouncer |
-| **Prisma 6** | ORM — schema-first, migrations, type-safe queries, transactions |
-| **Redis 7** | Caching, distributed rate limiting, leaderboard, Socket.IO adapter |
-| **Socket.IO** | Real-time chat (namespace `/chat`, room-based) |
-| **Passport.js + JWT** | Access token (15m) + Refresh token (7d) |
-| **Google OAuth2** | Mobile (idToken) + Web (OAuth2 redirect) |
-| **Swagger** | API documentation at `/api/docs` |
-| **Docker** | Multi-stage Alpine build + Compose |
-| **Nginx** | Reverse proxy + SSL |
+## Module hiện có
 
----
+Các feature nằm trực tiếp dưới `src/`:
 
-## Features
+- `auth`, `users`, `user-game-profiles`, `games`
+- `zones`, `tags`, `join-requests`, `zone-invites`
+- `groups`, `chat`, `messages`, `notifications`
+- `friends`, `blocks`, `leaderboard`
+- `reports`, `dashboard`, `files`
+- `common`, `prisma`
 
-- **REST API** — Full CRUD for users, zones, games, friendships, reports
-- **WebSocket Realtime Chat** — Room-based group chat via Socket.IO
-- **Authentication** — Register, login, refresh tokens, Google OAuth2
-- **Authorization** — RolesGuard (`@Roles('ADMIN')`), Global JWT guard with `@Public()` exceptions
-- **WebSocket Auth** — JWT-verified WebSocket handshake (`WsJwtGuard`)
-- **Rate Limiting** — Distributed via Redis INCR + TTL (custom `ThrottlerStorage`)
-- **Leaderboard** — Redis Sorted Sets (ZADD, ZREVRANGE, ZREVRANK)
-- **Caching** — API response caching via `@nestjs/cache-manager` + ioredis
-- **File Upload** — Avatar & game assets via Supabase Storage
-- **Zone Cleanup** — Automated cron job for expired/inactive zones
-- **Swagger Documentation** — Interactive API docs at `/api/docs`
+Backend dùng JWT guard và throttler guard ở phạm vi global. Route public phải dùng decorator `@Public()`.
 
----
-
-## Prerequisites
-
-- Node.js 20+
-- Docker Desktop (for local PostgreSQL + Redis)
-
-## Setup
+## Cấu hình
 
 ```bash
-# Install dependencies
 npm install
-
-# Configure environment
-cp .env.example .env
-# Edit .env: DATABASE_URL, REDIS_HOST, JWT_SECRET, etc.
-
-# Push schema & seed data
-npx prisma db push
-npx prisma db seed
-
-# Start development server
-npm run start:dev   # http://localhost:3000
+copy .env.example .env
 ```
 
-## Commands
+Các biến bắt buộc phụ thuộc chức năng sử dụng:
 
-| Command | Description |
-|---------|-------------|
-| `npm run start:dev` | Development with hot-reload |
-| `npm run build` | Production build |
-| `npm run start:prod` | Run production build |
-| `npm run test` | Unit tests |
-| `npm run test:e2e` | E2E tests |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier |
+- Database: `DATABASE_URL`, `DIRECT_URL`
+- JWT: `JWT_SECRET`, `JWT_EXPIRES_IN`, `JWT_REFRESH_SECRET`, `JWT_REFRESH_EXPIRES_IN`
+- Redis: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
+- Supabase Storage: `SUPABASE_URL`, `SUPABASE_ANON_KEY`
+- Google OAuth: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`
+- Email reset mật khẩu: `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM`
+- Server: `NODE_ENV`, `PORT`, `CORS_ORIGIN`
 
-## Docker
+Không commit file `.env` hoặc secret thật vào repository.
+
+## Chạy local
+
+Docker Compose local chỉ khởi tạo Redis. PostgreSQL phải được cung cấp qua URL trong `.env`.
 
 ```bash
-# Development (PostgreSQL + Redis)
-docker compose up -d
-
-# Production (full stack)
-docker compose -f docker-compose.prod.yml up -d
+npm run docker:up
+npm run db:generate
+npm run db:push
+npm run db:seed
+npm run start:dev
 ```
 
-## API Documentation
+- API: `http://localhost:3000`
+- Health check: `http://localhost:3000/health`
+- Swagger: `http://localhost:3000/api/docs`
 
-- **Swagger UI** (local): http://localhost:3000/api/docs
-- **Full endpoint reference**: [docs/API_ENDPOINTS.md](docs/API_ENDPOINTS.md)
-- **Development roadmap**: [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md)
+## Lệnh thường dùng
 
----
+| Lệnh | Mục đích |
+| --- | --- |
+| `npm run start:dev` | Chạy NestJS với hot reload |
+| `npm run build` | Generate Prisma Client và build production |
+| `npm run start:prod` | Chạy `dist/main` |
+| `npm run test` | Unit test |
+| `npm run test:e2e` | E2E test |
+| `npm run lint` | ESLint và tự sửa lỗi có thể sửa |
+| `npm run format` | Prettier cho `src` và `test` |
+| `npm run db:migrate` | Tạo/chạy migration ở môi trường phát triển |
+| `npm run db:push` | Đồng bộ schema không tạo migration |
+| `npm run db:seed` | Seed dữ liệu mẫu |
+| `npm run docker:up` | Khởi tạo Redis local |
+| `npm run docker:dev` | Chạy Redis và profile app development |
+| `npm run docker:prod` | Chạy Redis và profile app production |
 
-## Project Structure
+## Docker production
 
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
 ```
+
+File production chạy service `backend` và `redis`; database vẫn là PostgreSQL bên ngoài được cấu hình bằng biến môi trường.
+
+## Cấu trúc
+
+```text
 Backend/
-├── src/
-│   ├── modules/         # Feature modules (auth, user, zone, chat, game...)
-│   ├── common/          # Guards, decorators, DTOs, filters, interceptors
-│   └── main.ts          # Entry point
-├── prisma/
-│   ├── schema.prisma    # Database schema (25 models, 17 enums)
-│   ├── migrations/      # Migration history
-│   └── seed.ts          # Sample data seeder
-├── docs/
-│   ├── API_ENDPOINTS.md # Full API reference
-│   └── DEVELOPMENT_PLAN.md
-├── scripts/             # Utility scripts
-├── test/                # E2E tests
-├── Dockerfile           # Multi-stage Alpine build
-├── docker-compose.yml   # Local dev services
-└── nginx.conf           # Reverse proxy config
+├── src/                    Feature modules và common infrastructure
+├── prisma/schema.prisma    23 models, 18 enums
+├── prisma/migrations/      Lịch sử migration
+├── prisma/seed.ts          Seeder
+├── docs/                   API, kế hoạch và hướng dẫn lệnh
+├── test/                   E2E tests
+├── Dockerfile
+├── docker-compose.yml      Redis + app profiles cho local
+└── docker-compose.prod.yml Backend + Redis cho production
 ```
+
+## Tài liệu liên quan
+
+- [API endpoints](docs/API_ENDPOINTS.md)
+- [Development plan](docs/DEVELOPMENT_PLAN.md) — tài liệu lịch sử/backlog, không phải trạng thái runtime tuyệt đối
+- [Command reference](docs/COMMANDS.md)
+- [Zone cleanup proposal](docs/CRONJOB_ZONE_CLEANUP.md) — chưa được triển khai trong `src/zones`

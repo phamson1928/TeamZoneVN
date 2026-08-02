@@ -1,82 +1,63 @@
-# TeamZoneVN — Mobile App
+# TeamZoneVN Mobile
 
-> Ứng dụng mobile React Native cho nền tảng kết nối game thủ TeamZoneVN.
+Ứng dụng mobile TeamZoneVN xây dựng bằng Expo 54, React Native 0.81.5 và React 19.1.
 
-![React Native](https://img.shields.io/badge/React_Native-0.83-61DAFB?logo=react)
-![Expo](https://img.shields.io/badge/Expo-52-000020?logo=expo)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript)
+## Chức năng hiện có
 
----
+- Onboarding, đăng ký, đăng nhập, Google Sign-In và khôi phục mật khẩu.
+- Khám phá, tạo, xem chi tiết và quản lý Zone.
+- Nhóm, chat realtime và thông báo.
+- Hồ sơ cá nhân, hồ sơ game và hồ sơ công khai.
+- Bạn bè, lời mời Zone, danh sách chặn và bảng xếp hạng.
 
-## Tech Stack
+## Yêu cầu
 
-| Technology | Purpose |
-|------------|---------|
-| **React Native 0.83** | Cross-platform mobile framework |
-| **Expo** | Build toolchain & dev server |
-| **React Navigation 7** | Bottom tabs & stack navigation |
-| **Socket.IO Client** | Real-time chat |
-| **AsyncStorage** | Local token storage |
-| **Google Sign-In** | OAuth2 social login |
-
----
-
-## Setup
-
-### Prerequisites
 - Node.js 20+
-- Expo Go app on your phone (or Android/iOS emulator)
-- Backend server running (see [Backend README](../Backend/README.md))
+- Backend TeamZoneVN đang chạy
+- Android Studio/emulator, Xcode simulator hoặc thiết bị phù hợp với Expo development build
 
-### Quick Start
+Ứng dụng dùng native module `@react-native-google-signin/google-signin`; Expo Go tiêu chuẩn có thể không chứa module này. Khi gặp lỗi native module, dùng `npm run android`, `npm run ios` hoặc development build thay vì chỉ Expo Go.
+
+## Cài đặt và chạy
 
 ```bash
-# Install dependencies
 npm install
-
-# Configure API URL (edit .env)
-# EXPO_PUBLIC_API_URL=https://your-backend-url
-
-# Start development server
 npm start
-
-# Scan the QR code with Expo Go (Android/iOS)
 ```
 
-### Commands
+Các lệnh khác:
 
-| Command | Description |
-|---------|-------------|
-| `npm start` | Start Expo dev server |
-| `npm run android` | Build & run on Android |
-| `npm run ios` | Build & run on iOS |
-| `npm test` | Run tests |
-| `npm run lint` | ESLint |
-
----
-
-## Features
-
-- **Zone Browser** — Browse, search & filter gaming zones
-- **Real-time Chat** — Group chat with Socket.IO integration
-- **User Profile** — Avatar, stats, game preferences
-- **Friend System** — Add friends, view online status
-- **Authentication** — Email/password login + Google OAuth2
-- **Leaderboard** — View top-ranked users
-- **Notifications** — In-app notifications for zone invites & messages
-
-## Project Structure
-
+```bash
+npm run android
+npm run ios
+npm run web
+npm run lint
+npm test
 ```
+
+## Kết nối Backend
+
+API client ưu tiên `EXPO_PUBLIC_API_URL`. Tạo file `.env` trong thư mục `Frontend`:
+
+```env
+EXPO_PUBLIC_API_URL=http://192.168.1.10:3000
+```
+
+- Android emulator thường truy cập máy host qua `http://10.0.2.2:3000`.
+- Thiết bị thật cần IP LAN của máy chạy Backend và hai thiết bị phải truy cập được nhau.
+- Không thêm dấu `/` cuối URL.
+
+## Cấu trúc
+
+```text
 Frontend/
-├── src/
-│   ├── screens/        # App screens (Zone, Chat, Profile, Auth...)
-│   ├── components/     # Reusable UI components
-│   ├── services/       # API & WebSocket clients
-│   ├── hooks/          # Custom React hooks
-│   ├── navigation/     # Tab & stack navigation config
-│   └── utils/          # Helpers & constants
-├── App.tsx             # Root component
-├── app.json            # Expo config
-└── assets/             # Images, fonts
+├── src/api/          HTTP client và API modules
+├── src/components/   UI dùng lại
+├── src/navigation/   Stack/tab navigation
+├── src/screens/      Các màn hình của ứng dụng
+├── src/store/        Zustand stores
+├── src/theme/        Theme và token giao diện
+├── src/types/        TypeScript types
+├── App.tsx
+└── app.json          Expo configuration
 ```

@@ -1,81 +1,47 @@
-# TeamZoneVN — Admin Dashboard
+# TeamZoneVN Admin Dashboard
 
-> Giao diện quản trị web cho nền tảng kết nối game thủ TeamZoneVN.
+Ứng dụng quản trị web cho TeamZoneVN, sử dụng React 19.2, Vite 7, TypeScript 5.9 và Tailwind CSS 4.
 
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
-![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript)
-![Shadcn UI](https://img.shields.io/badge/Shadcn_UI-latest-000000?logo=shadcnui)
+## Chức năng hiện có
 
----
+- Đăng nhập và bảo vệ route quản trị.
+- Tổng quan số liệu và biểu đồ.
+- Quản lý người dùng, game, Zone và Group.
+- Report/moderation.
 
-## Tech Stack
+Các route chính: `/`, `/users`, `/zones`, `/groups`, `/games`, `/moderation` và `/login`.
 
-| Technology | Purpose |
-|------------|---------|
-| **React 19** | UI framework |
-| **Vite** | Build tool & dev server |
-| **TypeScript 5.7** | Strict type safety |
-| **TanStack Query** | Server state & caching |
-| **TanStack Table** | Data tables with sorting/filtering |
-| **Shadcn UI** | Component library |
-| **Framer Motion** | Animations & transitions |
-| **Recharts** | Analytics charts |
-| **Axios** | HTTP client |
-| **React Hook Form** | Form management |
-| **Lucide React** | Icons |
-
----
-
-## Setup
-
-### Prerequisites
-- Node.js 20+
-- Backend server running (see [Backend README](../Backend/README.md))
-
-### Quick Start
+## Cài đặt
 
 ```bash
-# Install dependencies
 npm install
-
-# Configure API URL (edit .env)
-# VITE_API_URL=https://your-backend-url
-
-# Start development server
-npm run dev    # http://localhost:5173
+npm run dev
 ```
 
-### Commands
+Dashboard mặc định gọi Backend tại `http://localhost:3000`. Có thể ghi đè bằng file `.env`:
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start dev server |
-| `npm run build` | Production build |
-| `npm run preview` | Preview production build |
-| `npm run lint` | ESLint |
-
----
-
-## Features
-
-- **User Management** — View, search, filter, ban/unban users
-- **Zone Moderation** — Monitor & manage gaming zones
-- **Game Management** — CRUD for supported games
-- **Analytics Dashboard** — Charts for user growth, active zones, engagement
-- **Admin Role Management** — Role-based access control
-- **System Settings** — Configure platform parameters
-
-## Project Structure
-
+```env
+VITE_API_URL=http://localhost:3000
 ```
-Dashboard/
-├── src/
-│   ├── components/     # Reusable UI components
-│   ├── pages/          # Route pages (Users, Zones, Games, Analytics...)
-│   ├── hooks/          # Custom hooks
-│   ├── lib/            # Utilities & API client
-│   └── styles/         # Global styles
-├── index.html
-└── vite.config.ts
+
+## Lệnh
+
+| Lệnh | Mục đích |
+| --- | --- |
+| `npm run dev` | Chạy Vite dev server |
+| `npm run build` | Type-check và build production |
+| `npm run preview` | Xem bản build local |
+| `npm run lint` | Chạy ESLint |
+
+## Cấu trúc
+
+```text
+Dashboard/src/
+├── components/auth/    Bảo vệ route
+├── components/common/  Thành phần UI dùng lại
+├── components/layout/  Sidebar, header và layout
+├── lib/                Axios client, API và utility
+├── pages/              Các trang quản trị
+├── App.tsx             Route configuration
+└── main.tsx            Entry point
 ```
