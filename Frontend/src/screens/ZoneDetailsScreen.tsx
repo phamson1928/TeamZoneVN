@@ -152,6 +152,8 @@ export const ZoneDetailsScreen = () => {
     : approvedRequests.length + 1; // +1 cho owner
   const maxPlayers = (zone?.requiredPlayers ?? 0) + 1;
   const remainingSlots = Math.max(0, maxPlayers - currentPlayers);
+  const isFull = zone?.status === 'FULL' || currentPlayers >= maxPlayers;
+  const displayStatus = isFull ? 'FULL' : zone?.status ?? 'OPEN';
 
   const { data: rawJoinRequests } = useQuery({
     queryKey: ['zone-requests', zoneId],
@@ -416,30 +418,30 @@ export const ZoneDetailsScreen = () => {
             style={[
               styles.statusBadge,
               {
-                borderColor: getStatusColor(zone.status) + '40',
-                backgroundColor: getStatusColor(zone.status) + '10',
+                borderColor: getStatusColor(displayStatus) + '40',
+                backgroundColor: getStatusColor(displayStatus) + '10',
               },
             ]}
           >
-            {zone.status === 'OPEN' ? (
-              <PulseDot color={getStatusColor(zone.status)} />
+            {!isFull ? (
+              <PulseDot color={getStatusColor(displayStatus)} />
             ) : (
               <View
                 style={[
                   styles.staticDot,
-                  { backgroundColor: getStatusColor(zone.status) },
+                  { backgroundColor: getStatusColor(displayStatus) },
                 ]}
               />
             )}
             <Text
               style={[
                 styles.statusText,
-                { color: getStatusColor(zone.status) },
+                { color: getStatusColor(displayStatus) },
               ]}
             >
-              {zone.status === 'OPEN'
+              {!isFull
                 ? 'ĐANG TÌM NGƯỜI'
-                : zone.status === 'FULL'
+                : displayStatus === 'FULL'
                 ? 'ĐÃ ĐẦY'
                 : 'ĐÃ ĐÓNG'}
             </Text>
@@ -787,7 +789,7 @@ export const ZoneDetailsScreen = () => {
       </ScrollView>
 
       {/* Glass Footer */}
-      {zone.status === 'OPEN' && !isOwner && (
+      {!isFull && !isOwner && (
         <View style={styles.footer}>
           <View style={styles.glassBackground} />
           <TouchableOpacity

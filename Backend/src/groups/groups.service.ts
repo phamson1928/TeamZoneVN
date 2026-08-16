@@ -264,7 +264,7 @@ export class GroupsService {
     const remainingCount = await this.prisma.groupMember.count({
       where: { groupId },
     });
-    if (remainingCount < group.zone.requiredPlayers) {
+    if (remainingCount < group.zone.requiredPlayers + 1) {
       await this.prisma.zone.update({
         where: { id: group.zone.id },
         data: { status: 'OPEN' },
@@ -371,7 +371,7 @@ export class GroupsService {
     const remainingCount = await this.prisma.groupMember.count({
       where: { groupId },
     });
-    if (remainingCount < group.zone.requiredPlayers) {
+    if (remainingCount < group.zone.requiredPlayers + 1) {
       await this.prisma.zone.update({
         where: { id: group.zone.id },
         data: { status: 'OPEN' },

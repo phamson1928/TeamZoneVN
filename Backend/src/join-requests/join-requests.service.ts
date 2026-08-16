@@ -20,10 +20,38 @@ export class JoinRequestsService {
   async sendJoinRequest(userId: string, zoneId: string) {
     const checkZone = await this.prisma.zone.findUnique({
       where: { id: zoneId },
+      include: {
+        group: {
+          select: {
+            members: {
+              select: { userId: true },
+            },
+          },
+        },
+        joinRequests: {
+          where: { status: 'APPROVED' },
+          select: { id: true },
+        },
+      },
     });
     if (!checkZone) {
       throw new NotFoundException('Zone không tồn tại');
     }
+    const maxPlayers = checkZone.requiredPlayers + 1;
+    const currentPlayers = checkZone.group
+      ? checkZone.group.members.length
+      : checkZone.joinRequests.length + 1;
+
+    if (currentPlayers >= maxPlayers) {
+      if (checkZone.status === 'OPEN') {
+        await this.prisma.zone.update({
+          where: { id: zoneId },
+          data: { status: 'FULL' },
+        });
+      }
+      throw new BadRequestException('Zone đã đầy, không thể gửi yêu cầu tham gia');
+    }
+
     if (checkZone.status !== 'OPEN') {
       throw new BadRequestException('Zone không còn mở để nhận yêu cầu');
     }

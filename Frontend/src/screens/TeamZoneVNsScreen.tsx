@@ -156,21 +156,22 @@ export const TeamZoneVNsScreen = () => {
     const currentPlayers = groupMembers > 0 ? groupMembers : (approvedCount + 1);
     const maxPlayers = item.requiredPlayers + 1;
     const progress = Math.min(currentPlayers / (maxPlayers || 1), 1);
+    const isFull = item.status === 'FULL' || currentPlayers >= maxPlayers;
 
     const micTag = item.tags?.find(t => t.tag?.name?.toLowerCase().includes('mic'));
     const otherTags = item.tags?.filter(t => !t.tag?.name?.toLowerCase().includes('mic')) || [];
     const displayTags = otherTags.slice(0, 3);
     const remainingTags = otherTags.length - 3;
 
-    const getStatusConfig = () => {
-      switch (item.status) {
+    const getStatusConfig = (status: string) => {
+      switch (status) {
         case 'OPEN': return { color: '#22C55E', label: 'OPEN', bg: 'rgba(34,197,94,0.12)' };
         case 'FULL': return { color: '#EF4444', label: 'FULL', bg: 'rgba(239,68,68,0.12)' };
-        default: return { color: '#94A3B8', label: item.status, bg: 'rgba(148,163,184,0.12)' };
+        default: return { color: '#94A3B8', label: status, bg: 'rgba(148,163,184,0.12)' };
       }
     };
 
-    const statusCfg = getStatusConfig();
+    const statusCfg = getStatusConfig(isFull ? 'FULL' : item.status);
     const ownerInitial = item.owner?.username?.charAt(0).toUpperCase() || '?';
     const ownerAvatar = item.owner?.avatarUrl;
 

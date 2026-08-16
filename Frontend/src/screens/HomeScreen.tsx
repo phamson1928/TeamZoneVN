@@ -180,13 +180,15 @@ const ZoneCardComponent = React.memo(
   }) => {
     const hasMic =
       item.tags?.some(t => t.tag?.name?.toLowerCase().includes('mic')) ?? false;
-    const statusCfg = getStatusConfig(item.status);
       const approvedCount = item._count?.joinRequests ?? 0;
       const groupMembers = item.group?._count?.members ?? 0;
       const currentPlayers = groupMembers > 0 ? groupMembers : (approvedCount + 1);
       const maxPlayers = item.requiredPlayers + 1;
       const remainingSlots = Math.max(0, maxPlayers - currentPlayers);
       const progress = Math.min(currentPlayers / (maxPlayers || 1), 1);
+      const isFull = item.status === 'FULL' || currentPlayers >= maxPlayers;
+      const displayStatus = isFull ? 'FULL' : item.status;
+      const statusCfg = getStatusConfig(displayStatus);
     const otherTags =
       item.tags
         ?.filter(t => !t.tag?.name?.toLowerCase().includes('mic'))
