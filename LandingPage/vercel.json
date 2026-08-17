@@ -1,0 +1,17 @@
+{
+  "headers": [
+    {
+      "source": "/teamzonevn.apk",
+      "headers": [
+        {
+          "key": "Content-Disposition",
+          "value": "attachment; filename=\"teamzonevn.apk\""
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/vnd.android.package-archive"
+        }
+      ]
+    }
+  ]
+}
