@@ -24,6 +24,7 @@ const Navbar = () => {
     { label: 'Sảnh Chờ', href: '#hero' },
     { label: 'Tính Năng', href: '#features' },
     { label: 'Trải Nghiệm', href: '#showcase' },
+    { label: 'Demo', href: '#recruiter-access' },
     { label: 'Hỏi Đáp', href: '#faq' },
   ];
 

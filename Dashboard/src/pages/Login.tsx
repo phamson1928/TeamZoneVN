@@ -1,124 +1,187 @@
-import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { apiClient } from '../lib/axios';
-import { toast } from 'sonner';
-import teamzoneLogo from '../assets/non-background-teamzonevn-logo.png';
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { KeyRound, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { apiClient } from "../lib/axios";
+import { toast } from "sonner";
+import teamzoneLogo from "../assets/non-background-teamzonevn-logo.png";
 
 const loginSchema = z.object({
-    email: z.string().email({ message: 'Email không hợp lệ' }),
-    password: z.string().min(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' }),
+  email: z.string().email({ message: "Email không hợp lệ" }),
+  password: z.string().min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự" }),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+const demoCredentials = {
+  email: "admin@teamzonevn.com",
+  password: "User123456",
+};
+
 export const Login = () => {
-    const [isLoading, setIsLoading] = useState(false);
-    const navigate = useNavigate();
-    const location = useLocation();
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
-        resolver: zodResolver(loginSchema)
-    });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
 
-    const onSubmit = async (data: LoginFormValues) => {
-        try {
-            setIsLoading(true);
-            // Gọi API đăng nhập - apiClient (qua interceptor) trả về chính result.data
-            const result: any = await apiClient.post('/auth/login', data);
+  const onSubmit = async (data: LoginFormValues) => {
+    try {
+      setIsLoading(true);
+      // Gọi API đăng nhập - apiClient (qua interceptor) trả về chính result.data
+      const result: any = await apiClient.post("/auth/login", data);
 
-            if (result && result.tokens) {
-                // Lưu token tạm để gọi API Get Profile kiểm tra Role
-                localStorage.setItem('access_token', result.tokens.accessToken);
-                localStorage.setItem('refresh_token', result.tokens.refreshToken);
+      if (result && result.tokens) {
+        // Lưu token tạm để gọi API Get Profile kiểm tra Role
+        localStorage.setItem("access_token", result.tokens.accessToken);
+        localStorage.setItem("refresh_token", result.tokens.refreshToken);
 
-                // Lấy thông tin User hiện tại để check role
-                const user: any = await apiClient.get('/users/me');
+        // Lấy thông tin User hiện tại để check role
+        const user: any = await apiClient.get("/users/me");
 
-                if (user && user.role !== 'ADMIN') {
-                    // Xóa token ngay lập tức nếu không phải Admin
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
-                    throw new Error('Tài khoản của bạn không có quyền truy cập Admin Dashboard.');
-                }
-
-                // Lưu thông tin admin
-                localStorage.setItem('user', JSON.stringify(user));
-                toast.success('Đăng nhập quản trị thành công!');
-
-                // Chuyển hướng về trang trước đó hoặc Overview
-                const origin = location.state?.from?.pathname || '/';
-                navigate(origin, { replace: true });
-            } else {
-                toast.error('Phản hồi từ máy chủ không hợp lệ.');
-            }
-        } catch (error: any) {
-            // Xóa rác trong trường hợp login lỗi hoặc role sai
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-            localStorage.removeItem('user');
-
-            console.error('Login Error:', error);
-            const apiMessage = error?.response?.data?.message || error.message;
-            toast.error(Array.isArray(apiMessage) ? apiMessage.join(', ') : (apiMessage || 'Lỗi hệ thống. Không thể đăng nhập.'));
-        } finally {
-            setIsLoading(false);
+        if (user && user.role !== "ADMIN") {
+          // Xóa token ngay lập tức nếu không phải Admin
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          throw new Error(
+            "Tài khoản của bạn không có quyền truy cập Admin Dashboard.",
+          );
         }
-    };
 
-    return (
-        <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-4">
-            <div className="bg-white p-8 md:p-10 rounded-[24px] shadow-sm border border-gray-100/50 w-full max-w-md">
+        // Lưu thông tin admin
+        localStorage.setItem("user", JSON.stringify(user));
+        toast.success("Đăng nhập quản trị thành công!");
 
-                <div className="flex flex-col items-center justify-center mb-8">
-                    <div className="h-14 w-14 rounded-2xl bg-gray-900 flex items-center justify-center mb-4 shadow-xl shadow-black/20 overflow-hidden">
-                        <img src={teamzoneLogo} alt="TeamZoneVN" className="h-10 w-10 object-contain" draggable={false} />
-                    </div>
-                    <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">TeamZoneVN Admin</h2>
-                    <p className="text-sm font-medium text-gray-500 mt-1">Hệ thống quản trị và kiểm duyệt</p>
-                </div>
+        // Chuyển hướng về trang trước đó hoặc Overview
+        const origin = location.state?.from?.pathname || "/";
+        navigate(origin, { replace: true });
+      } else {
+        toast.error("Phản hồi từ máy chủ không hợp lệ.");
+      }
+    } catch (error: any) {
+      // Xóa rác trong trường hợp login lỗi hoặc role sai
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("user");
 
-                {location.state?.error && (
-                    <div className="mb-6 p-3 rounded-xl bg-red-50 border border-red-100 text-sm font-medium text-red-600 text-center">
-                        {location.state.error}
-                    </div>
-                )}
+      console.error("Login Error:", error);
+      const apiMessage = error?.response?.data?.message || error.message;
+      toast.error(
+        Array.isArray(apiMessage)
+          ? apiMessage.join(", ")
+          : apiMessage || "Lỗi hệ thống. Không thể đăng nhập.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
-                        <input
-                            type="email"
-                            placeholder="admin@gamezone.vn"
-                            {...register('email')}
-                            className={`w-full bg-gray-50 border transition-all rounded-xl py-3 px-4 text-sm font-medium text-gray-900 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:outline-none ${errors.email ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 hover:border-gray-300'}`}
-                        />
-                        {errors.email && <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.email.message}</p>}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mật khẩu</label>
-                        <input
-                            type="password"
-                            placeholder="••••••••"
-                            {...register('password')}
-                            className={`w-full bg-gray-50 border transition-all rounded-xl py-3 px-4 text-sm font-medium text-gray-900 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:outline-none ${errors.password ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500 hover:border-gray-300'}`}
-                        />
-                        {errors.password && <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.password.message}</p>}
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="group relative w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gray-900 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 shadow-md transition-all active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none"
-                    >
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : 'Đăng nhập'}
-                    </button>
-                </form>
-            </div>
+  return (
+    <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-4">
+      <div className="bg-white p-8 md:p-10 rounded-[24px] shadow-sm border border-gray-100/50 w-full max-w-md">
+        <div className="flex flex-col items-center justify-center mb-8">
+          <div className="h-14 w-14 rounded-2xl bg-gray-900 flex items-center justify-center mb-4 shadow-xl shadow-black/20 overflow-hidden">
+            <img
+              src={teamzoneLogo}
+              alt="TeamZoneVN"
+              className="h-10 w-10 object-contain"
+              draggable={false}
+            />
+          </div>
+          <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+            TeamZoneVN Admin
+          </h2>
+          <p className="text-sm font-medium text-gray-500 mt-1">
+            Hệ thống quản trị và kiểm duyệt
+          </p>
         </div>
-    );
+
+        {location.state?.error && (
+          <div className="mb-6 p-3 rounded-xl bg-red-50 border border-red-100 text-sm font-medium text-red-600 text-center">
+            {location.state.error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              Email
+            </label>
+            <input
+              type="email"
+              placeholder="admin@gamezone.vn"
+              {...register("email")}
+              className={`w-full bg-gray-50 border transition-all rounded-xl py-3 px-4 text-sm font-medium text-gray-900 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:outline-none ${errors.email ? "border-red-300 focus:border-red-500" : "border-gray-200 focus:border-indigo-500 hover:border-gray-300"}`}
+            />
+            {errors.email && (
+              <p className="mt-1.5 text-xs text-red-500 font-medium">
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              Mật khẩu
+            </label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              {...register("password")}
+              className={`w-full bg-gray-50 border transition-all rounded-xl py-3 px-4 text-sm font-medium text-gray-900 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:outline-none ${errors.password ? "border-red-300 focus:border-red-500" : "border-gray-200 focus:border-indigo-500 hover:border-gray-300"}`}
+            />
+            {errors.password && (
+              <p className="mt-1.5 text-xs text-red-500 font-medium">
+                {errors.password.message}
+              </p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="group relative w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gray-900 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 shadow-md transition-all active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-white" />
+            ) : (
+              "Đăng nhập"
+            )}
+          </button>
+        </form>
+
+        <div className="mt-6 rounded-xl border border-indigo-100 bg-indigo-50/70 p-4">
+          <div className="flex items-center gap-2 text-sm font-bold text-indigo-950">
+            <KeyRound className="h-4 w-4" />
+            Tài khoản demo
+          </div>
+          <p className="mt-1 text-xs font-medium text-indigo-700">
+            Thông tin dùng để nhà tuyển dụng kiểm thử hệ thống.
+          </p>
+          <dl className="mt-3 space-y-2 text-sm">
+            <div className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 text-gray-700">
+              <dt className="font-semibold">Tài khoản</dt>
+              <dd className="text-right font-medium text-gray-500">
+                {demoCredentials.email}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 text-gray-700">
+              <dt className="font-semibold">Mật khẩu</dt>
+              <dd className="text-right font-medium text-gray-500">
+                {demoCredentials.password}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  );
 };

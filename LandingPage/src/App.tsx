@@ -6,6 +6,7 @@ import Features from "./components/Features";
 import AppShowcase from "./components/AppShowcase";
 import FAQ from "./components/FAQ";
 import CTA from "./components/CTA";
+import RecruiterAccess from "./components/RecruiterAccess";
 import logo from "./assets/logo.png";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
@@ -48,6 +49,7 @@ function App() {
         <Stats />
         <Features />
         <AppShowcase />
+        <RecruiterAccess />
         <FAQ />
         <CTA />
       </main>
@@ -84,6 +86,12 @@ function App() {
               className="hover:text-primary transition-colors"
             >
               Trải Nghiệm
+            </a>
+            <a
+              href="#recruiter-access"
+              className="hover:text-primary transition-colors"
+            >
+              Tài Khoản Demo
             </a>
             <a href="#faq" className="hover:text-primary transition-colors">
               Hỏi Đáp
