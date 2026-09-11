@@ -277,10 +277,7 @@ export class AuthService {
       },
     });
 
-    // Build reset link
-    const frontendUrl =
-      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3001';
-    const resetLink = `${frontendUrl}/auth/reset-password?token=${rawToken}`;
+    const resetLink = this.buildPasswordResetLink(rawToken);
 
     // Send email (fire & forget — don't block response if email fails)
     const mailFrom =
@@ -398,6 +395,27 @@ export class AuthService {
       </body>
       </html>
     `;
+  }
+
+  /**
+   * Prefer a web reset page when one is explicitly configured. The mobile app
+   * otherwise owns the reset flow through its registered custom URI scheme.
+   */
+  private buildPasswordResetLink(token: string): string {
+    const frontendUrl = this.configService
+      .get<string>('FRONTEND_URL')
+      ?.trim()
+      .replace(/\/+$/, '');
+
+    if (frontendUrl) {
+      return `${frontendUrl}/auth/reset-password?token=${encodeURIComponent(token)}`;
+    }
+
+    const scheme =
+      this.configService.get<string>('MOBILE_APP_SCHEME')?.trim() ||
+      'teamzonevn';
+
+    return `${scheme}://reset-password?token=${encodeURIComponent(token)}`;
   }
 
   /**

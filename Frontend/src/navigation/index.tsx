@@ -3,6 +3,7 @@ import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import * as Linking from 'expo-linking';
 import { useAuthStore } from '../store/useAuthStore';
 import { theme } from '../theme';
 import { Home, Compass, Users, User, Plus } from 'lucide-react-native';
@@ -56,6 +57,20 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
+
+const linking = {
+  prefixes: [Linking.createURL('/'), 'teamzonevn://'],
+  config: {
+    screens: {
+      ResetPassword: {
+        path: 'reset-password',
+        parse: {
+          token: (token: string) => token,
+        },
+      },
+    },
+  },
+};
 
 // Placeholder component for the center tab (does nothing, we handle navigation via custom button)
 const DummyScreen = () => null;
@@ -202,7 +217,6 @@ const AuthNavigator = () => (
     <Stack.Screen name="Login" component={LoginScreen} />
     <Stack.Screen name="Register" component={RegisterScreen} />
     <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-    <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
   </Stack.Navigator>
 );
 
@@ -267,7 +281,9 @@ export const AppNavigator = () => {
   }
 
   return (
-    <NavigationContainer theme={{
+    <NavigationContainer
+      linking={linking}
+      theme={{
       ...DarkTheme,
       colors: {
         ...DarkTheme.colors,
@@ -277,7 +293,8 @@ export const AppNavigator = () => {
         text: theme.colors.text,
         border: theme.colors.border,
       },
-    }}>
+      }}
+    >
       <Stack.Navigator screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: theme.colors.background },
@@ -289,6 +306,7 @@ export const AppNavigator = () => {
           name="App"
           component={isAuthenticated ? MainNavigator : AuthNavigator}
         />
+        <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

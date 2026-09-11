@@ -125,7 +125,7 @@ export const ResetPasswordScreen = ({ navigation, route }: Props) => {
 
                   <Button
                     title={STRINGS.BACK_TO_LOGIN}
-                    onPress={() => navigation.navigate('Login')}
+                    onPress={() => navigation.replace('App')}
                     variant="solid"
                     style={styles.resetButton}
                     size="md"

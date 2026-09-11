@@ -66,7 +66,7 @@ export const Login = () => {
       } else {
         toast.error("Phản hồi từ máy chủ không hợp lệ.");
       }
-    } catch (error: any) {
+    } catch (error) {
       // Xóa rác trong trường hợp login lỗi hoặc role sai
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
