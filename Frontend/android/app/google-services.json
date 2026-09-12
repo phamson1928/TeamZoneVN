@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "946383947788-6l58c58cedlhbnfq7s773au9g4otrdr8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.teamzonevn.app",
+            "certificate_hash": "6e6df7db7f89aa88839b3319d3ef27431bc7be16"
+          }
+        },
+        {
           "client_id": "946383947788-s3qn3o2gso78s148q4qu3af1kinej3b4.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
