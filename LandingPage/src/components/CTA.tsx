@@ -85,7 +85,7 @@ const CTA = () => {
 
             {/* Direct APK Download Button */}
             <a
-              href="/teamzonevn.apk?download=release-1.0.1"
+              href="/teamzonevn.apk?download=release-1.0.2"
               download
               className="w-full lg:w-auto flex items-center justify-center gap-3.5 px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl transition-all font-body font-bold text-base group shadow-lg border border-slate-800 hover:scale-[1.03] shrink-0"
             >
